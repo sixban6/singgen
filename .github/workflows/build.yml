@@ -1,0 +1,114 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+        
+    - name: Get version info
+      id: version
+      run: |
+        echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        echo "commit=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        echo "build_time=$(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_OUTPUT
+        
+    - name: Build Linux binaries
+      run: |
+        ls -al
+        # Build Linux AMD64
+        GOOS=linux GOARCH=amd64 go build -v -trimpath \
+          -ldflags "-X 'github.com/sixban6/singgen/internal/version.Version=${{ steps.version.outputs.version }}' \
+                   -X 'github.com/sixban6/singgen/internal/version.GitCommit=${{ steps.version.outputs.commit }}' \
+                   -X 'github.com/sixban6/singgen/internal/version.BuildTime=${{ steps.version.outputs.build_time }}'" \
+          -o singgen-linux-amd64 \
+          ./cmd/singgen
+        
+        # Build Linux ARM64
+        GOOS=linux GOARCH=arm64 go build -v -trimpath \
+          -ldflags "-X 'github.com/sixban6/singgen/internal/version.Version=${{ steps.version.outputs.version }}' \
+                   -X 'github.com/sixban6/singgen/internal/version.GitCommit=${{ steps.version.outputs.commit }}' \
+                   -X 'github.com/sixban6/singgen/internal/version.BuildTime=${{ steps.version.outputs.build_time }}'" \
+          -o singgen-linux-arm64 \
+          ./cmd/singgen
+        
+        
+        # Build darwin ARM64
+        GOOS=darwin GOARCH=arm64 go build -v -trimpath \
+          -ldflags "-X 'github.com/sixban6/singgen/internal/version.Version=${{ steps.version.outputs.version }}' \
+                   -X 'github.com/sixban6/singgen/internal/version.GitCommit=${{ steps.version.outputs.commit }}' \
+                   -X 'github.com/sixban6/singgen/internal/version.BuildTime=${{ steps.version.outputs.build_time }}'" \
+          -o singgen-darwin-arm64 \
+          ./cmd/singgen
+          
+    - name: Package releases
+      run: |
+        # Create AMD64 package
+        mkdir -p singgen-linux-amd64-release
+        cp singgen-linux-amd64 singgen-linux-amd64-release/singgen
+        cp -r configs singgen-linux-amd64-release/
+        cp README.md singgen-linux-amd64-release/
+        tar -czf singgen-linux-amd64.tar.gz -C singgen-linux-amd64-release .
+        
+        # Create ARM64 package
+        mkdir -p singgen-linux-arm64-release
+        cp singgen-linux-arm64 singgen-linux-arm64-release/singgen
+        cp -r configs singgen-linux-arm64-release/
+        cp README.md singgen-linux-arm64-release/
+        tar -czf singgen-linux-arm64.tar.gz -C singgen-linux-arm64-release .
+        
+        # Create darwin ARM64 package
+        mkdir -p singgen-darwin-arm64-release
+        cp singgen-darwin-arm64 singgen-darwin-arm64-release/singgen
+        cp -r configs singgen-darwin-arm64-release/
+        cp README.md singgen-darwin-arm64-release/
+        tar -czf singgen-darwin-arm64.tar.gz -C singgen-darwin-arm64-release .
+          
+    - name: Create release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          singgen-linux-amd64.tar.gz
+          singgen-linux-arm64.tar.gz
+          singgen-darwin-arm64.tar.gz
+        body: |
+          ## Release ${{ steps.version.outputs.version }}
+          
+          This release contains Linux binaries for singgen.
+          
+          **Build Information:**
+          - Version: ${{ steps.version.outputs.version }}
+          - Commit: ${{ steps.version.outputs.commit }}
+          - Build Time: ${{ steps.version.outputs.build_time }}
+          
+          **Available Packages:**
+          - `singgen-linux-amd64.tar.gz` - Linux x86_64 (includes configs and README)
+          - `singgen-linux-arm64.tar.gz` - Linux ARM64 (includes configs and README)
+          - `singgen-darwin-arm64.tar.gz` - Linux ARM64 (includes configs and README)
+          
+          **Usage:**
+          ```bash
+          # For x86_64
+          tar -xzf singgen-linux-amd64.tar.gz
+          chmod +x singgen
+          ./singgen --help
+          
+          # For ARM64
+          tar -xzf singgen-linux-arm64.tar.gz
+          chmod +x singgen
+          ./singgen --help
+          ```
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

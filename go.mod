@@ -1,6 +1,6 @@
 module github.com/sixban6/singgen
 
-go 1.22
+go 1.25
 
 require (
 	go.uber.org/zap v1.26.0

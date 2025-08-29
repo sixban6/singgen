@@ -373,7 +373,14 @@ func (t *EmbedTemplate) applyPlatformSpecificAdaptation(config *config.Config, p
 		}
 		
 		// 更新必要的字段
-		clashAPI["external_controller"] = "127.0.0.1:9095"
+		// 使用配置文件中的webui_address，如果没有则使用默认值
+		if options.ExternalController != "" {
+			clashAPI["external_controller"] = options.ExternalController
+		} else if _, ok := clashAPI["external_controller"]; !ok {
+			// 只有在配置中没有external_controller时才设置默认值
+			clashAPI["external_controller"] = "127.0.0.1:9095"
+		}
+		
 		if _, ok := clashAPI["default_mode"]; !ok {
 			clashAPI["default_mode"] = "rule"
 		}

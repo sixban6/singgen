@@ -1,0 +1,13 @@
+# Shadowsocks节点（带emoji）
+ss://YWVzLTI1Ni1nY206cGFzc3dvcmQxMjM=@127.0.0.1:8000#🇺🇸 美国-SS-节点1
+ss://YWVzLTI1Ni1nY206cGFzc3dvcmQxMjQ=@127.0.0.2:8001#🇯🇵 日本-SS-节点2
+ss://YWVzLTI1Ni1nY206cGFzc3dvcmQxMjU=@127.0.0.3:8002#🇭🇰 香港-SS-节点3-⚡
+ss://YWVzLTI1Ni1nY206cGFzc3dvcmQxMjY=@127.0.0.4:8003#🇸🇬 新加坡-SS-4🔥
+ss://YWVzLTI1Ni1nY206cGFzc3dvcmQxMjc=@127.0.0.5:8004#🇬🇧 英国-SS-5💎
+
+# Hysteria2节点（带emoji）
+hysteria2://password123@127.0.0.1:9000#🚀 美国-HY2-1-🎯
+hysteria2://password124@127.0.0.2:9001#⚡ 日本-HY2-2-💫  
+hysteria2://password125@127.0.0.3:9002#🔥 香港-HY2-3-🌟
+hysteria2://password126@127.0.0.4:9003#💎 新加坡-HY2-4-✨
+hysteria2://password127@127.0.0.5:9004#🌈 英国-HY2-5-🎪

@@ -1,0 +1,20 @@
+global:
+  template: v1.12
+  platform: linux
+  mirror_url: https://ghfast.top
+  dns_server: 114.114.114.114
+  webui_address: 127.0.0.1:9095
+  remove_emoji: true
+  skip_tls_verify: false
+  http_timeout: 30s
+  format: json
+
+subscriptions:
+  - url: ./test-nodes.txt
+    name: primary
+    remove_emoji: false
+    skip_tls_verify: false
+  - url: ./test-nodes.txt  
+    name: backup
+    remove_emoji: true
+    skip_tls_verify: true

@@ -39,4 +39,12 @@ var (
 	
 	// ErrRenderFailed is returned when rendering the final configuration fails
 	ErrRenderFailed = errors.New("failed to render configuration")
+	
+	// Multi-subscription related errors
+	ErrNoSubscriptions = errors.New("no subscriptions configured")
+	ErrEmptySubscriptionName = errors.New("subscription name cannot be empty")
+	ErrEmptySubscriptionURL = errors.New("subscription URL cannot be empty")
+	ErrDuplicateSubscriptionName = errors.New("duplicate subscription name")
+	ErrConfigFileNotFound = errors.New("configuration file not found")
+	ErrInvalidConfigFormat = errors.New("invalid configuration file format")
 )

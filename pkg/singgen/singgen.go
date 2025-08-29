@@ -8,6 +8,12 @@
 //     singgen.WithTemplate("v1.12"),
 //     singgen.WithPlatform("linux"))
 //
+// Multi-subscription API:
+//   config, err := singgen.GenerateConfigFromFile(ctx, "config.yaml")
+//   
+//   multiConfig := &singgen.MultiConfig{...}
+//   config, err := singgen.GenerateConfigFromMulti(ctx, multiConfig)
+//
 // Mid-level API (for more control):
 //   generator := singgen.NewGenerator(
 //     singgen.WithLogger(logger),
@@ -50,6 +56,9 @@ type GenerateOptions struct {
 	// Output configuration
 	Format      string
 	RemoveEmoji bool
+	
+	// TLS configuration
+	SkipTLSVerify bool
 	
 	// External services
 	ExternalController string

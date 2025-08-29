@@ -1,4 +1,8 @@
 # Binaries for programs and plugins
+# 只忽略根目录的可执行文件
+/singgen
+!/pkg/singgen/
+!/cmd/singgen/
 .idea
 *.exe
 *.exe~

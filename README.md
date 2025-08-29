@@ -1,6 +1,8 @@
 # SingGen
 SingGen 是一个用于生成 sing-box 配置文件的工具，支持从各种订阅链接和协议解析节点信息。
-
+[![Release](https://img.shields.io/github/v/release/sixban6/singgen)](https://github.com/sixban6/singgen/releases)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/sixban6/singgen)](https://golang.org/)
+[![License](https://img.shields.io/github/license/sixban6/singgen)](https://github.com/sixban6/singgen/blob/main/LICENSE)
 ## 特性
 - 🔧 支持多种协议：VMess, VLESS, Trojan, Hysteria2, Shadowsocks
 - 📄 支持多种输出格式：JSON, YAML

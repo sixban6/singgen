@@ -1,6 +1,6 @@
 global:
   template: v1.12
-  platform: linux
+  platform: darwin
   mirror_url: https://ghfast.top
   dns_server: 114.114.114.114
   webui_address: 127.0.0.1:9095

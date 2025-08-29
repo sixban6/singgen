@@ -316,9 +316,16 @@ func (t *EmbedTemplate) applyEmbedPlatformAdaptation(config *config.Config, opti
 	}
 
 	// 从嵌入的文件系统读取平台配置
-	platformConfigFile := fmt.Sprintf("configs/platform/%s-tun.json", platformType)
-	if platformType == "linux" {
+	var platformConfigFile string
+	switch platformType {
+	case "darwin", "mac", "macos":
+		platformConfigFile = "configs/platform/mac-tun.json"
+	case "linux":
 		platformConfigFile = "configs/platform/linux-tproxy.json"
+	case "ios":
+		platformConfigFile = "configs/platform/ios-tun.json"
+	default:
+		platformConfigFile = fmt.Sprintf("configs/platform/%s-tun.json", platformType)
 	}
 
 	platformData, err := templatesFS.ReadFile(platformConfigFile)
@@ -333,5 +340,64 @@ func (t *EmbedTemplate) applyEmbedPlatformAdaptation(config *config.Config, opti
 
 	// 替换inbound配置
 	config.Inbounds = platformConfig
+
+	// 应用平台特定的配置适配（如删除default_mark等）
+	if err := t.applyPlatformSpecificAdaptation(config, platformType, options); err != nil {
+		return fmt.Errorf("failed to apply platform-specific adaptation: %w", err)
+	}
+
+	return nil
+}
+
+// applyPlatformSpecificAdaptation 应用平台特定的配置适配
+func (t *EmbedTemplate) applyPlatformSpecificAdaptation(config *config.Config, platformType string, options config.TemplateOptions) error {
+	switch platformType {
+	case "darwin", "mac", "macos":
+		// macOS不需要default_mark，删除它
+		if config.Route != nil {
+			delete(config.Route, "default_mark")
+		}
+		
+		// macOS默认使用external_controller
+		if config.Experimental == nil {
+			config.Experimental = make(map[string]any)
+		}
+		
+		// 获取或创建clash_api配置
+		var clashAPI map[string]any
+		if existingClashAPI, ok := config.Experimental["clash_api"].(map[string]any); ok {
+			clashAPI = existingClashAPI
+		} else {
+			clashAPI = make(map[string]any)
+			config.Experimental["clash_api"] = clashAPI
+		}
+		
+		// 更新必要的字段
+		clashAPI["external_controller"] = "127.0.0.1:9095"
+		if _, ok := clashAPI["default_mode"]; !ok {
+			clashAPI["default_mode"] = "rule"
+		}
+		if _, ok := clashAPI["secret"]; !ok {
+			clashAPI["secret"] = ""
+		}
+		
+		// macOS不需要cache文件路径
+		if cacheFile, ok := config.Experimental["cache_file"].(map[string]any); ok {
+			delete(cacheFile, "path")
+		}
+
+	case "ios":
+		// iOS也不需要default_mark
+		if config.Route != nil {
+			delete(config.Route, "default_mark")
+		}
+
+	case "linux":
+		// Linux需要default_mark用于tproxy
+		if config.Route != nil {
+			config.Route["default_mark"] = 1
+		}
+	}
+	
 	return nil
 }

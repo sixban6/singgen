@@ -4,7 +4,7 @@
   "experimental": {
     "clash_api": {
       "external_controller": "192.168.31.1:9095", "external_ui": "/etc/sing-box/ui", "secret": "", "external_ui_download_detour": "DirectConn", "default_mode": "rule",
-      "external_ui_download_url": "{mirror_url}/https://github.com/Zephyruso/zashboard/releases/latest/download/dist.zip"
+      "external_ui_download_url": "{mirror_url}/https://github.com/MetaCubeX/Yacd-meta/archive/gh-pages.zip"
     },
     "cache_file": { "enabled": true,  "path": "/etc/sing-box/cache.db"}
   },

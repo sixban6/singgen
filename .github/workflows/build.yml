@@ -58,21 +58,18 @@ jobs:
         # Create AMD64 package
         mkdir -p singgen-linux-amd64-release
         cp singgen-linux-amd64 singgen-linux-amd64-release/singgen
-        cp -r configs singgen-linux-amd64-release/
         cp README.md singgen-linux-amd64-release/
         tar -czf singgen-linux-amd64.tar.gz -C singgen-linux-amd64-release .
         
         # Create ARM64 package
         mkdir -p singgen-linux-arm64-release
         cp singgen-linux-arm64 singgen-linux-arm64-release/singgen
-        cp -r configs singgen-linux-arm64-release/
         cp README.md singgen-linux-arm64-release/
         tar -czf singgen-linux-arm64.tar.gz -C singgen-linux-arm64-release .
         
         # Create darwin ARM64 package
         mkdir -p singgen-darwin-arm64-release
         cp singgen-darwin-arm64 singgen-darwin-arm64-release/singgen
-        cp -r configs singgen-darwin-arm64-release/
         cp README.md singgen-darwin-arm64-release/
         tar -czf singgen-darwin-arm64.tar.gz -C singgen-darwin-arm64-release .
           
@@ -94,9 +91,9 @@ jobs:
           - Build Time: ${{ steps.version.outputs.build_time }}
           
           **Available Packages:**
-          - `singgen-linux-amd64.tar.gz` - Linux x86_64 (includes configs and README)
-          - `singgen-linux-arm64.tar.gz` - Linux ARM64 (includes configs and README)
-          - `singgen-darwin-arm64.tar.gz` - Linux ARM64 (includes configs and README)
+          - `singgen-linux-amd64.tar.gz` - Linux x86_64 (single binary with embedded configs)
+          - `singgen-linux-arm64.tar.gz` - Linux ARM64 (single binary with embedded configs)
+          - `singgen-darwin-arm64.tar.gz` - macOS ARM64 (single binary with embedded configs)
           
           **Usage:**
           ```bash

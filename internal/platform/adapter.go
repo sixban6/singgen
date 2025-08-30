@@ -20,13 +20,14 @@ type PlatformAdapter interface {
 type PlatformType string
 
 const (
-	Linux  PlatformType = "linux"
-	Darwin PlatformType = "darwin"
-	IOS    PlatformType = "ios"
+	Linux   PlatformType = "linux"
+	Darwin  PlatformType = "darwin"
+	IOS     PlatformType = "ios"
+	Windows PlatformType = "windows"
 )
 
 // ValidPlatforms 有效的平台列表
-var ValidPlatforms = []PlatformType{Linux, Darwin, IOS}
+var ValidPlatforms = []PlatformType{Linux, Darwin, IOS, Windows}
 
 // IsValidPlatform 检查是否为有效平台
 func IsValidPlatform(platform string) bool {

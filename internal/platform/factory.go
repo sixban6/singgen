@@ -25,6 +25,8 @@ func (f *AdapterFactory) CreateAdapter(platformType PlatformType) (PlatformAdapt
 		return NewDarwinAdapter(f.platformConfigDir), nil
 	case IOS:
 		return NewIOSAdapter(f.platformConfigDir), nil
+	case Windows:
+		return NewWindowsAdapter(f.platformConfigDir), nil
 	default:
 		return nil, fmt.Errorf("unsupported platform: %s", platformType)
 	}

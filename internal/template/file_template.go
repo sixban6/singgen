@@ -3,6 +3,7 @@ package template
 import (
 	"fmt"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/sixban6/singgen/internal/config"
@@ -24,12 +25,12 @@ func NewFileTemplate(templatePath string) (*FileTemplate, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read template file %s: %w", templatePath, err)
 	}
-	
+
 	var config map[string]any
 	if err := util.Unmarshal(data, &config); err != nil {
 		return nil, fmt.Errorf("failed to parse template JSON: %w", err)
 	}
-	
+
 	return &FileTemplate{
 		templatePath: templatePath,
 		rawConfig:    config,
@@ -44,41 +45,41 @@ func (t *FileTemplate) Inject(outbounds []transformer.Outbound, mirrorURL string
 func (t *FileTemplate) InjectWithOptions(outbounds []transformer.Outbound, options config.TemplateOptions) *config.Config {
 	// 深拷贝模板配置
 	configData := t.deepCopyConfig()
-	
+
 	// 处理emoji移除（如果启用）
 	processedOutbounds := outbounds
 	if options.RemoveEmoji {
 		processedOutbounds = t.processEmojiRemoval(outbounds)
 	}
-	
+
 	// 处理镜像URL占位符
 	if options.MirrorURL != "" {
 		t.replaceMirrorURL(configData, options.MirrorURL)
 	} else {
 		t.replaceMirrorURL(configData, "")
 	}
-	
+
 	// 注入外部控制器配置
 	if options.ExternalController != "" {
 		t.injectExternalController(configData, options.ExternalController)
 	}
-	
+
 	// 注入客户端子网配置
 	if options.ClientSubnet != "" {
 		t.injectClientSubnet(configData, options.ClientSubnet)
 	}
-	
+
 	// 注入DNS本地服务器配置
 	if options.DNSLocalServer != "" {
 		t.injectDNSLocalServer(configData, options.DNSLocalServer)
 	}
-	
+
 	// 处理 {all} 占位符和过滤规则
 	t.processor.ProcessAllPlaceholders(configData, processedOutbounds)
-	
+
 	// 注入代理节点
 	t.injectProxyOutbounds(configData, processedOutbounds)
-	
+
 	// 创建配置对象
 	result := &config.Config{
 		Log:          t.convertToMap(configData["log"]),
@@ -88,14 +89,14 @@ func (t *FileTemplate) InjectWithOptions(outbounds []transformer.Outbound, optio
 		Outbounds:    t.convertToMapArray(configData["outbounds"]),
 		Route:        t.convertToMap(configData["route"]),
 	}
-	
+
 	// 应用平台适配
 	if err := t.applyPlatformAdaptation(result, options); err != nil {
 		if util.L != nil {
 			util.L.Warn("Failed to apply platform adaptation", zap.Error(err))
 		}
 	}
-	
+
 	return result
 }
 
@@ -142,7 +143,7 @@ func (t *FileTemplate) injectProxyOutbounds(config map[string]any, outbounds []t
 	// 处理类型转换
 	outboundsInterface := config["outbounds"]
 	var existingOutbounds []map[string]any
-	
+
 	switch v := outboundsInterface.(type) {
 	case []map[string]any:
 		existingOutbounds = v
@@ -156,7 +157,7 @@ func (t *FileTemplate) injectProxyOutbounds(config map[string]any, outbounds []t
 	default:
 		return // 无法处理的类型
 	}
-	
+
 	// 找到插入位置 (在 DirectConn 之前)
 	insertIndex := len(existingOutbounds) - 1
 	for i, outbound := range existingOutbounds {
@@ -165,20 +166,20 @@ func (t *FileTemplate) injectProxyOutbounds(config map[string]any, outbounds []t
 			break
 		}
 	}
-	
+
 	// 转换代理节点为 map[string]any 格式
 	var proxyOutbounds []map[string]any
 	for _, outbound := range outbounds {
 		outboundMap := t.transformerOutboundToMap(outbound)
 		proxyOutbounds = append(proxyOutbounds, outboundMap)
 	}
-	
+
 	// 插入代理节点
 	newOutbounds := make([]map[string]any, 0, len(existingOutbounds)+len(proxyOutbounds))
 	newOutbounds = append(newOutbounds, existingOutbounds[:insertIndex]...)
 	newOutbounds = append(newOutbounds, proxyOutbounds...)
 	newOutbounds = append(newOutbounds, existingOutbounds[insertIndex:]...)
-	
+
 	config["outbounds"] = newOutbounds
 }
 
@@ -189,7 +190,7 @@ func (t *FileTemplate) transformerOutboundToMap(outbound transformer.Outbound) m
 		"server":      outbound.Server,
 		"server_port": outbound.ServerPort,
 	}
-	
+
 	if outbound.UUID != "" {
 		result["uuid"] = outbound.UUID
 	}
@@ -208,7 +209,7 @@ func (t *FileTemplate) transformerOutboundToMap(outbound transformer.Outbound) m
 	if len(outbound.Multiplex) > 0 {
 		result["multiplex"] = outbound.Multiplex
 	}
-	
+
 	return result
 }
 
@@ -223,7 +224,7 @@ func (t *FileTemplate) convertToMapArray(v any) []map[string]any {
 	if arr, ok := v.([]map[string]any); ok {
 		return arr
 	}
-	
+
 	if arr, ok := v.([]any); ok {
 		result := make([]map[string]any, len(arr))
 		for i, item := range arr {
@@ -235,7 +236,7 @@ func (t *FileTemplate) convertToMapArray(v any) []map[string]any {
 		}
 		return result
 	}
-	
+
 	return []map[string]any{}
 }
 
@@ -245,13 +246,13 @@ func (t *FileTemplate) injectExternalController(config map[string]any, externalC
 		experimental = make(map[string]any)
 		config["experimental"] = experimental
 	}
-	
+
 	clashAPI, ok := experimental["clash_api"].(map[string]any)
 	if !ok {
 		clashAPI = make(map[string]any)
 		experimental["clash_api"] = clashAPI
 	}
-	
+
 	// 只更新external_controller字段，保留其他字段
 	clashAPI["external_controller"] = externalController
 }
@@ -264,7 +265,7 @@ func (t *FileTemplate) injectClientSubnet(config map[string]any, clientSubnet st
 		}
 		return s
 	})
-	
+
 	// Also ensure DNS section has the client_subnet field
 	dns, ok := config["dns"].(map[string]any)
 	if ok {
@@ -291,18 +292,18 @@ func (t *FileTemplate) injectDNSLocalServer(config map[string]any, dnsLocalServe
 		}
 		return s
 	})
-	
+
 	// 确保DNS配置中的servers字段包含本地DNS服务器
 	dns, ok := config["dns"].(map[string]any)
 	if !ok {
 		return
 	}
-	
+
 	servers, ok := dns["servers"].([]any)
 	if !ok {
 		return
 	}
-	
+
 	// 更新DNS服务器配置
 	for _, serverAny := range servers {
 		if server, ok := serverAny.(map[string]any); ok {
@@ -319,7 +320,7 @@ func (t *FileTemplate) applyPlatformAdaptation(config *config.Config, options co
 	// 如果没有指定平台，默认使用linux
 	platformType := options.Platform
 	if platformType == "" {
-		platformType = "linux"
+		platformType = runtime.GOOS
 	}
 
 	// 验证平台类型

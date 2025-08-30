@@ -37,41 +37,41 @@ func (t *EmbedTemplate) Inject(outbounds []transformer.Outbound, mirrorURL strin
 func (t *EmbedTemplate) InjectWithOptions(outbounds []transformer.Outbound, options config.TemplateOptions) *config.Config {
 	// 深拷贝模板配置
 	configData := t.deepCopyConfig()
-	
+
 	// 处理emoji移除（如果启用）
 	processedOutbounds := outbounds
 	if options.RemoveEmoji {
 		processedOutbounds = t.processEmojiRemoval(outbounds)
 	}
-	
+
 	// 处理镜像URL占位符
 	if options.MirrorURL != "" {
 		t.replaceMirrorURL(configData, options.MirrorURL)
 	} else {
 		t.replaceMirrorURL(configData, "")
 	}
-	
+
 	// 注入外部控制器配置
 	if options.ExternalController != "" {
 		t.injectExternalController(configData, options.ExternalController)
 	}
-	
+
 	// 注入客户端子网配置
 	if options.ClientSubnet != "" {
 		t.injectClientSubnet(configData, options.ClientSubnet)
 	}
-	
+
 	// 注入DNS本地服务器配置
 	if options.DNSLocalServer != "" {
 		t.injectDNSLocalServer(configData, options.DNSLocalServer)
 	}
-	
+
 	// 处理 {all} 占位符和过滤规则
 	t.processor.ProcessAllPlaceholders(configData, processedOutbounds)
-	
+
 	// 注入代理节点
 	t.injectProxyOutbounds(configData, processedOutbounds)
-	
+
 	// 创建配置对象
 	result := &config.Config{
 		Log:          t.convertToMap(configData["log"]),
@@ -81,14 +81,14 @@ func (t *EmbedTemplate) InjectWithOptions(outbounds []transformer.Outbound, opti
 		Outbounds:    t.convertToMapArray(configData["outbounds"]),
 		Route:        t.convertToMap(configData["route"]),
 	}
-	
+
 	// 应用平台适配（使用嵌入的平台配置）
 	if err := t.applyEmbedPlatformAdaptation(result, options); err != nil {
 		if util.L != nil {
 			util.L.Warn("Failed to apply platform adaptation", zap.Error(err))
 		}
 	}
-	
+
 	return result
 }
 
@@ -135,7 +135,7 @@ func (t *EmbedTemplate) injectProxyOutbounds(config map[string]any, outbounds []
 	// 处理类型转换
 	outboundsInterface := config["outbounds"]
 	var existingOutbounds []map[string]any
-	
+
 	switch v := outboundsInterface.(type) {
 	case []map[string]any:
 		existingOutbounds = v
@@ -149,7 +149,7 @@ func (t *EmbedTemplate) injectProxyOutbounds(config map[string]any, outbounds []
 	default:
 		return // 无法处理的类型
 	}
-	
+
 	// 找到插入位置 (在 DirectConn 之前)
 	insertIndex := len(existingOutbounds) - 1
 	for i, outbound := range existingOutbounds {
@@ -158,20 +158,20 @@ func (t *EmbedTemplate) injectProxyOutbounds(config map[string]any, outbounds []
 			break
 		}
 	}
-	
+
 	// 转换代理节点为 map[string]any 格式
 	var proxyOutbounds []map[string]any
 	for _, outbound := range outbounds {
 		outboundMap := t.transformerOutboundToMap(outbound)
 		proxyOutbounds = append(proxyOutbounds, outboundMap)
 	}
-	
+
 	// 插入代理节点
 	newOutbounds := make([]map[string]any, 0, len(existingOutbounds)+len(proxyOutbounds))
 	newOutbounds = append(newOutbounds, existingOutbounds[:insertIndex]...)
 	newOutbounds = append(newOutbounds, proxyOutbounds...)
 	newOutbounds = append(newOutbounds, existingOutbounds[insertIndex:]...)
-	
+
 	config["outbounds"] = newOutbounds
 }
 
@@ -182,7 +182,7 @@ func (t *EmbedTemplate) transformerOutboundToMap(outbound transformer.Outbound) 
 		"server":      outbound.Server,
 		"server_port": outbound.ServerPort,
 	}
-	
+
 	if outbound.UUID != "" {
 		result["uuid"] = outbound.UUID
 	}
@@ -201,7 +201,7 @@ func (t *EmbedTemplate) transformerOutboundToMap(outbound transformer.Outbound) 
 	if len(outbound.Multiplex) > 0 {
 		result["multiplex"] = outbound.Multiplex
 	}
-	
+
 	return result
 }
 
@@ -216,7 +216,7 @@ func (t *EmbedTemplate) convertToMapArray(v any) []map[string]any {
 	if arr, ok := v.([]map[string]any); ok {
 		return arr
 	}
-	
+
 	if arr, ok := v.([]any); ok {
 		result := make([]map[string]any, len(arr))
 		for i, item := range arr {
@@ -228,7 +228,7 @@ func (t *EmbedTemplate) convertToMapArray(v any) []map[string]any {
 		}
 		return result
 	}
-	
+
 	return []map[string]any{}
 }
 
@@ -238,13 +238,13 @@ func (t *EmbedTemplate) injectExternalController(config map[string]any, external
 		experimental = make(map[string]any)
 		config["experimental"] = experimental
 	}
-	
+
 	clashAPI, ok := experimental["clash_api"].(map[string]any)
 	if !ok {
 		clashAPI = make(map[string]any)
 		experimental["clash_api"] = clashAPI
 	}
-	
+
 	// 只更新external_controller字段，保留其他字段
 	clashAPI["external_controller"] = externalController
 }
@@ -257,7 +257,7 @@ func (t *EmbedTemplate) injectClientSubnet(config map[string]any, clientSubnet s
 		}
 		return s
 	})
-	
+
 	// Also ensure DNS section has the client_subnet field
 	dns, ok := config["dns"].(map[string]any)
 	if ok {
@@ -284,18 +284,18 @@ func (t *EmbedTemplate) injectDNSLocalServer(config map[string]any, dnsLocalServ
 		}
 		return s
 	})
-	
+
 	// 确保DNS配置中的servers字段包含本地DNS服务器
 	dns, ok := config["dns"].(map[string]any)
 	if !ok {
 		return
 	}
-	
+
 	servers, ok := dns["servers"].([]any)
 	if !ok {
 		return
 	}
-	
+
 	// 更新DNS服务器配置
 	for _, serverAny := range servers {
 		if server, ok := serverAny.(map[string]any); ok {
@@ -352,17 +352,17 @@ func (t *EmbedTemplate) applyEmbedPlatformAdaptation(config *config.Config, opti
 // applyPlatformSpecificAdaptation 应用平台特定的配置适配
 func (t *EmbedTemplate) applyPlatformSpecificAdaptation(config *config.Config, platformType string, options config.TemplateOptions) error {
 	switch platformType {
-	case "darwin", "mac", "macos":
+	case "windows", "darwin", "mac", "macos":
 		// macOS不需要default_mark，删除它
 		if config.Route != nil {
 			delete(config.Route, "default_mark")
 		}
-		
+
 		// macOS默认使用external_controller
 		if config.Experimental == nil {
 			config.Experimental = make(map[string]any)
 		}
-		
+
 		// 获取或创建clash_api配置
 		var clashAPI map[string]any
 		if existingClashAPI, ok := config.Experimental["clash_api"].(map[string]any); ok {
@@ -371,7 +371,7 @@ func (t *EmbedTemplate) applyPlatformSpecificAdaptation(config *config.Config, p
 			clashAPI = make(map[string]any)
 			config.Experimental["clash_api"] = clashAPI
 		}
-		
+
 		// 更新必要的字段
 		// 使用配置文件中的webui_address，如果没有则使用默认值
 		if options.ExternalController != "" {
@@ -380,14 +380,14 @@ func (t *EmbedTemplate) applyPlatformSpecificAdaptation(config *config.Config, p
 			// 只有在配置中没有external_controller时才设置默认值
 			clashAPI["external_controller"] = "127.0.0.1:9095"
 		}
-		
+
 		if _, ok := clashAPI["default_mode"]; !ok {
 			clashAPI["default_mode"] = "rule"
 		}
 		if _, ok := clashAPI["secret"]; !ok {
 			clashAPI["secret"] = ""
 		}
-		
+
 		// macOS不需要cache文件路径
 		if cacheFile, ok := config.Experimental["cache_file"].(map[string]any); ok {
 			delete(cacheFile, "path")
@@ -405,6 +405,6 @@ func (t *EmbedTemplate) applyPlatformSpecificAdaptation(config *config.Config, p
 			config.Route["default_mark"] = 1
 		}
 	}
-	
+
 	return nil
 }

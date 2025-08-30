@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	platformpkg "github.com/sixban6/singgen/internal/platform"
 	"github.com/sixban6/singgen/internal/util"
 	"github.com/sixban6/singgen/internal/version"
 	"github.com/sixban6/singgen/pkg/singgen"
@@ -204,15 +205,8 @@ func validateInputs(dnsLocalServer, platform string, logger *slog.Logger) error 
 	}
 	
 	// Validate platform
-	validPlatforms := []string{"linux", "darwin", "ios"}
-	isValidPlatform := false
-	for _, p := range validPlatforms {
-		if platform == p {
-			isValidPlatform = true
-			break
-		}
-	}
-	if !isValidPlatform {
+	if !platformpkg.IsValidPlatform(platform) {
+		validPlatforms := platformpkg.GetSupportedPlatforms()
 		return fmt.Errorf("invalid platform: %s, valid platforms: %v", platform, validPlatforms)
 	}
 	

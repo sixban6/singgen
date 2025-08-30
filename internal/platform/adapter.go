@@ -40,3 +40,12 @@ func IsValidPlatform(platform string) bool {
 	}
 	return false
 }
+
+// GetSupportedPlatforms 获取支持的平台列表
+func GetSupportedPlatforms() []string {
+	platforms := make([]string, len(ValidPlatforms))
+	for i, p := range ValidPlatforms {
+		platforms[i] = string(p)
+	}
+	return platforms
+}

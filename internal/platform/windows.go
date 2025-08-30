@@ -20,7 +20,7 @@ func NewWindowsAdapter(configDir string) *WindowsAdapter {
 }
 
 func (a *WindowsAdapter) AdaptConfig(config *config.Config, options config.TemplateOptions) error {
-	// macOS不需要default_mark，删除它
+	// Windows不需要default_mark，删除它
 	delete(config.Route, "default_mark")
 
 	// macOS默认使用external_controller，无需用户传入
@@ -95,4 +95,9 @@ func (a *WindowsAdapter) RequiresExternalController() bool {
 // GetPlatformName 获取平台名称
 func (a *WindowsAdapter) GetPlatformName() string {
 	return string(Windows)
+}
+
+// GetConfigFileName 获取配置文件名
+func (a *WindowsAdapter) GetConfigFileName() string {
+	return "win-tun.json"
 }

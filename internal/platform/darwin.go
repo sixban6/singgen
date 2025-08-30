@@ -97,3 +97,8 @@ func (a *DarwinAdapter) RequiresExternalController() bool {
 func (a *DarwinAdapter) GetPlatformName() string {
 	return "darwin"
 }
+
+// GetConfigFileName 获取配置文件名
+func (a *DarwinAdapter) GetConfigFileName() string {
+	return "mac-tun.json"
+}

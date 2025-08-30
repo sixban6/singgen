@@ -36,3 +36,19 @@ func (f *AdapterFactory) CreateAdapter(platformType PlatformType) (PlatformAdapt
 func (f *AdapterFactory) GetDefaultAdapter() (PlatformAdapter, error) {
 	return f.CreateAdapter(Linux)
 }
+
+// CreateAdapterByString 根据字符串创建适配器
+func CreateAdapterByString(platform, configDir string) (PlatformAdapter, error) {
+	switch platform {
+	case "windows":
+		return NewWindowsAdapter(configDir), nil
+	case "darwin", "mac", "macos":
+		return NewDarwinAdapter(configDir), nil
+	case "linux":
+		return NewLinuxAdapter(configDir), nil
+	case "ios":
+		return NewIOSAdapter(configDir), nil
+	default:
+		return nil, fmt.Errorf("unsupported platform: %s", platform)
+	}
+}

@@ -101,3 +101,8 @@ func (a *LinuxAdapter) RequiresExternalController() bool {
 func (a *LinuxAdapter) GetPlatformName() string {
 	return "linux"
 }
+
+// GetConfigFileName 获取配置文件名
+func (a *LinuxAdapter) GetConfigFileName() string {
+	return "linux-tproxy.json"
+}

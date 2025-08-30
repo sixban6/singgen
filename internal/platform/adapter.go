@@ -14,6 +14,8 @@ type PlatformAdapter interface {
 	RequiresExternalController() bool
 	// GetPlatformName 获取平台名称
 	GetPlatformName() string
+	// GetConfigFileName 获取平台配置文件名
+	GetConfigFileName() string
 }
 
 // PlatformType 平台类型

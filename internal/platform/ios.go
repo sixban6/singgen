@@ -97,3 +97,8 @@ func (a *IOSAdapter) RequiresExternalController() bool {
 func (a *IOSAdapter) GetPlatformName() string {
 	return "ios"
 }
+
+// GetConfigFileName 获取配置文件名
+func (a *IOSAdapter) GetConfigFileName() string {
+	return "ios-tun.json"
+}

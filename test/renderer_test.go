@@ -1,11 +1,11 @@
 package test
 
 import (
-	"encoding/json"
 	"strings"
 	"testing"
 
 	"github.com/sixban6/singgen/internal/renderer"
+	"github.com/sixban6/singgen/internal/util"
 	"gopkg.in/yaml.v3"
 )
 
@@ -29,7 +29,7 @@ func TestJSONRenderer(t *testing.T) {
 	}
 	
 	var parsed map[string]any
-	err = json.Unmarshal(result, &parsed)
+	err = util.Unmarshal(result, &parsed)
 	if err != nil {
 		t.Errorf("JSON result is not valid JSON: %v", err)
 	}

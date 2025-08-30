@@ -1,7 +1,6 @@
 package template
 
 import (
-	"encoding/json"
 	"strings"
 
 	"github.com/sixban6/singgen/internal/filter"
@@ -169,7 +168,7 @@ func (p *TemplateProcessor) parseFilterRule(ruleMap map[string]any) *filter.Filt
 // logFilterResult 记录过滤结果（用于调试）
 func (p *TemplateProcessor) logFilterResult(rules []filter.FilterRule, originalCount int, filteredCount int) {
 	if util.L != nil && len(rules) > 0 {
-		rulesJson, _ := json.Marshal(rules)
+		rulesJson, _ := util.Marshal(rules)
 		util.L.Debug("Node filter applied",
 			zap.String("rules", string(rulesJson)),
 			zap.Int("original_count", originalCount),

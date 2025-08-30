@@ -1,7 +1,6 @@
 package test
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -61,7 +60,7 @@ trojan://password123@example.com:443?type=ws&host=example.com&path=/ws#trojan%20
 		}
 		
 		var jsonConfig map[string]any
-		if err := json.Unmarshal(jsonData, &jsonConfig); err != nil {
+		if err := util.Unmarshal(jsonData, &jsonConfig); err != nil {
 			t.Errorf("Invalid JSON output: %v", err)
 		}
 		
@@ -144,7 +143,7 @@ func TestFileOperations(t *testing.T) {
 	}
 	
 	var outputConfig map[string]any
-	if err := json.Unmarshal(readData, &outputConfig); err != nil {
+	if err := util.Unmarshal(readData, &outputConfig); err != nil {
 		t.Errorf("Output file contains invalid JSON: %v", err)
 	}
 }

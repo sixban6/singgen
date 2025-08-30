@@ -1,12 +1,12 @@
 package singgen
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/sixban6/singgen/internal/util"
 	"gopkg.in/yaml.v3"
 )
 
@@ -75,7 +75,7 @@ func parseConfigData(data []byte, filePath string) (*MultiConfig, error) {
 			return nil, fmt.Errorf("%w: %v", ErrInvalidConfigFormat, err)
 		}
 	case ".json":
-		if err := json.Unmarshal(data, config); err != nil {
+		if err := util.Unmarshal(data, config); err != nil {
 			return nil, fmt.Errorf("%w: %v", ErrInvalidConfigFormat, err)
 		}
 	default:
@@ -87,7 +87,7 @@ func parseConfigData(data []byte, filePath string) (*MultiConfig, error) {
 		
 		// Reset config and try JSON
 		config = GetDefaultMultiConfig()
-		if err := json.Unmarshal(data, config); err != nil {
+		if err := util.Unmarshal(data, config); err != nil {
 			return nil, fmt.Errorf("%w: unable to parse as YAML or JSON", ErrInvalidConfigFormat)
 		}
 	}
@@ -109,7 +109,7 @@ func SaveConfigFile(config *MultiConfig, configPath string, format string) error
 	case "yaml", "yml":
 		data, err = yaml.Marshal(config)
 	case "json":
-		data, err = json.MarshalIndent(config, "", "  ")
+		data, err = util.MarshalIndent(config)
 	default:
 		return fmt.Errorf("unsupported format: %s", format)
 	}

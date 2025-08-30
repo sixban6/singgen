@@ -1,6 +1,7 @@
 # Binaries for programs and plugins
 # 只忽略根目录的可执行文件
-/test-config.json
+test-config.json
+test_config.json
 /singgen
 !/pkg/singgen/
 !/cmd/singgen/

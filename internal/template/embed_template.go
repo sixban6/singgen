@@ -253,7 +253,7 @@ func (t *EmbedTemplate) injectExternalController(config map[string]any, external
 func (t *EmbedTemplate) injectClientSubnet(config map[string]any, clientSubnet string) {
 	// Use walkAndReplace to replace all client_subnet occurrences
 	t.walkAndReplace(config, func(s string) string {
-		if s == "202.101.170.1/24" { // Replace the default client subnet
+		if s == "223.5.5.5/32" { // Replace the default client subnet
 			return clientSubnet
 		}
 		return s

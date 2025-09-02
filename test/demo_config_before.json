@@ -1,0 +1,193 @@
+{
+  "dns": {
+    "rules": [
+      {
+        "outbound": [
+          "any"
+        ],
+        "server": "local"
+      }
+    ],
+    "servers": [
+      {
+        "address": "8.8.8.8",
+        "detour": "Proxy",
+        "tag": "google"
+      },
+      {
+        "address": "223.5.5.5",
+        "detour": "direct",
+        "tag": "local"
+      }
+    ]
+  },
+  "experimental": {
+    "clash_api": {
+      "external_controller": "127.0.0.1:9090",
+      "external_ui": "ui",
+      "external_ui_download_detour": "Proxy",
+      "external_ui_download_url": "https://mirror.ghproxy.com/https://github.com/MetaCubeX/Yacd-meta/archive/gh-pages.zip",
+      "secret": ""
+    }
+  },
+  "inbounds": [
+    {
+      "listen": "127.0.0.1",
+      "port": 7890,
+      "type": "mixed",
+      "users": []
+    }
+  ],
+  "log": {
+    "disabled": false,
+    "level": "info",
+    "output": "sing-box.log",
+    "timestamp": true
+  },
+  "outbounds": [
+    {
+      "filter": {
+        "exclude": [
+          ".*"
+        ]
+      },
+      "outbounds": [
+        "{all}"
+      ],
+      "tag": "AdBlock",
+      "type": "selector"
+    },
+    {
+      "default": "auto",
+      "outbounds": [
+        "{all}"
+      ],
+      "tag": "Proxy",
+      "type": "selector"
+    },
+    {
+      "filter": {
+        "include": [
+          "美国"
+        ]
+      },
+      "outbounds": [
+        "{all}"
+      ],
+      "tag": "US-Nodes",
+      "type": "selector"
+    },
+    {
+      "filter": {
+        "include": [
+          "日本"
+        ]
+      },
+      "outbounds": [
+        "{all}"
+      ],
+      "tag": "JP-Nodes",
+      "type": "selector"
+    },
+    {
+      "filter": {
+        "include": [
+          "🚀|⚡|🔥"
+        ]
+      },
+      "outbounds": [
+        "{all}"
+      ],
+      "tag": "High-Speed",
+      "type": "selector"
+    },
+    {
+      "filter": {
+        "exclude": [
+          ".*"
+        ]
+      },
+      "outbounds": [
+        "A",
+        "B",
+        "C"
+      ],
+      "tag": "ABC",
+      "type": "selector"
+    },
+    {
+      "outbounds": [
+        "AdBlock",
+        "fallback"
+      ],
+      "tag": "ChainToEmpty",
+      "type": "selector"
+    },
+    {
+      "filter": {
+        "include": [
+          "🇫🇷|法国"
+        ]
+      },
+      "outbounds": [
+        "{all}"
+      ],
+      "tag": "FR-Nodes",
+      "type": "selector"
+    },
+    {
+      "interval": "300s",
+      "outbounds": [
+        "🇺🇸 美国-SS-节点1",
+        "🚀 美国-HY2-1-🎯",
+        "🇯🇵 日本-SS-节点2"
+      ],
+      "tag": "auto",
+      "tolerance": 50,
+      "type": "urltest",
+      "url": "http://www.gstatic.com/generate_204"
+    },
+    {
+      "outbounds": [
+        "🇸🇬 新加坡-SS-4🔥",
+        "🇬🇧 英国-SS-5💎"
+      ],
+      "tag": "fallback",
+      "type": "selector"
+    },
+    {
+      "tag": "direct",
+      "type": "direct"
+    },
+    {
+      "tag": "block",
+      "type": "block"
+    }
+  ],
+  "route": {
+    "auto_detect_interface": true,
+    "rules": [
+      {
+        "outbound": "dns-out",
+        "protocol": "dns"
+      },
+      {
+        "domain": [
+          "googleapis.cn",
+          "gstatic.com"
+        ],
+        "outbound": "Proxy"
+      },
+      {
+        "domain_suffix": [
+          ".cn"
+        ],
+        "outbound": "direct"
+      },
+      {
+        "geoip": "private",
+        "outbound": "direct"
+      }
+    ]
+  }
+}

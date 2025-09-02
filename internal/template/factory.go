@@ -51,9 +51,9 @@ func (f *TemplateFactory) listEmbeddedTemplates() ([]string, error) {
 		if err != nil {
 			return err
 		}
-		if !d.IsDir() && strings.HasPrefix(d.Name(), "template-") && strings.HasSuffix(d.Name(), ".json") {
+		if !d.IsDir() && strings.HasPrefix(d.Name(), "template-") && strings.HasSuffix(d.Name(), ".yaml") {
 			version := strings.TrimPrefix(d.Name(), "template-")
-			version = strings.TrimSuffix(version, ".json")
+			version = strings.TrimSuffix(version, ".yaml")
 			versions = append(versions, version)
 		}
 		return nil

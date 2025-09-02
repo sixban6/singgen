@@ -38,10 +38,11 @@ SingGen 是一个用于生成 sing-box 配置文件的工具，支持从各种�
 ./singgen --list-templates
 
 # 多订阅模式：完全由配置文件驱动
-./singgen -config my-config.yaml -out output.json
-
+./singgen -config test-config.yaml -out output.json
 
 ```
+### 进阶用法
+可以自己编辑internal/template/configs/template-v1.12.yaml定制自己的模版
 
 ### 命令行参数
 - `-url`: 订阅URL或文件路径（必需）

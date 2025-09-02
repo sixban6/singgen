@@ -3,9 +3,9 @@ package template
 import (
 	"embed"
 	"fmt"
+	"github.com/sixban6/singgen/internal/util"
 	"io/fs"
 	"strings"
-
 )
 
 //go:embed configs
@@ -22,7 +22,7 @@ func (f *TemplateFactory) CreateTemplate(version string) (Template, error) {
 		version = "v1.12" // 默认版本
 	}
 
-	templateFile := fmt.Sprintf("template-%s.json", version)
+	templateFile := fmt.Sprintf("template-%s.yaml", version)
 	templateData, err := f.getTemplateData(templateFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get template data: %w", err)
@@ -37,7 +37,8 @@ func (f *TemplateFactory) GetAvailableVersions() ([]string, error) {
 
 func (f *TemplateFactory) getTemplateData(filename string) ([]byte, error) {
 	filePath := "configs/" + filename
-	data, err := templatesFS.ReadFile(filePath)
+	yamlData, err := templatesFS.ReadFile(filePath)
+	data, err := util.YamlToJson(yamlData)
 	if err != nil {
 		return nil, fmt.Errorf("template file not found: %s", filename)
 	}

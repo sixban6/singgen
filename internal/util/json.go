@@ -3,7 +3,28 @@ package util
 import (
 	jsonv1 "encoding/json"
 	json "github.com/goccy/go-json"
+	"gopkg.in/yaml.v3"
+	"log"
 )
+
+func YamlToJson(yamlData []byte) ([]byte, error) {
+
+	var data map[string]interface{}
+
+	// 使用yaml.Unmarshal将YAML数据解析到map中
+	err := yaml.Unmarshal(yamlData, &data)
+	if err != nil {
+		log.Fatalf("yaml to json error: %v", err)
+	}
+
+	// 使用json.Marshal将Go对象编码为JSON格式
+	jsonData, err := MarshalIndent(data) // 使用json.MarshalIndent可以美化输出
+	if err != nil {
+		log.Fatalf("yaml to json error: %v", err)
+	}
+
+	return jsonData, nil
+}
 
 // MarshalIndent marshals the value to JSON with indentation using high-performance JSON library
 func MarshalIndent(v any) ([]byte, error) {
@@ -54,14 +75,4 @@ func MarshalIndentNoEscape(v any) ([]byte, error) {
 func UnmarshalFast(data []byte, v any) error {
 	// goccy/go-json is already optimized, so just use the regular Unmarshal
 	return json.Unmarshal(data, v)
-}
-
-// MarshalV1 provides fallback to standard library JSON for compatibility if needed
-func MarshalV1(v any) ([]byte, error) {
-	return jsonv1.Marshal(v)
-}
-
-// UnmarshalV1 provides fallback to standard library JSON for compatibility if needed  
-func UnmarshalV1(data []byte, v any) error {
-	return jsonv1.Unmarshal(data, v)
 }

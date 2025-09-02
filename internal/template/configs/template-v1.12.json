@@ -34,7 +34,7 @@
 
   "outbounds": [
     { "tag": "ChainProxy", "type": "selector",   "outbounds": ["{all}"], "filter": [{ "action": "include", "keywords": ["sec_"] }]},
-    { "tag": "Test", "type": "selector",         "outbounds": ["ChainProxy"]},
+    { "tag": "Test", "type": "selector",         "outbounds": ["AAA"]},
     { "tag": "DNS",         "type": "selector",  "outbounds": ["NodeSelect","ChainProxy", "block"]                                              ,"interrupt_exist_connections": true},
     { "tag": "NodeSelect",   "type": "selector", "outbounds": ["AutoSelect-HK","AutoSelect-JP","AutoSelect-US","AutoSelect-SG","AutoSelect-TW","AutoSelect-KR", "Select", "ChainProxy", "HK", "JP", "DirectConn"], "interrupt_exist_connections": true},
     { "tag": "YouTube",     "type": "selector",  "outbounds": ["AutoSelect-HK","HK","ChainProxy","AutoSelect","NodeSelect"]                     ,"interrupt_exist_connections": true},

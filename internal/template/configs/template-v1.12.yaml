@@ -10,9 +10,9 @@ experimental:
   cache_file: {enabled: true, path: /etc/sing-box/cache.db}
 dns:
   servers:
-    - {tag: dns_local, type: udp, server: 114.114.114.114}
-    - {tag: dns_proxy, type: https, server: 8.8.8.8, detour: DNS}
-    - {tag: dns_backup, type: https, server: 1.1.1.1, detour: DNS}
+    - {tag: dns_local, type: udp, server: 114.114.114.114, detour: DNSLocal}
+    - {tag: dns_proxy, type: https, server: 8.8.8.8, detour: DNSProxy}
+    - {tag: dns_backup, type: https, server: 1.1.1.1, detour: DNSProxy}
   rules:
     - {clash_mode: Direct, server: dns_local}
     - {clash_mode: Global, server: dns_proxy}
@@ -22,22 +22,23 @@ dns:
   strategy: prefer_ipv4
   disable_cache: false
   disable_expire: false
-  independent_cache: false
-  client_subnet: 223.5.5.5/32
+  independent_cache: true
+  client_subnet: 223.5.5.5/24
 inbounds:
-  - {type: tproxy, tag: tproxy-in, listen: "::", listen_port: 7895, udp_timeout: 5m}
+  - {type: tproxy, tag: tproxy-in, listen: "::", listen_port: 7895, udp_timeout: 1m}
 outbounds:
   - {tag: ChainProxy, type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["sec_"]}]}
   - {tag: Test, type: selector, outbounds: [AAA]}
-  - {tag: DNS, type: selector, outbounds: [NodeSelect, ChainProxy, block], interrupt_exist_connections: true}
+  - {tag: DNSLocal, type: selector, outbounds: [DirectConn, ChainProxy, block], interrupt_exist_connections: true }
+  - {tag: DNSProxy, type: selector, outbounds: [AutoSelect-HK, AutoSelect-JP, NodeSelect, ChainProxy, block], interrupt_exist_connections: true}
   - {tag: NodeSelect, type: selector, outbounds: [AutoSelect-HK, AutoSelect-JP, AutoSelect-US, AutoSelect-SG, AutoSelect-TW, AutoSelect-KR, Select, ChainProxy, HK, JP, DirectConn], interrupt_exist_connections: true}
-  - {tag: YouTube, type: selector, outbounds: [AutoSelect-HK, HK, ChainProxy, AutoSelect, NodeSelect], interrupt_exist_connections: true}
+  - {tag: YouTube, type: selector, outbounds: [ChainProxy, AutoSelect-HK, HK, JP, NodeSelect], interrupt_exist_connections: true}
   - {tag: OpenAI, type: selector, outbounds: [AutoSelect-JP, JP, AutoSelect-US, US, NodeSelect], interrupt_exist_connections: true}
-  - {tag: Google, type: selector, outbounds: [AutoSelect-US, ChainProxy, Select, AutoSelect, NodeSelect], interrupt_exist_connections: true}
-  - {tag: Github, type: selector, outbounds: [AutoSelect-SG, ChainProxy, Select, AutoSelect, DirectConn, NodeSelect], interrupt_exist_connections: true}
-  - {tag: Telegram, type: selector, outbounds: [AutoSelect-SG, SG, ChainProxy, Select, NodeSelect], interrupt_exist_connections: true}
+  - {tag: Google, type: selector, outbounds: [ChainProxy,AutoSelect-US, Select, AutoSelect, NodeSelect], interrupt_exist_connections: true}
+  - {tag: Github, type: selector, outbounds: [ChainProxy, AutoSelect-SG, Select, AutoSelect, DirectConn, NodeSelect], interrupt_exist_connections: true}
+  - {tag: Telegram, type: selector, outbounds: [ChainProxy, AutoSelect-SG, SG, Select, NodeSelect], interrupt_exist_connections: true}
   - {tag: Microsoft, type: selector, outbounds: [SG, ChainProxy, DirectConn, NodeSelect]}
-  - {tag: Apple, type: selector, outbounds: [DirectConn, AutoSelect, NodeSelect]}
+  - {tag: Apple, type: selector, outbounds: [ChainProxy, DirectConn, AutoSelect, NodeSelect]}
   - {tag: Paypal, type: selector, outbounds: [ChainProxy, Select, AutoSelect, DirectConn, NodeSelect]}
   - {tag: Netflix, type: selector, outbounds: [AutoSelect-SG, SG, AutoSelect-HK, HK, ChainProxy, NodeSelect], interrupt_exist_connections: true}
   - {tag: Disney+, type: selector, outbounds: [AutoSelect-US, US, AutoSelect-SG, SG, HK, NodeSelect], interrupt_exist_connections: true}
@@ -52,7 +53,7 @@ outbounds:
   - {tag: BTC, type: selector, outbounds: [DirectConn, AutoSelect-SG, SG, AutoSelect-TW, TW, AutoSelect-JP, JP, NodeSelect]}
   - {tag: Douyin, type: selector, outbounds: [DirectConn, block]}
   - {tag: WeChatVideo, type: selector, outbounds: [DirectConn, block]}
-  - {tag: HoK, type: selector, outbounds: [HK, JP, SG]}
+  - {tag: HoK, type: selector, outbounds: [ChainProxy, HK, JP, SG]}
   - {tag: Others, type: selector, outbounds: [NodeSelect, ChainProxy, AutoSelect-SG, HK, JP, DirectConn]}
   - {tag: AutoSelect-HK, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["香港|港|HK|Hong Kong|🇭🇰"]}], url: https://cp.cloudflare.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
   - {tag: AutoSelect-JP, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["日本|日|JP|Japan|🇯🇵"]}], url: https://cp.cloudflare.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
@@ -74,7 +75,7 @@ outbounds:
   - {tag: CA, type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["加拿大|CA|Canada|🇨🇦"]}]}
   - {type: socks, tag: block, server: 0.0.0.0, server_port: 1080}
 route:
-  default_domain_resolver: {server: dns_local, rewrite_tll: 60, client_subnet: 202.101.170.1/24}
+  default_domain_resolver: {server: dns_local, rewrite_tll: 60, client_subnet: 223.5.5.5/24}
   auto_detect_interface: true
   final: Others
   default_mark: 1

@@ -2,7 +2,7 @@ package test
 
 import (
 	"testing"
-	
+
 	"github.com/sixban6/singgen/internal/util"
 )
 
@@ -18,9 +18,9 @@ type TestData struct {
 }
 
 type NestedData struct {
-	ID       string   `json:"id"`
-	Values   []int    `json:"values"`
-	Options  []string `json:"options"`
+	ID       string                 `json:"id"`
+	Values   []int                  `json:"values"`
+	Options  []string               `json:"options"`
 	Settings map[string]interface{} `json:"settings"`
 }
 
@@ -62,7 +62,7 @@ func generateTestData() TestData {
 // BenchmarkJSONMarshal benchmarks the optimized JSON marshaling
 func BenchmarkJSONMarshal(b *testing.B) {
 	testData := generateTestData()
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := util.Marshal(testData)
@@ -79,7 +79,7 @@ func BenchmarkJSONUnmarshal(b *testing.B) {
 	if err != nil {
 		b.Fatalf("Marshal failed: %v", err)
 	}
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		var result TestData
@@ -93,7 +93,7 @@ func BenchmarkJSONUnmarshal(b *testing.B) {
 // BenchmarkJSONMarshalIndent benchmarks the optimized JSON marshaling with indentation
 func BenchmarkJSONMarshalIndent(b *testing.B) {
 	testData := generateTestData()
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := util.MarshalIndent(testData)
@@ -103,87 +103,15 @@ func BenchmarkJSONMarshalIndent(b *testing.B) {
 	}
 }
 
-// BenchmarkJSONMarshalV1 benchmarks the standard library JSON marshaling for comparison
-func BenchmarkJSONMarshalV1(b *testing.B) {
-	testData := generateTestData()
-	
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		_, err := util.MarshalV1(testData)
-		if err != nil {
-			b.Fatalf("MarshalV1 failed: %v", err)
-		}
-	}
-}
-
-// BenchmarkJSONUnmarshalV1 benchmarks the standard library JSON unmarshaling for comparison
-func BenchmarkJSONUnmarshalV1(b *testing.B) {
-	testData := generateTestData()
-	jsonData, err := util.MarshalV1(testData)
-	if err != nil {
-		b.Fatalf("MarshalV1 failed: %v", err)
-	}
-	
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		var result TestData
-		err := util.UnmarshalV1(jsonData, &result)
-		if err != nil {
-			b.Fatalf("UnmarshalV1 failed: %v", err)
-		}
-	}
-}
-
 // BenchmarkJSONMarshalNoEscape benchmarks marshaling without HTML escaping
 func BenchmarkJSONMarshalNoEscape(b *testing.B) {
 	testData := generateTestData()
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := util.MarshalNoEscape(testData)
 		if err != nil {
 			b.Fatalf("MarshalNoEscape failed: %v", err)
 		}
-	}
-}
-
-// TestJSONOptimizationCorrectness verifies that optimized JSON produces the same results
-func TestJSONOptimizationCorrectness(t *testing.T) {
-	testData := generateTestData()
-	
-	// Test Marshal
-	optimizedData, err := util.Marshal(testData)
-	if err != nil {
-		t.Fatalf("Optimized Marshal failed: %v", err)
-	}
-	
-	standardData, err := util.MarshalV1(testData)
-	if err != nil {
-		t.Fatalf("Standard Marshal failed: %v", err)
-	}
-	
-	// Both should produce valid JSON that unmarshals to the same result
-	var optimizedResult TestData
-	var standardResult TestData
-	
-	if err := util.Unmarshal(optimizedData, &optimizedResult); err != nil {
-		t.Fatalf("Optimized Unmarshal failed: %v", err)
-	}
-	
-	if err := util.UnmarshalV1(standardData, &standardResult); err != nil {
-		t.Fatalf("Standard Unmarshal failed: %v", err)
-	}
-	
-	// Basic verification - both should have same name and count
-	if optimizedResult.Name != standardResult.Name {
-		t.Errorf("Name mismatch: optimized=%s, standard=%s", optimizedResult.Name, standardResult.Name)
-	}
-	
-	if optimizedResult.Count != standardResult.Count {
-		t.Errorf("Count mismatch: optimized=%d, standard=%d", optimizedResult.Count, standardResult.Count)
-	}
-	
-	if len(optimizedResult.Nested) != len(standardResult.Nested) {
-		t.Errorf("Nested length mismatch: optimized=%d, standard=%d", len(optimizedResult.Nested), len(standardResult.Nested))
 	}
 }

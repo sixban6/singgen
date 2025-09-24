@@ -53,8 +53,9 @@ outbounds:
   - {tag: BTC, type: selector, outbounds: [DirectConn, AutoSelect-SG, SG, AutoSelect-TW, TW, AutoSelect-JP, JP, NodeSelect]}
   - {tag: Douyin, type: selector, outbounds: [DirectConn, block]}
   - {tag: WeChatVideo, type: selector, outbounds: [DirectConn, block]}
-  - {tag: HoK, type: selector, outbounds: [ChainProxy, HK, JP, SG]}
-  - {tag: Others, type: selector, outbounds: [NodeSelect, ChainProxy, AutoSelect-SG, HK, JP, DirectConn]}
+  - {tag: HoK, type: selector, outbounds: [Auto-Game, ChainProxy, HK, JP, SG]}
+  - {tag: Others, type: selector, outbounds: [NodeSelect, Auto-Game, ChainProxy, AutoSelect-SG, HK, JP, DirectConn]}
+  - {tag: Auto-Game,     type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: [ "IEPL" ] } ], url: https://cp.cloudflare.com/generate_204, interval: 20m, tolerance: 200, interrupt_exist_connections: true }
   - {tag: AutoSelect-HK, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["香港|港|HK|Hong Kong|🇭🇰"]}], url: https://cp.cloudflare.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
   - {tag: AutoSelect-JP, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["日本|日|JP|Japan|🇯🇵"]}], url: https://cp.cloudflare.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
   - {tag: AutoSelect-US, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["美国|美國|美|US|USA|America|🇺🇸"]}], url: https://cp.cloudflare.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}

@@ -10,7 +10,7 @@ experimental:
   cache_file: {enabled: true, path: /etc/sing-box/cache.db}
 dns:
   servers:
-    - {tag: dns_local, type: local, detour: DNSLocal}
+    - {tag: dns_local, type: udp, server: 114.114.114.114, detour: DNSLocal}
     - {tag: dns_proxy, type: https, server: 8.8.8.8, detour: DNSProxy}
     - {tag: dns_backup, type: https, server: 1.1.1.1, detour: DNSProxy}
   rules:

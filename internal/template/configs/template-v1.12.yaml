@@ -85,7 +85,6 @@ route:
     - {action: hijack-dns, type: logical, mode: or, rules: [{port: 53}, {protocol: dns}]}
     - {ip_is_private: true, outbound: DirectConn}
     - {action: reject, rule_set: [geosite-ad1, geosite-ad2]}
-    - {action: reject, protocol: quic}
     - {action: route, rule_set: geosite-steam, outbound: Steam}
     - {action: route, rule_set: geosite-epic, outbound: Epic}
     - {action: route, rule_set: geosite-playstation, outbound: PlayStation}
@@ -103,7 +102,7 @@ route:
     - {action: route, clash_mode: global, outbound: AutoSelect}
     - {action: route, rule_set: geosite-hok, outbound: HoK}
     - {action: route, domain: [clash.razord.top, yacd.metacubex.one, yacd.haishan.me, d.metacubex.one], outbound: DirectConn}
-    - {action: route, domain_suffix: [z-lib.gs, missav.com, missav.ws], outbound: NodeSelect}
+    - {action: route, domain_suffix: [z-lib.gs, missav.com, missav.ws, follow.is, folo.is], outbound: NodeSelect}
     - {action: route, rule_set: geosite-cryptocurrency, outbound: BTC}
     - {action: route, rule_set: geosite-ctm_cn, outbound: DirectConn}
     - {action: route, rule_set: geosite-private, outbound: DirectConn}

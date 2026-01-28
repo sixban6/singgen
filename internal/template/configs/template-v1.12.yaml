@@ -153,3 +153,5 @@ route:
     - {tag: geosite-paypal, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/paypal.srs", download_detour: DirectConn}
     - {tag: geosite-hok, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/sixban6/rulesets/refs/heads/main/rule/hok.srs", download_detour: DirectConn}
     - {tag: geosite-cryptocurrency, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-cryptocurrency.srs", download_detour: DirectConn}
+certificate:
+  store: mozilla

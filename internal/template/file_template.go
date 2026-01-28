@@ -88,6 +88,7 @@ func (t *FileTemplate) InjectWithOptions(outbounds []transformer.Outbound, optio
 		Inbounds:     t.convertToMapArray(configData["inbounds"]),
 		Outbounds:    t.convertToMapArray(configData["outbounds"]),
 		Route:        t.convertToMap(configData["route"]),
+		Certificate:  t.convertToMap(configData["certificate"]),
 	}
 
 	// 应用平台适配

@@ -91,7 +91,6 @@
     },
     {
       "outbounds": [
-        "AdBlock",
         "fallback"
       ],
       "tag": "ChainToEmpty",

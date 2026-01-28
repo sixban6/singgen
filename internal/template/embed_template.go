@@ -81,6 +81,7 @@ func (t *EmbedTemplate) InjectWithOptions(outbounds []transformer.Outbound, opti
 		Inbounds:     t.convertToMapArray(configData["inbounds"]),
 		Outbounds:    t.convertToMapArray(configData["outbounds"]),
 		Route:        t.convertToMap(configData["route"]),
+		Certificate:  t.convertToMap(configData["certificate"]),
 	}
 
 	// 应用平台适配（使用嵌入的平台配置）
@@ -324,7 +325,7 @@ func (t *EmbedTemplate) applyEmbedPlatformAdaptation(config *config.Config, opti
 
 	// 使用适配器获取配置文件名
 	platformConfigFile := fmt.Sprintf("configs/platform/%s", adapter.GetConfigFileName())
-	
+
 	platformData, err := templatesFS.ReadFile(platformConfigFile)
 	if err != nil {
 		return fmt.Errorf("platform config file not found: %s", platformConfigFile)
@@ -341,4 +342,3 @@ func (t *EmbedTemplate) applyEmbedPlatformAdaptation(config *config.Config, opti
 	// 直接使用平台适配器进行配置适配
 	return adapter.AdaptConfig(config, options)
 }
-

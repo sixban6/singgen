@@ -54,7 +54,7 @@ outbounds:
   - {tag: Douyin, type: selector, outbounds: [DirectConn, block]}
   - {tag: WeChatVideo, type: selector, outbounds: [DirectConn, block]}
   - {tag: HoK, type: selector, outbounds: [Auto-Game, ChainProxy, HK, JP, SG]}
-  - {tag: Others, type: selector, outbounds: [NodeSelect, Auto-Game, ChainProxy, AutoSelect-SG, HK, JP, DirectConn]}
+  - {tag: Others, type: selector, outbounds: [DirectConn, NodeSelect, Auto-Game, ChainProxy, AutoSelect-SG, HK, JP]}
   - {tag: Auto-Game,     type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: [ "cr" ] } ], url: https://cp.cloudflare.com/generate_204, interval: 20m, tolerance: 200, interrupt_exist_connections: false }
   - {tag: AutoSelect-HK, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["香港|港|HK|Hong Kong|🇭🇰"]}], url: https://cp.cloudflare.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
   - {tag: AutoSelect-JP, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["日本|日|JP|Japan|🇯🇵"]}], url: https://cp.cloudflare.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}

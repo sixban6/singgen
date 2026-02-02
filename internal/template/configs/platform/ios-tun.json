@@ -2,16 +2,17 @@
   {
     "type": "tun",
     "tag": "tun-in",
-    "address": [
-      "10.8.8.8/30"
-    ],
+    "address": ["10.8.8.8/30", "fdfe:dcba:9876::0/126"],
     "mtu": 9000,
     "auto_route": true,
+    "strict_route": true,
     "stack": "system",
-    "route_exclude_address_set": [
-      "geosite-private",
-      "geosite-ctm_cn",
-      "geoip-cn"
-    ]
+    "platform": {
+      "http_proxy": {
+        "enabled": true,
+        "server": "127.0.0.1",
+        "server_port": 7890
+      }
+    }
   }
 ]

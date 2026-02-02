@@ -39,9 +39,20 @@ func (a *DarwinAdapter) AdaptConfig(config *config.Config, options config.Templa
 		clashAPI = make(map[string]any)
 		experimental["clash_api"] = clashAPI
 	}
-
 	// 更新必要的字段
-	clashAPI["external_controller"] = "127.0.0.1:9095"
+	clashAPI["external_controller"] = "127.0.0.1:9090"
+
+	// 获取或创建cache_file配置，保留已有字段
+	var cacheFile map[string]any
+	if existingcacheFile, ok := experimental["cache_file"].(map[string]any); ok {
+		cacheFile = existingcacheFile
+	} else {
+		cacheFile = make(map[string]any)
+		experimental["cache_file"] = cacheFile
+	}
+	cacheFile["store_fakeip"] = true
+	cacheFile["store_rdrc"] = true
+
 	if _, ok := clashAPI["default_mode"]; !ok {
 		clashAPI["default_mode"] = "rule"
 	}
@@ -65,10 +76,10 @@ func (a *DarwinAdapter) GetInboundConfig() ([]map[string]any, error) {
 		// 如果配置文件不存在，返回默认配置
 		return []map[string]any{
 			{
-				"type":    "tun",
-				"tag":     "tun-in",
-				"address": []string{"10.8.8.8/30"},
-				"mtu":     9000,
+				"type":       "tun",
+				"tag":        "tun-in",
+				"address":    []string{"10.8.8.8/30"},
+				"mtu":        9000,
 				"auto_route": true,
 				"stack":      "system",
 				"route_exclude_address_set": []string{

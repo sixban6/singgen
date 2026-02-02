@@ -42,17 +42,6 @@ func (a *DarwinAdapter) AdaptConfig(config *config.Config, options config.Templa
 	// 更新必要的字段
 	clashAPI["external_controller"] = "127.0.0.1:9090"
 
-	// 获取或创建cache_file配置，保留已有字段
-	var cacheFile map[string]any
-	if existingcacheFile, ok := experimental["cache_file"].(map[string]any); ok {
-		cacheFile = existingcacheFile
-	} else {
-		cacheFile = make(map[string]any)
-		experimental["cache_file"] = cacheFile
-	}
-	cacheFile["store_fakeip"] = true
-	cacheFile["store_rdrc"] = true
-
 	if _, ok := clashAPI["default_mode"]; !ok {
 		clashAPI["default_mode"] = "rule"
 	}

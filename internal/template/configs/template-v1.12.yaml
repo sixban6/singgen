@@ -153,8 +153,6 @@ route:
     - {tag: geoip-apple, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo-lite/geoip/apple.srs", download_detour: DirectConn}
     - {tag: geoip-cn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/cn.srs", download_detour: DirectConn}
     - {tag: geoip-private, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/private.srs", download_detour: DirectConn}
-    - {tag: geosite-wx-shortvideo, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/sixban6/rulesets/refs/heads/main/rule/wx_shortvideo.srs", download_detour: DirectConn}
-    - {tag: geosite-douyin, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/sixban6/rulesets/refs/heads/main/rule/douyin.srs", download_detour: DirectConn}
     - {tag: geosite-paypal, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/paypal.srs", download_detour: DirectConn}
     - {tag: geosite-hok, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/sixban6/rulesets/refs/heads/main/rule/hok.srs", download_detour: DirectConn}
     - {tag: geosite-cryptocurrency, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-cryptocurrency.srs", download_detour: DirectConn}

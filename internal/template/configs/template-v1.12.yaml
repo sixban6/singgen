@@ -27,20 +27,19 @@ dns:
 inbounds:
   - {type: tproxy, tag: tproxy-in, listen: "::", listen_port: 7895, udp_timeout: 1m}
 outbounds:
-  - {tag: ChainProxy, type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["sec_"]}]}
   - {tag: Test, type: selector, outbounds: [AAA]}
-  - {tag: DNSLocal, type: selector, outbounds: [DirectConn, ChainProxy, block], interrupt_exist_connections: true }
-  - {tag: DNSProxy, type: selector, outbounds: [Proxy, AutoSelect-HK, AutoSelect-JP, ChainProxy, block], interrupt_exist_connections: true}
-  - {tag: Proxy, type: selector, outbounds: [ChainProxy, AutoSelect-HK, AutoSelect-JP, AutoSelect-US, AutoSelect-SG, AutoSelect-TW, AutoSelect-KR, Select, HK, JP, DirectConn], interrupt_exist_connections: true}
-  - {tag: YouTube, type: selector, outbounds: [Proxy, ChainProxy, AutoSelect-HK, HK, JP], interrupt_exist_connections: true}
-  - {tag: OpenAI, type: selector, outbounds: [Proxy, ChainProxy, AutoSelect-JP, JP, AutoSelect-US, US], interrupt_exist_connections: true}
-  - {tag: Google, type: selector, outbounds: [Proxy, ChainProxy,AutoSelect-US, Select, AutoSelect], interrupt_exist_connections: true}
-  - {tag: Github, type: selector, outbounds: [Proxy, ChainProxy, AutoSelect-SG, Select, AutoSelect, DirectConn], interrupt_exist_connections: true}
-  - {tag: Telegram, type: selector, outbounds: [Proxy, ChainProxy, AutoSelect-SG, SG, Select], interrupt_exist_connections: true}
-  - {tag: Microsoft, type: selector, outbounds: [Proxy, ChainProxy, SG, DirectConn]}
-  - {tag: Apple, type: selector, outbounds: [Proxy, ChainProxy, DirectConn, AutoSelect]}
-  - {tag: Paypal, type: selector, outbounds: [Proxy, ChainProxy, Select, AutoSelect, DirectConn]}
-  - {tag: Netflix, type: selector, outbounds: [Proxy, AutoSelect-SG, SG, AutoSelect-HK, HK, ChainProxy ], interrupt_exist_connections: true}
+  - {tag: DNSProxy, type: selector, outbounds: [Proxy, AutoSelect-HK, AutoSelect-JP, SecProxy, block], interrupt_exist_connections: true}
+  - {tag: SecProxy, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "sec_" ] } ] }
+  - {tag: Proxy, type: selector, outbounds: [SecProxy, AutoSelect-HK, AutoSelect-JP, AutoSelect-US, AutoSelect-SG, AutoSelect-TW, AutoSelect-KR, Select, HK, JP, DirectConn], interrupt_exist_connections: true}
+  - {tag: YouTube, type: selector, outbounds: [Proxy, SecProxy, AutoSelect-HK, HK, JP], interrupt_exist_connections: true}
+  - {tag: OpenAI, type: selector, outbounds: [Proxy, SecProxy, AutoSelect-JP, JP, AutoSelect-US, US], interrupt_exist_connections: true}
+  - {tag: Google, type: selector, outbounds: [Proxy, SecProxy,AutoSelect-US, Select, AutoSelect], interrupt_exist_connections: true}
+  - {tag: Github, type: selector, outbounds: [Proxy, SecProxy, AutoSelect-SG, Select, AutoSelect, DirectConn], interrupt_exist_connections: true}
+  - {tag: Telegram, type: selector, outbounds: [Proxy, SecProxy, AutoSelect-SG, SG, Select], interrupt_exist_connections: true}
+  - {tag: Microsoft, type: selector, outbounds: [Proxy, SecProxy, SG, DirectConn]}
+  - {tag: Apple, type: selector, outbounds: [Proxy, SecProxy, DirectConn, AutoSelect]}
+  - {tag: Paypal, type: selector, outbounds: [Proxy, SecProxy, Select, AutoSelect, DirectConn]}
+  - {tag: Netflix, type: selector, outbounds: [Proxy, AutoSelect-SG, SG, AutoSelect-HK, HK, SecProxy ], interrupt_exist_connections: true}
   - {tag: Disney+, type: selector, outbounds: [Proxy,AutoSelect-US, US, AutoSelect-SG, SG, HK], interrupt_exist_connections: true}
   - {tag: HBO, type: selector, outbounds: [Proxy,AutoSelect-US, US, AutoSelect-HK, HK, TW], interrupt_exist_connections: true}
   - {tag: PrimeVideo, type: selector, outbounds: [Proxy,AutoSelect-US, US, AutoSelect-JP, JP, UK], interrupt_exist_connections: true}
@@ -52,7 +51,7 @@ outbounds:
   - {tag: Xbox, type: selector, outbounds: [Proxy,AutoSelect-HK, HK, AutoSelect-SG, SG, US]}
   - {tag: BTC, type: selector, outbounds: [Proxy,DirectConn, AutoSelect-SG, SG, AutoSelect-TW, TW, AutoSelect-JP, JP]}
   - {tag: Others, type: selector, outbounds: [Proxy, DirectConn]}
-  - {tag: HoK, type: selector, outbounds: [Auto-Game, ChainProxy, HK, JP, SG]}
+  - {tag: HoK, type: selector, outbounds: [Auto-Game, SecProxy, HK, JP, SG]}
   - {tag: Auto-Game,     type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: [ "cr" ]}, {action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]} ], url: https://cp.cloudflare.com/generate_204, interval: 20m, tolerance: 200, interrupt_exist_connections: false }
   - {tag: AutoSelect-HK, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["香港|港|HK|Hong Kong|🇭🇰"]}], url: https://cp.cloudflare.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
   - {tag: AutoSelect-JP, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["日本|日|JP|Japan|🇯🇵"]}], url: https://cp.cloudflare.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
@@ -73,6 +72,7 @@ outbounds:
   - {tag: DE, type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["德国|德國|德|DE|Germany|🇩🇪"]}]}
   - {tag: CA, type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["加拿大|CA|Canada|🇨🇦"]}]}
   - {type: socks, tag: block, server: 0.0.0.0, server_port: 1080}
+  - {tag: DNSLocal, type: selector, outbounds: [DirectConn, SecProxy, block], interrupt_exist_connections: true }
 route:
   default_domain_resolver: {server: dns_local, rewrite_tll: 60, client_subnet: 223.5.5.5/24}
   auto_detect_interface: true

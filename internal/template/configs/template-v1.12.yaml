@@ -51,8 +51,7 @@ outbounds:
   - {tag: PlayStation, type: selector, outbounds: [Proxy,AutoSelect-HK, HK, AutoSelect-JP, JP, US]}
   - {tag: Xbox, type: selector, outbounds: [Proxy,AutoSelect-HK, HK, AutoSelect-SG, SG, US]}
   - {tag: BTC, type: selector, outbounds: [Proxy,DirectConn, AutoSelect-SG, SG, AutoSelect-TW, TW, AutoSelect-JP, JP]}
-  - {tag: Douyin, type: selector, outbounds: [DirectConn, block]}
-  - {tag: WeChatVideo, type: selector, outbounds: [DirectConn, block]}
+  - {tag: Others, type: selector, outbounds: [Proxy, DirectConn]}
   - {tag: HoK, type: selector, outbounds: [Auto-Game, ChainProxy, HK, JP, SG]}
   - {tag: Auto-Game,     type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: [ "cr" ]}, {action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]} ], url: https://cp.cloudflare.com/generate_204, interval: 20m, tolerance: 200, interrupt_exist_connections: false }
   - {tag: AutoSelect-HK, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["香港|港|HK|Hong Kong|🇭🇰"]}], url: https://cp.cloudflare.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
@@ -77,7 +76,7 @@ outbounds:
 route:
   default_domain_resolver: {server: dns_local, rewrite_tll: 60, client_subnet: 223.5.5.5/24}
   auto_detect_interface: true
-  final: Proxy
+  final: Others
   default_mark: 1
   rules:
     - {action: sniff, inbound: [tun-in, mixed-in, tproxy-in]}
@@ -93,18 +92,25 @@ route:
     - {action: route, rule_set: geosite-primevideo, outbound: PrimeVideo}
     - {action: route, rule_set: geosite-spotify, outbound: Spotify}
     - {action: route, rule_set: geosite-tiktok, outbound: TikTok}
-    - {action: route, rule_set: geosite-douyin, outbound: Douyin}
-    - {action: route, rule_set: geosite-wx-shortvideo, outbound: WeChatVideo}
     - {action: route, protocol: ssh, outbound: DirectConn}
     - {action: route, protocol: bittorrent, outbound: DirectConn}
     - {action: route, clash_mode: direct, outbound: DirectConn}
-    - {action: route, clash_mode: global, outbound: AutoSelect}
+    - {action: route, clash_mode: global, outbound: Proxy}
     - {action: route, rule_set: geosite-hok, outbound: HoK}
     - {action: route, domain: [clash.razord.top, yacd.metacubex.one, yacd.haishan.me, d.metacubex.one], outbound: DirectConn}
     - {action: route, domain_suffix: [z-lib.gs, missav.com, missav.ws, follow.is, folo.is], outbound: Proxy}
     - {action: route, rule_set: geosite-cryptocurrency, outbound: BTC}
-    - {action: route, rule_set: geosite-ctm_cn, outbound: DirectConn}
     - {action: route, rule_set: geosite-private, outbound: DirectConn}
+    - {action: route, rule_set: geosite-jd, outbound: DirectConn}
+    - {action: route, rule_set: geosite-ali, outbound: DirectConn }
+    - {action: route, rule_set: geosite-baidu, outbound: DirectConn }
+    - {action: route, rule_set: geosite-bytedance, outbound: DirectConn }
+    - {action: route, rule_set: geosite-pdd, outbound: DirectConn }
+    - {action: route, rule_set: geosite-bili, outbound: DirectConn }
+    - { action: route, rule_set: geosite-meituan, outbound: DirectConn }
+    - { action: route, rule_set: geosite-ctrip, outbound: DirectConn }
+    - { action: route, rule_set: geosite-tencent, outbound: DirectConn }
+    - {action: route, rule_set: geosite-ctm_cn, outbound: DirectConn}
     - {action: route, rule_set: geosite-chat, domain_suffix: [grok.com], outbound: OpenAI}
     - {action: route, rule_set: geosite-youtube, outbound: YouTube}
     - {action: route, rule_set: geosite-github, outbound: Github}
@@ -115,7 +121,7 @@ route:
     - {action: route, rule_set: geosite-paypal, outbound: Paypal}
     - {action: route, rule_set: geosite-netflix, outbound: Netflix}
     - {action: route, rule_set: geosite-geolocation-!cn, outbound: Proxy}
-    - {action: route, rule_set: [geoip-cn, geosite-cn], outbound: DirectConn}
+    - {action: route, rule_set: [geosite-cn, geoip-cn], outbound: DirectConn}
   rule_set:
     - {tag: geosite-ad1, type: remote, format: binary, url: "{mirror_url}/https://github.com/Toperlock/sing-box-geosite/raw/main/rule/adservers.srs", download_detour: DirectConn}
     - {tag: geosite-ad2, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/privacy-protection-tools/anti-ad.github.io/master/docs/anti-ad-sing-box.srs", download_detour: DirectConn}
@@ -152,5 +158,14 @@ route:
     - {tag: geosite-paypal, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/paypal.srs", download_detour: DirectConn}
     - {tag: geosite-hok, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/sixban6/rulesets/refs/heads/main/rule/hok.srs", download_detour: DirectConn}
     - {tag: geosite-cryptocurrency, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-cryptocurrency.srs", download_detour: DirectConn}
+    - {tag: geosite-jd, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/jd.srs", download_detour: DirectConn }
+    - {tag: geosite-ali, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/alibaba.srs", download_detour: DirectConn }
+    - {tag: geosite-baidu, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/baidu.srs", download_detour: DirectConn }
+    - {tag: geosite-bytedance, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/bytedance.srs", download_detour: DirectConn }
+    - {tag: geosite-pdd, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/pinduoduo.srs", download_detour: DirectConn }
+    - {tag: geosite-bili, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/bilibili.srs", download_detour: DirectConn }
+    - {tag: geosite-meituan, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/meituan.srs", download_detour: DirectConn }
+    - {tag: geosite-ctrip, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/ctrip.srs", download_detour: DirectConn }
+    - {tag: geosite-tencent, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/tencent.srs", download_detour: DirectConn }
 certificate:
   store: mozilla

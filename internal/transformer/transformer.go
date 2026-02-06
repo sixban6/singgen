@@ -19,6 +19,7 @@ type Outbound struct {
 	UUID       string         `json:"uuid,omitempty"`
 	Password   string         `json:"password,omitempty"`
 	Method     string         `json:"method,omitempty"`
+	Flow       string         `json:"flow,omitempty"`
 	Transport  map[string]any `json:"transport,omitempty"`
 	TLS        map[string]any `json:"tls,omitempty"`
 	Multiplex  map[string]any `json:"multiplex,omitempty"`
@@ -274,15 +275,47 @@ func (t *SingBoxTransformer) transformVless(node model.Node, outbound *Outbound)
 	outbound.Type = "vless"
 	outbound.UUID = node.UUID
 
+	// Handle flow control for XTLS
+	if flow, ok := node.Extra["flow"].(string); ok && flow != "" {
+		outbound.Flow = flow
+	}
+
 	if node.Security.TLS {
-		outbound.TLS = map[string]any{
+		tls := map[string]any{
 			"enabled":     true,
 			"insecure":    node.Security.SkipVerify,
 			"server_name": node.Security.ServerName,
 		}
+
 		if len(node.Security.ALPN) > 0 {
-			outbound.TLS["alpn"] = node.Security.ALPN
+			tls["alpn"] = node.Security.ALPN
 		}
+
+		// Handle Reality protocol
+		if security, ok := node.Extra["security"].(string); ok && security == "reality" {
+			reality := map[string]any{
+				"enabled": true,
+			}
+
+			if publicKey, ok := node.Extra["public_key"].(string); ok && publicKey != "" {
+				reality["public_key"] = publicKey
+			}
+			if shortID, ok := node.Extra["short_id"].(string); ok && shortID != "" {
+				reality["short_id"] = shortID
+			}
+
+			tls["reality"] = reality
+
+			// Set uTLS fingerprint for Reality
+			if fp, ok := node.Extra["fingerprint"].(string); ok && fp != "" {
+				tls["utls"] = map[string]any{
+					"enabled":     true,
+					"fingerprint": fp,
+				}
+			}
+		}
+
+		outbound.TLS = tls
 	}
 
 	if node.Transport.Net != "" && node.Transport.Net != "tcp" {

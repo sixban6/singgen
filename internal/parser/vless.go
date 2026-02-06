@@ -22,14 +22,14 @@ func (p *VlessParser) Accept(mediaTypeHint string, raw []byte) bool {
 func (p *VlessParser) Parse(raw []byte) ([]model.Node, error) {
 	var nodes []model.Node
 	data := strings.TrimSpace(string(raw))
-	
+
 	lines := strings.Split(data, "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if !strings.HasPrefix(line, "vless://") {
 			continue
 		}
-		
+
 		node, err := p.parseVlessURL(line)
 		if err != nil {
 			if util.L != nil {
@@ -37,14 +37,14 @@ func (p *VlessParser) Parse(raw []byte) ([]model.Node, error) {
 			}
 			continue
 		}
-		
+
 		nodes = append(nodes, *node)
 	}
-	
+
 	if len(nodes) == 0 {
 		return nil, constant.ErrParseFailed
 	}
-	
+
 	return nodes, nil
 }
 
@@ -52,19 +52,21 @@ func (p *VlessParser) parseVlessURL(vlessURL string) (*model.Node, error) {
 	if !strings.HasPrefix(vlessURL, "vless://") {
 		return nil, fmt.Errorf("invalid vless URL")
 	}
-	
+
 	u, err := url.Parse(vlessURL)
 	if err != nil {
 		return nil, fmt.Errorf("parse URL failed: %w", err)
 	}
-	
+
 	port, err := strconv.ParseUint(u.Port(), 10, 16)
 	if err != nil {
 		return nil, fmt.Errorf("parse port failed: %w", err)
 	}
-	
+
 	query := u.Query()
-	
+
+	security := query.Get("security")
+
 	node := &model.Node{
 		ID:   util.MD5String(vlessURL),
 		Tag:  u.Fragment,
@@ -73,7 +75,7 @@ func (p *VlessParser) parseVlessURL(vlessURL string) (*model.Node, error) {
 		Port: uint16(port),
 		UUID: u.User.Username(),
 		Security: model.Security{
-			TLS:        query.Get("security") == "tls",
+			TLS:        security == "tls" || security == "reality",
 			SkipVerify: query.Get("allowInsecure") == "1",
 			ServerName: query.Get("sni"),
 		},
@@ -84,19 +86,36 @@ func (p *VlessParser) parseVlessURL(vlessURL string) (*model.Node, error) {
 		},
 		Extra: make(map[string]any),
 	}
-	
+
 	if alpn := query.Get("alpn"); alpn != "" {
 		node.Security.ALPN = strings.Split(alpn, ",")
 	}
-	
+
 	if encryption := query.Get("encryption"); encryption != "" {
 		node.Extra["encryption"] = encryption
 	}
-	
+
 	if flow := query.Get("flow"); flow != "" {
 		node.Extra["flow"] = flow
 	}
-	
+
+	// Reality protocol specific parameters
+	if security == "reality" {
+		node.Extra["security"] = "reality"
+		if pbk := query.Get("pbk"); pbk != "" {
+			node.Extra["public_key"] = pbk
+		}
+		if sid := query.Get("sid"); sid != "" {
+			node.Extra["short_id"] = sid
+		}
+		if fp := query.Get("fp"); fp != "" {
+			node.Extra["fingerprint"] = fp
+		}
+		if spx := query.Get("spx"); spx != "" {
+			node.Extra["spider_x"] = spx
+		}
+	}
+
 	return node, nil
 }
 

@@ -194,6 +194,9 @@ func (t *EmbedTemplate) transformerOutboundToMap(outbound transformer.Outbound) 
 	if outbound.Method != "" {
 		result["method"] = outbound.Method
 	}
+	if outbound.Flow != "" {
+		result["flow"] = outbound.Flow
+	}
 	if len(outbound.Transport) > 0 {
 		result["transport"] = outbound.Transport
 	}

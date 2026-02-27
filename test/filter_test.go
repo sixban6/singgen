@@ -11,7 +11,7 @@ func TestNodeFilter(t *testing.T) {
 	// 创建测试节点
 	outbounds := []transformer.Outbound{
 		{Tag: "🇭🇰 香港 01", Type: "shadowsocks"},
-		{Tag: "🇭🇰 香港 02", Type: "shadowsocks"}, 
+		{Tag: "🇭🇰 香港 02", Type: "shadowsocks"},
 		{Tag: "🇯🇵 日本 01", Type: "shadowsocks"},
 		{Tag: "🇺🇸 美国 01", Type: "shadowsocks"},
 		{Tag: "🇭🇰 官网：www.example.com", Type: "shadowsocks"},
@@ -33,11 +33,11 @@ func TestNodeFilter(t *testing.T) {
 
 		result := nodeFilter.Filter(outbounds, rules)
 		expected := []string{"🇭🇰 香港 01", "🇭🇰 香港 02", "🇭🇰 官网：www.example.com"}
-		
+
 		if len(result) != len(expected) {
 			t.Errorf("Expected %d results, got %d", len(expected), len(result))
 		}
-		
+
 		for i, tag := range result {
 			if tag != expected[i] {
 				t.Errorf("Expected %s, got %s", expected[i], tag)
@@ -56,11 +56,11 @@ func TestNodeFilter(t *testing.T) {
 
 		result := nodeFilter.Filter(outbounds, rules)
 		expected := []string{"🇭🇰 香港 01", "🇭🇰 香港 02", "🇯🇵 日本 01", "🇺🇸 美国 01"}
-		
+
 		if len(result) != len(expected) {
 			t.Errorf("Expected %d results, got %d", len(expected), len(result))
 		}
-		
+
 		for _, expectedTag := range expected {
 			found := false
 			for _, actualTag := range result {
@@ -90,11 +90,11 @@ func TestNodeFilter(t *testing.T) {
 
 		result := nodeFilter.Filter(outbounds, rules)
 		expected := []string{"🇭🇰 香港 01", "🇭🇰 香港 02"}
-		
+
 		if len(result) != len(expected) {
 			t.Errorf("Expected %d results, got %d", len(expected), len(result))
 		}
-		
+
 		for i, tag := range result {
 			if tag != expected[i] {
 				t.Errorf("Expected %s, got %s", expected[i], tag)
@@ -113,11 +113,11 @@ func TestNodeFilter(t *testing.T) {
 
 		result := nodeFilter.Filter(outbounds, rules)
 		expected := []string{"sec_us1", "sec_us2"}
-		
+
 		if len(result) != len(expected) {
 			t.Errorf("Expected %d results, got %d", len(expected), len(result))
 		}
-		
+
 		for i, tag := range result {
 			if tag != expected[i] {
 				t.Errorf("Expected %s, got %s", expected[i], tag)
@@ -130,7 +130,7 @@ func TestNodeFilter(t *testing.T) {
 		var rules []filter.FilterRule
 
 		result := nodeFilter.Filter(outbounds, rules)
-		
+
 		if len(result) != len(outbounds) {
 			t.Errorf("Expected %d results, got %d", len(outbounds), len(result))
 		}

@@ -40,7 +40,7 @@ func (f *contextFetcher) Fetch(ctx context.Context, source string) ([]byte, erro
 		return nil, ctx.Err()
 	default:
 	}
-	
+
 	// Determine source type and select appropriate fetcher
 	var fetcher fetcher.Fetcher
 	if f.isURL(source) {
@@ -50,16 +50,16 @@ func (f *contextFetcher) Fetch(ctx context.Context, source string) ([]byte, erro
 		fetcher = f.fileFetcher
 		f.logf("Reading from file: %s", source)
 	}
-	
+
 	// Create a channel to handle the result
 	resultCh := make(chan fetchResult, 1)
-	
+
 	// Start fetching in a goroutine
 	go func() {
 		data, err := fetcher.Fetch(source)
 		resultCh <- fetchResult{data: data, err: err}
 	}()
-	
+
 	// Wait for either completion or context cancellation
 	select {
 	case <-ctx.Done():
@@ -119,22 +119,43 @@ func (t *contextTransformer) Transform(ctx context.Context, nodes []model.Node) 
 		return nil, fmt.Errorf("transform operation canceled: %w", ctx.Err())
 	default:
 	}
-	
+
 	if len(nodes) == 0 {
 		return []transformer.Outbound{}, nil
 	}
-	
+
 	t.logf("Transforming %d nodes to outbounds", len(nodes))
-	
+
 	// Create a channel for the result
 	resultCh := make(chan transformResult, 1)
-	
+
 	// Start transformation in a goroutine
 	go func() {
+		// Inject bandwidth parameters into Hysteria2 nodes from config
+		if t.options.UpMbps > 0 || t.options.DownMbps > 0 {
+			upStr := fmt.Sprintf("%d", t.options.UpMbps)
+			downStr := fmt.Sprintf("%d", t.options.DownMbps)
+			for i, node := range nodes {
+				if node.Type == "hysteria2" {
+					if nodes[i].Extra == nil {
+						nodes[i].Extra = make(map[string]any)
+					}
+					// Only override if using default values (25/300) or not set
+					if node.Extra["up_mbps"] == "25" || node.Extra["up_mbps"] == nil {
+						nodes[i].Extra["up_mbps"] = upStr
+					}
+					if node.Extra["down_mbps"] == "300" || node.Extra["down_mbps"] == nil {
+						nodes[i].Extra["down_mbps"] = downStr
+					}
+				}
+			}
+		}
+
+		// Perform the actual transformation
 		outbounds, err := t.transformer.Transform(nodes)
 		resultCh <- transformResult{outbounds: outbounds, err: err}
 	}()
-	
+
 	// Wait for either completion or context cancellation
 	select {
 	case <-ctx.Done():
@@ -188,7 +209,7 @@ func (p *contextParser) DetectFormat(ctx context.Context, data []byte) string {
 		return "unknown"
 	default:
 	}
-	
+
 	// Use the internal parser's detection logic
 	// This is fast and doesn't need special context handling
 	return parser.DetectFormat(data)
@@ -207,22 +228,22 @@ func (p *contextParser) ParseWithHint(ctx context.Context, data []byte, formatHi
 		return nil, fmt.Errorf("parse operation canceled: %w", ctx.Err())
 	default:
 	}
-	
+
 	format := formatHint
 	if format == "" {
 		format = p.DetectFormat(ctx, data)
 	}
-	
+
 	p.logf("Parsing data with format: %s", format)
-	
+
 	// The actual parsing is typically fast and doesn't need context handling,
 	// but we wrap it for consistency and future extensibility
 	resultCh := make(chan parseResult, 1)
-	
+
 	go func() {
 		var nodes []model.Node
 		var err error
-		
+
 		if factory, exists := parser.Registry[format]; exists {
 			p := factory()
 			if p.Accept("", data) {
@@ -233,10 +254,10 @@ func (p *contextParser) ParseWithHint(ctx context.Context, data []byte, formatHi
 		} else {
 			err = fmt.Errorf("no parser available for format: %s", format)
 		}
-		
+
 		resultCh <- parseResult{nodes: nodes, err: err}
 	}()
-	
+
 	// Wait for either completion or context cancellation
 	select {
 	case <-ctx.Done():

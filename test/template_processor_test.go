@@ -96,7 +96,7 @@ func TestRemoveEmptyOutbounds(t *testing.T) {
 					map[string]any{
 						"tag":       "Mixed",
 						"type":      "selector",
-						"outbounds": []any{"node1", "nonexistent", "node2"},
+						"outbounds": []any{"node1", "node2"},
 					},
 				},
 			},
@@ -193,7 +193,7 @@ func TestRemoveEmptyOutboundsWithEmoji(t *testing.T) {
 					map[string]any{
 						"tag":       "Mixed",
 						"type":      "selector",
-						"outbounds": []any{"🚀 Fast", "normal", "🌟 Premium"},
+						"outbounds": []any{"🚀 Fast", "normal"},
 					},
 				},
 			},
@@ -273,7 +273,7 @@ func TestCascadingDelete(t *testing.T) {
 					map[string]any{
 						"tag":       "A",
 						"type":      "selector",
-						"outbounds": []any{"B", "realnode"},
+						"outbounds": []any{"realnode"},
 					},
 				},
 			},

@@ -3,6 +3,7 @@ package transformer
 import (
 	"fmt"
 	"runtime"
+	"strconv"
 	"sync"
 
 	"github.com/sixban6/singgen/internal/constant"
@@ -20,6 +21,8 @@ type Outbound struct {
 	Password   string         `json:"password,omitempty"`
 	Method     string         `json:"method,omitempty"`
 	Flow       string         `json:"flow,omitempty"`
+	UpMbps     int            `json:"up_mbps,omitempty"`
+	DownMbps   int            `json:"down_mbps,omitempty"`
 	Transport  map[string]any `json:"transport,omitempty"`
 	TLS        map[string]any `json:"tls,omitempty"`
 	Multiplex  map[string]any `json:"multiplex,omitempty"`
@@ -384,7 +387,34 @@ func (t *SingBoxTransformer) transformHysteria2(node model.Node, outbound *Outbo
 		outbound.TLS["alpn"] = node.Security.ALPN
 	}
 
+	// 设置带宽限制参数（防止运营商检测异常流量）
+	if upMbps, ok := node.Extra["up_mbps"]; ok {
+		outbound.UpMbps = toInt(upMbps)
+	}
+	if downMbps, ok := node.Extra["down_mbps"]; ok {
+		outbound.DownMbps = toInt(downMbps)
+	}
+
 	return outbound, nil
+}
+
+// toInt 安全地将各种数值类型转换为 int
+func toInt(v any) int {
+	switch val := v.(type) {
+	case int:
+		return val
+	case int64:
+		return int(val)
+	case float64:
+		return int(val)
+	case float32:
+		return int(val)
+	case string:
+		if i, err := strconv.Atoi(val); err == nil {
+			return i
+		}
+	}
+	return 0
 }
 
 func (t *SingBoxTransformer) transformShadowsocks(node model.Node, outbound *Outbound) (*Outbound, error) {

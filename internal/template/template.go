@@ -85,6 +85,12 @@ func (t *EmptyTemplate) InjectWithOptions(outbounds []transformer.Outbound, opti
 		if len(outbound.Multiplex) > 0 {
 			outboundMap["multiplex"] = outbound.Multiplex
 		}
+		if outbound.UpMbps > 0 {
+			outboundMap["up_mbps"] = outbound.UpMbps
+		}
+		if outbound.DownMbps > 0 {
+			outboundMap["down_mbps"] = outbound.DownMbps
+		}
 
 		outboundsMap = append(outboundsMap, outboundMap)
 	}

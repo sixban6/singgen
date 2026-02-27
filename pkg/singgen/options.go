@@ -64,6 +64,15 @@ func WithEmojiRemoval(remove bool) Option {
 	}
 }
 
+// WithBandwidthParams sets the bandwidth parameters for Hysteria2 nodes (in Mbps)
+// Default values are up=25, down=300 if not specified
+func WithBandwidthParams(upMbps, downMbps int) Option {
+	return func(o *GenerateOptions) {
+		o.UpMbps = upMbps
+		o.DownMbps = downMbps
+	}
+}
+
 // WithExternalController sets the external controller address for Clash API
 func WithExternalController(addr string) Option {
 	return func(o *GenerateOptions) {
@@ -115,7 +124,7 @@ func WithIOSDefaults() Option {
 func WithPerformanceOptimized() Option {
 	return func(o *GenerateOptions) {
 		o.HTTPTimeout = 15 * time.Second // Faster timeout
-		o.RemoveEmoji = false // Skip emoji processing
+		o.RemoveEmoji = false            // Skip emoji processing
 	}
 }
 

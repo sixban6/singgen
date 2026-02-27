@@ -20,16 +20,16 @@ import (
 func main() {
 	var (
 		// Single subscription mode (legacy)
-		subURL             = flag.String("url", "", "subscription URL or file path")
-		
+		subURL = flag.String("url", "", "subscription URL or file path")
+
 		// Multi-subscription mode (new)
-		configFile         = flag.String("config", "", "multi-subscription config file path (yaml/json)")
-		generateExample    = flag.Bool("generate-example", false, "generate example configuration file")
-		
+		configFile      = flag.String("config", "", "multi-subscription config file path (yaml/json)")
+		generateExample = flag.Bool("generate-example", false, "generate example configuration file")
+
 		// Output options
-		outFile            = flag.String("out", "config.json", "output file path")
-		format             = flag.String("format", "json", "output format (json, yaml)")
-		
+		outFile = flag.String("out", "config.json", "output file path")
+		format  = flag.String("format", "json", "output format (json, yaml)")
+
 		// Global options (can override config file)
 		mirrorURL          = flag.String("mirror", "https://ghfast.top", "mirror URL for downloading rule sets")
 		logLevel           = flag.String("log", "warn", "log level (debug, info, warn, error)")
@@ -37,13 +37,15 @@ func main() {
 		externalController = flag.String("external-controller", "127.0.0.1:9095", "external controller address for Clash API")
 		clientSubnet       = flag.String("subnet", "", "client subnet for DNS queries (e.g., 202.101.170.1/24)")
 		removeEmoji        = flag.Bool("emoji", true, "remove emoji characters from node tags")
+		upMbps             = flag.Int("up-mbps", 25, "upload bandwidth limit for Hysteria2 nodes (Mbps)")
+		downMbps           = flag.Int("down-mbps", 300, "download bandwidth limit for Hysteria2 nodes (Mbps)")
 		dnsLocalServer     = flag.String("dns", "114.114.114.114", "DNS local server address")
 		platform           = flag.String("platform", "linux", "target platform (linux, darwin, ios)")
-		
+
 		// Utility options
-		listTemplate       = flag.Bool("list-templates", false, "list available template versions")
-		showVersion        = flag.Bool("version", false, "show version information")
-		showFullVersion    = flag.Bool("version-full", false, "show detailed version information")
+		listTemplate    = flag.Bool("list-templates", false, "list available template versions")
+		showVersion     = flag.Bool("version", false, "show version information")
+		showFullVersion = flag.Bool("version-full", false, "show detailed version information")
 	)
 	flag.Parse()
 
@@ -106,7 +108,7 @@ func main() {
 		if strings.HasSuffix(*outFile, ".json") {
 			format = "json"
 		}
-		
+
 		if err := singgen.SaveConfigFile(example, *outFile, format); err != nil {
 			log.Fatal("Failed to generate example config:", err)
 		}
@@ -123,7 +125,7 @@ func main() {
 		}
 	} else if *subURL != "" {
 		// Single subscription mode (legacy)
-		if err := runSingleSubscriptionMode(logger, *subURL, *outFile, *templateVer, *platform, *mirrorURL, *dnsLocalServer, *externalController, *clientSubnet, *format, *removeEmoji); err != nil {
+		if err := runSingleSubscriptionMode(logger, *subURL, *outFile, *templateVer, *platform, *mirrorURL, *dnsLocalServer, *externalController, *clientSubnet, *format, *removeEmoji, *upMbps, *downMbps); err != nil {
 			logger.Error("Single subscription mode failed", "error", err)
 			os.Exit(1)
 		}
@@ -141,31 +143,31 @@ func main() {
 // runMultiSubscriptionMode handles multi-subscription configuration generation
 func runMultiSubscriptionMode(logger *slog.Logger, configFile string, outFile string) error {
 	logger.Info("Running in multi-subscription mode", "config_file", configFile)
-	
+
 	// Load and generate - everything comes from config file
 	ctx := context.Background()
 	data, err := singgen.GenerateConfigBytesFromFile(ctx, configFile, singgen.WithLogger(logger))
 	if err != nil {
 		return fmt.Errorf("failed to generate configuration: %w", err)
 	}
-	
+
 	// Write output
 	if err := writeOutput(outFile, data); err != nil {
 		return fmt.Errorf("failed to write output: %w", err)
 	}
-	
+
 	return nil
 }
 
 // runSingleSubscriptionMode handles single subscription configuration generation (legacy)
-func runSingleSubscriptionMode(logger *slog.Logger, subURL, outFile, templateVer, platform, mirrorURL, dnsLocalServer, externalController, clientSubnet, format string, removeEmoji bool) error {
+func runSingleSubscriptionMode(logger *slog.Logger, subURL, outFile, templateVer, platform, mirrorURL, dnsLocalServer, externalController, clientSubnet, format string, removeEmoji bool, upMbps, downMbps int) error {
 	logger.Info("Running in single subscription mode", "url", subURL)
-	
+
 	// Validate inputs
 	if err := validateInputs(dnsLocalServer, platform, logger); err != nil {
 		return err
 	}
-	
+
 	// Build options for the library
 	opts := []singgen.Option{
 		singgen.WithTemplate(templateVer),
@@ -174,26 +176,27 @@ func runSingleSubscriptionMode(logger *slog.Logger, subURL, outFile, templateVer
 		singgen.WithDNSServer(dnsLocalServer),
 		singgen.WithOutputFormat(format),
 		singgen.WithEmojiRemoval(removeEmoji),
+		singgen.WithBandwidthParams(upMbps, downMbps),
 		singgen.WithExternalController(externalController),
 		singgen.WithLogger(logger),
 	}
-	
+
 	if clientSubnet != "" {
 		opts = append(opts, singgen.WithClientSubnet(clientSubnet))
 	}
-	
+
 	// Generate configuration using the library
 	ctx := context.Background()
 	data, err := singgen.GenerateConfigBytes(ctx, subURL, opts...)
 	if err != nil {
 		return fmt.Errorf("failed to generate configuration: %w", err)
 	}
-	
+
 	// Write output
 	if err := writeOutput(outFile, data); err != nil {
 		return fmt.Errorf("failed to write output: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -203,13 +206,13 @@ func validateInputs(dnsLocalServer, platform string, logger *slog.Logger) error 
 	if dnsLocalServer != "" && !util.ValidateDNSServer(dnsLocalServer) {
 		return fmt.Errorf("invalid DNS server address: %s", dnsLocalServer)
 	}
-	
+
 	// Validate platform
 	if !platformpkg.IsValidPlatform(platform) {
 		validPlatforms := platformpkg.GetSupportedPlatforms()
 		return fmt.Errorf("invalid platform: %s, valid platforms: %v", platform, validPlatforms)
 	}
-	
+
 	return nil
 }
 

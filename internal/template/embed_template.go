@@ -206,6 +206,12 @@ func (t *EmbedTemplate) transformerOutboundToMap(outbound transformer.Outbound) 
 	if len(outbound.Multiplex) > 0 {
 		result["multiplex"] = outbound.Multiplex
 	}
+	if outbound.UpMbps > 0 {
+		result["up_mbps"] = outbound.UpMbps
+	}
+	if outbound.DownMbps > 0 {
+		result["down_mbps"] = outbound.DownMbps
+	}
 
 	return result
 }

@@ -77,7 +77,7 @@ route:
   final: Proxy
   default_mark: 1
   rules:
-    - {action: sniff, inbound: [tun-in, mixed-in, tproxy-in]}
+    - {action: sniff, inbound: [http, tls, quic, dns]}
     - {action: hijack-dns, type: logical, mode: or, rules: [{port: 53}, {protocol: dns}]}
     - {ip_is_private: true, outbound: DirectConn}
     - {action: reject, rule_set: [geosite-ad1, geosite-ad2]}

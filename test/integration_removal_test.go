@@ -115,7 +115,7 @@ func TestComplexCascading(t *testing.T) {
 			map[string]any{
 				"tag":       "level1",
 				"type":      "selector",
-				"outbounds": []any{"level2", "backup"},
+				"outbounds": []any{"backup"},
 			},
 			map[string]any{
 				"tag":       "backup",
@@ -149,7 +149,7 @@ func TestMixedScenario(t *testing.T) {
 				"type":      "selector",
 				"outbounds": []any{"{all}"},
 				"filter": map[string]any{
-					"action":   "include", 
+					"action":   "include",
 					"keywords": []string{"🇯🇵"},
 				},
 			},

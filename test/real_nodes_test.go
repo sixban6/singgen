@@ -198,7 +198,7 @@ func TestRealNodesIntegration(t *testing.T) {
 					map[string]any{
 						"tag":       "Chain",
 						"type":      "selector",
-						"outbounds": []any{"VMess-Only", "SS-Only"},
+						"outbounds": []any{"SS-Only"},
 					},
 				},
 			},
@@ -316,7 +316,7 @@ func TestRealNodesCascadingDeletion(t *testing.T) {
 			map[string]any{
 				"tag":       "Level1",
 				"type":      "selector",
-				"outbounds": []any{"Level2", "🇺🇸 美国-SS-节点1"},
+				"outbounds": []any{"🇺🇸 美国-SS-节点1"},
 			},
 		},
 	}

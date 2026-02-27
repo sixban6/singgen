@@ -4,27 +4,31 @@
 // The library provides multiple API levels:
 //
 // High-level API (recommended for most users):
-//   config, err := singgen.GenerateConfig(ctx, "https://example.com/sub", 
-//     singgen.WithTemplate("v1.12"),
-//     singgen.WithPlatform("linux"))
+//
+//	config, err := singgen.GenerateConfig(ctx, "https://example.com/sub",
+//	  singgen.WithTemplate("v1.12"),
+//	  singgen.WithPlatform("linux"))
 //
 // Multi-subscription API:
-//   config, err := singgen.GenerateConfigFromFile(ctx, "config.yaml")
-//   
-//   multiConfig := &singgen.MultiConfig{...}
-//   config, err := singgen.GenerateConfigFromMulti(ctx, multiConfig)
+//
+//	config, err := singgen.GenerateConfigFromFile(ctx, "config.yaml")
+//
+//	multiConfig := &singgen.MultiConfig{...}
+//	config, err := singgen.GenerateConfigFromMulti(ctx, multiConfig)
 //
 // Mid-level API (for more control):
-//   generator := singgen.NewGenerator(
-//     singgen.WithLogger(logger),
-//     singgen.WithHTTPTimeout(30*time.Second))
-//   config, err := generator.Generate(ctx, source)
+//
+//	generator := singgen.NewGenerator(
+//	  singgen.WithLogger(logger),
+//	  singgen.WithHTTPTimeout(30*time.Second))
+//	config, err := generator.Generate(ctx, source)
 //
 // Low-level API (maximum control):
-//   pipeline := singgen.NewPipeline(
-//     singgen.WithCustomFetcher(myFetcher),
-//     singgen.WithCustomParser(myParser))
-//   result, err := pipeline.Execute(ctx, source)
+//
+//	pipeline := singgen.NewPipeline(
+//	  singgen.WithCustomFetcher(myFetcher),
+//	  singgen.WithCustomParser(myParser))
+//	result, err := pipeline.Execute(ctx, source)
 package singgen
 
 import (
@@ -47,22 +51,26 @@ type GenerateOptions struct {
 	TemplateVersion string
 	Platform        string
 
-	// Network configuration  
-	HTTPTimeout     time.Duration
-	MirrorURL       string
-	ClientSubnet    string
-	DNSLocalServer  string
-	
+	// Network configuration
+	HTTPTimeout    time.Duration
+	MirrorURL      string
+	ClientSubnet   string
+	DNSLocalServer string
+
 	// Output configuration
 	Format      string
 	RemoveEmoji bool
-	
+
+	// Hysteria2 bandwidth parameters (Mbps)
+	UpMbps   int
+	DownMbps int
+
 	// TLS configuration
 	SkipTLSVerify bool
-	
+
 	// External services
 	ExternalController string
-	
+
 	// Logging
 	Logger *slog.Logger
 }
@@ -79,7 +87,7 @@ func GenerateConfig(ctx context.Context, source string, opts ...Option) (*Config
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	
+
 	generator := NewGenerator(opts...)
 	return generator.Generate(ctx, source)
 }
@@ -90,9 +98,9 @@ func GenerateConfigBytes(ctx context.Context, source string, opts ...Option) ([]
 	if err != nil {
 		return nil, err
 	}
-	
+
 	options := buildOptions(opts...)
-	
+
 	var renderer renderer.Renderer
 	switch options.Format {
 	case "yaml", "yml":
@@ -100,7 +108,7 @@ func GenerateConfigBytes(ctx context.Context, source string, opts ...Option) ([]
 	default:
 		renderer = registry.JSONRenderer
 	}
-	
+
 	return renderer.Render(cfg)
 }
 
@@ -109,7 +117,7 @@ func ParseNodes(ctx context.Context, source string, opts ...Option) ([]Node, err
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	
+
 	generator := NewGenerator(opts...)
 	return generator.ParseNodes(ctx, source)
 }
@@ -117,11 +125,11 @@ func ParseNodes(ctx context.Context, source string, opts ...Option) ([]Node, err
 // Generator provides mid-level API with more control over the generation process
 type Generator struct {
 	options GenerateOptions
-	
+
 	// Context-aware component wrappers
 	fetcher     ContextFetcher
 	transformer ContextTransformer
-	
+
 	// Internal components (not context-aware but wrapped)
 	templateFactory *template.TemplateFactory
 }
@@ -129,7 +137,7 @@ type Generator struct {
 // NewGenerator creates a new Generator with the specified options
 func NewGenerator(opts ...Option) *Generator {
 	options := buildOptions(opts...)
-	
+
 	return &Generator{
 		options:         options,
 		fetcher:         NewContextFetcher(options),
@@ -143,35 +151,35 @@ func (g *Generator) Generate(ctx context.Context, source string) (*Config, error
 	if source == "" {
 		return nil, ErrEmptySource
 	}
-	
+
 	// 1. Fetch data
 	data, err := g.fetcher.Fetch(ctx, source)
 	if err != nil {
 		return nil, fmt.Errorf("fetch failed: %w", err)
 	}
-	
+
 	// 2. Parse nodes
 	nodes, err := g.parseData(ctx, data)
 	if err != nil {
 		return nil, fmt.Errorf("parse failed: %w", err)
 	}
-	
+
 	if len(nodes) == 0 {
 		return nil, ErrNoValidNodes
 	}
-	
+
 	// 3. Transform to outbounds
 	outbounds, err := g.transformer.Transform(ctx, nodes)
 	if err != nil {
 		return nil, fmt.Errorf("transform failed: %w", err)
 	}
-	
+
 	// 4. Generate configuration
 	tmpl, err := g.templateFactory.CreateTemplate(g.options.TemplateVersion)
 	if err != nil {
 		return nil, fmt.Errorf("template creation failed: %w", err)
 	}
-	
+
 	templateOptions := config.TemplateOptions{
 		MirrorURL:          g.options.MirrorURL,
 		ExternalController: g.options.ExternalController,
@@ -180,7 +188,7 @@ func (g *Generator) Generate(ctx context.Context, source string) (*Config, error
 		DNSLocalServer:     g.options.DNSLocalServer,
 		Platform:           g.options.Platform,
 	}
-	
+
 	cfg := tmpl.InjectWithOptions(outbounds, templateOptions)
 	return cfg, nil
 }
@@ -190,12 +198,12 @@ func (g *Generator) ParseNodes(ctx context.Context, source string) ([]Node, erro
 	if source == "" {
 		return nil, ErrEmptySource
 	}
-	
+
 	data, err := g.fetcher.Fetch(ctx, source)
 	if err != nil {
 		return nil, fmt.Errorf("fetch failed: %w", err)
 	}
-	
+
 	return g.parseData(ctx, data)
 }
 
@@ -203,12 +211,12 @@ func (g *Generator) ParseNodes(ctx context.Context, source string) ([]Node, erro
 func (g *Generator) parseData(ctx context.Context, data []byte) ([]Node, error) {
 	format := parser.DetectFormat(data)
 	g.logf("Detected format: %s", format)
-	
+
 	if format == "unknown" {
 		g.logf("Unknown format, trying all parsers")
 		return g.tryAllParsers(ctx, data)
 	}
-	
+
 	if factory, exists := parser.Registry[format]; exists {
 		p := factory()
 		if p.Accept("", data) {
@@ -220,7 +228,7 @@ func (g *Generator) parseData(ctx context.Context, data []byte) ([]Node, error) 
 			return nodes, nil
 		}
 	}
-	
+
 	if format == "mixed" {
 		p := parser.Registry["mixed"]()
 		nodes, err := p.Parse(data)
@@ -230,7 +238,7 @@ func (g *Generator) parseData(ctx context.Context, data []byte) ([]Node, error) 
 		}
 		return nodes, nil
 	}
-	
+
 	return g.tryAllParsers(ctx, data)
 }
 
@@ -240,14 +248,14 @@ func (g *Generator) tryAllParsers(ctx context.Context, data []byte) ([]Node, err
 		if name == "mixed" {
 			continue
 		}
-		
+
 		// Check context cancellation
 		select {
 		case <-ctx.Done():
 			return nil, ctx.Err()
 		default:
 		}
-		
+
 		p := factory()
 		if p.Accept("", data) {
 			nodes, err := p.Parse(data)
@@ -257,7 +265,7 @@ func (g *Generator) tryAllParsers(ctx context.Context, data []byte) ([]Node, err
 			}
 		}
 	}
-	
+
 	// Try mixed parser as last resort
 	p := parser.Registry["mixed"]()
 	nodes, err := p.Parse(data)
@@ -265,7 +273,7 @@ func (g *Generator) tryAllParsers(ctx context.Context, data []byte) ([]Node, err
 		g.logf("Successfully parsed with mixed parser: %d nodes", len(nodes))
 		return nodes, nil
 	}
-	
+
 	return nil, ErrNoValidNodes
 }
 
@@ -284,19 +292,19 @@ func (g *Generator) GetAvailableTemplates() ([]string, error) {
 // buildOptions creates GenerateOptions from Option functions with defaults
 func buildOptions(opts ...Option) GenerateOptions {
 	options := GenerateOptions{
-		TemplateVersion: "v1.12",
-		Platform:        "linux", 
-		HTTPTimeout:     30 * time.Second,
-		MirrorURL:       "https://ghfast.top",
-		DNSLocalServer:  "114.114.114.114",
-		Format:          "json",
-		RemoveEmoji:     true,
+		TemplateVersion:    "v1.12",
+		Platform:           "linux",
+		HTTPTimeout:        30 * time.Second,
+		MirrorURL:          "https://ghfast.top",
+		DNSLocalServer:     "114.114.114.114",
+		Format:             "json",
+		RemoveEmoji:        true,
 		ExternalController: "127.0.0.1:9095",
 	}
-	
+
 	for _, opt := range opts {
 		opt(&options)
 	}
-	
+
 	return options
 }

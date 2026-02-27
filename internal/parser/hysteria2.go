@@ -94,6 +94,19 @@ func (p *Hysteria2Parser) parseHysteria2URL(hysteria2URL string) (*model.Node, e
 		}
 	}
 
+	// 解析带宽限制参数
+	if upMbps := query.Get("up_mbps"); upMbps != "" {
+		node.Extra["up_mbps"] = upMbps
+	} else {
+		node.Extra["up_mbps"] = "25" // 默认上行 25 Mbps
+	}
+
+	if downMbps := query.Get("down_mbps"); downMbps != "" {
+		node.Extra["down_mbps"] = downMbps
+	} else {
+		node.Extra["down_mbps"] = "300" // 默认下行 300 Mbps
+	}
+
 	return node, nil
 }
 

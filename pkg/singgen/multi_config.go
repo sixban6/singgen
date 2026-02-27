@@ -25,6 +25,8 @@ type GlobalConfig struct {
 	HTTPTimeout    time.Duration `json:"http_timeout" yaml:"http_timeout"`
 	Format         string        `json:"format" yaml:"format"`
 	ClientSubnet   string        `json:"client_subnet,omitempty" yaml:"client_subnet,omitempty"`
+	UpMbps         int           `json:"up_mbps" yaml:"up_mbps"`
+	DownMbps       int           `json:"down_mbps" yaml:"down_mbps"`
 }
 
 // MultiConfig represents configuration supporting multiple subscriptions
@@ -49,6 +51,8 @@ func GetDefaultMultiConfig() *MultiConfig {
 			SkipTLSVerify:  false,
 			HTTPTimeout:    30 * time.Second,
 			Format:         "json",
+			UpMbps:         25,
+			DownMbps:       300,
 		},
 		Subscriptions: []SubscriptionConfig{},
 	}
@@ -68,6 +72,8 @@ func (mc *MultiConfig) MergeSubscriptionOptions(subConfig SubscriptionConfig) Ge
 		RemoveEmoji:        mc.Global.RemoveEmoji,
 		SkipTLSVerify:      mc.Global.SkipTLSVerify,
 		ExternalController: mc.Global.WebUIAddress,
+		UpMbps:             mc.Global.UpMbps,
+		DownMbps:           mc.Global.DownMbps,
 	}
 
 	// Override with subscription-specific settings

@@ -135,3 +135,17 @@ func WithStrictSecurity() Option {
 		// Additional security settings could be added here
 	}
 }
+
+// WithTSAuthKey sets the Tailscale authentication key
+func WithTSAuthKey(authKey string) Option {
+	return func(o *GenerateOptions) {
+		o.TSAuthKey = authKey
+	}
+}
+
+// WithTSLanIPCIDR sets the Tailscale LAN IP CIDR
+func WithTSLanIPCIDR(ipCIDR string) Option {
+	return func(o *GenerateOptions) {
+		o.TSLanIPCIDR = ipCIDR
+	}
+}

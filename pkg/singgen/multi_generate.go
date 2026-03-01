@@ -185,6 +185,8 @@ func GenerateConfigFromMulti(ctx context.Context, multiConfig *MultiConfig, opts
 		RemoveEmoji:        templateOptions.RemoveEmoji,
 		DNSLocalServer:     templateOptions.DNSLocalServer,
 		Platform:           templateOptions.Platform,
+		TSAuthKey:          templateOptions.TSAuthKey,
+		TSLanIPCIDR:        templateOptions.TSLanIPCIDR,
 	}
 
 	cfg := tmpl.InjectWithOptions(allOutbounds, tmplOptions)
@@ -196,7 +198,7 @@ func GenerateConfigFromMulti(ctx context.Context, multiConfig *MultiConfig, opts
 	return cfg, nil
 }
 
-// GenerateConfigBytesFromFile loads config file and generates configuration bytes
+// 用于从config.yaml直接读取配置生成 sb配置文件
 func GenerateConfigBytesFromFile(ctx context.Context, configFile string, opts ...Option) ([]byte, error) {
 	multiConfig, err := LoadConfigFile(configFile)
 	if err != nil {
@@ -206,7 +208,7 @@ func GenerateConfigBytesFromFile(ctx context.Context, configFile string, opts ..
 	return GenerateConfigBytesFromMulti(ctx, multiConfig, opts...)
 }
 
-// GenerateConfigBytesFromMulti generates configuration bytes from MultiConfig
+// 最底层的方法，多订阅源生成配置
 func GenerateConfigBytesFromMulti(ctx context.Context, multiConfig *MultiConfig, opts ...Option) ([]byte, error) {
 	cfg, err := GenerateConfigFromMulti(ctx, multiConfig, opts...)
 	if err != nil {

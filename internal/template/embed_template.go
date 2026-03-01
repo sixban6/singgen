@@ -52,6 +52,9 @@ func (t *EmbedTemplate) InjectWithOptions(outbounds []transformer.Outbound, opti
 		t.replaceMirrorURL(configData, "")
 	}
 
+	// 处理 Tailscale 配置
+	t.handleTailscaleConfig(configData, options)
+
 	// 注入外部控制器配置
 	if options.ExternalController != "" {
 		t.injectExternalController(configData, options.ExternalController)
@@ -82,6 +85,7 @@ func (t *EmbedTemplate) InjectWithOptions(outbounds []transformer.Outbound, opti
 		Outbounds:    t.convertToMapArray(configData["outbounds"]),
 		Route:        t.convertToMap(configData["route"]),
 		Certificate:  t.convertToMap(configData["certificate"]),
+		Endpoints:    t.convertToMapArray(configData["endpoints"]),
 	}
 
 	// 应用平台适配（使用嵌入的平台配置）
@@ -350,4 +354,191 @@ func (t *EmbedTemplate) applyEmbedPlatformAdaptation(config *config.Config, opti
 
 	// 直接使用平台适配器进行配置适配
 	return adapter.AdaptConfig(config, options)
+}
+
+// handleTailscaleConfig 处理 Tailscale 配置
+func (t *EmbedTemplate) handleTailscaleConfig(config map[string]any, options config.TemplateOptions) {
+	// 如果 TSAuthKey 为空，删除所有 Tailscale 相关配置
+	if options.TSAuthKey == "" {
+		t.removeTailscaleConfig(config)
+		return
+	}
+
+	// 如果 TSAuthKey 不为空，更新或生成 endpoints 配置
+	t.updateTailscaleEndpoints(config, options)
+}
+
+// updateTailscaleEndpoints 更新或生成 Tailscale endpoints 配置
+func (t *EmbedTemplate) updateTailscaleEndpoints(config map[string]any, options config.TemplateOptions) {
+	// 检查 endpoints 是否存在
+	endpoints, ok := config["endpoints"]
+	if !ok {
+		// 如果不存在，创建新的 endpoints 配置
+		config["endpoints"] = []map[string]any{
+			{
+				"type":                  "tailscale",
+				"tag":                   "ts-node",
+				"auth_key":              options.TSAuthKey,
+				"system_interface":      true,
+				"system_interface_name": "tailscale0",
+				"accept_routes":         true,
+				"advertise_routes":      []string{options.TSLanIPCIDR},
+			},
+		}
+		return
+	}
+
+	// 如果存在，更新配置
+	endpointsArray, ok := endpoints.([]any)
+	if !ok {
+		return
+	}
+
+	// 找到 ts-node endpoint 并更新
+	for _, endpoint := range endpointsArray {
+		if endpointMap, ok := endpoint.(map[string]any); ok {
+			if tag, tagOk := endpointMap["tag"].(string); tagOk && tag == "ts-node" {
+				endpointMap["auth_key"] = options.TSAuthKey
+				if options.TSLanIPCIDR != "" {
+					endpointMap["advertise_routes"] = []string{options.TSLanIPCIDR}
+				}
+				break
+			}
+		}
+	}
+}
+
+// removeTailscaleConfig 删除所有 Tailscale 相关配置
+func (t *EmbedTemplate) removeTailscaleConfig(config map[string]any) {
+	// 删除 endpoints 配置
+	delete(config, "endpoints")
+
+	// 删除 route.rules 中 outbound 为 ts-node 的规则
+	t.removeRouteRules(config)
+
+	// 删除 dns.rules 中 server 名为 dns_tailscale 的规则
+	t.removeDNSRules(config)
+
+	// 删除 dns.servers 中 tag 为 dns_tailscale 的 dns 服务
+	t.removeDNSServers(config)
+}
+
+// removeRouteRules 删除 route.rules 中 outbound 为 ts-node 的路由规则
+func (t *EmbedTemplate) removeRouteRules(config map[string]any) {
+	route, ok := config["route"]
+	if !ok {
+		return
+	}
+
+	routeMap, ok := route.(map[string]any)
+	if !ok {
+		return
+	}
+
+	rules, ok := routeMap["rules"]
+	if !ok {
+		return
+	}
+
+	rulesArray, ok := rules.([]any)
+	if !ok {
+		return
+	}
+
+	// 过滤掉 outbound 为 ts-node 的规则
+	filteredRules := make([]any, 0)
+	for _, rule := range rulesArray {
+		if ruleMap, ok := rule.(map[string]any); ok {
+			if outbound, outboundOk := ruleMap["outbound"].(string); outboundOk && outbound == "ts-node" {
+				continue // 跳过这个规则
+			}
+			filteredRules = append(filteredRules, rule)
+		}
+	}
+
+	if len(filteredRules) > 0 {
+		routeMap["rules"] = filteredRules
+	} else {
+		delete(routeMap, "rules")
+	}
+}
+
+// removeDNSRules 删除 dns.rules 中 server 名为 dns_tailscale 的规则
+func (t *EmbedTemplate) removeDNSRules(config map[string]any) {
+	dns, ok := config["dns"]
+	if !ok {
+		return
+	}
+
+	dnsMap, ok := dns.(map[string]any)
+	if !ok {
+		return
+	}
+
+	rules, ok := dnsMap["rules"]
+	if !ok {
+		return
+	}
+
+	rulesArray, ok := rules.([]any)
+	if !ok {
+		return
+	}
+
+	// 过滤掉 server 为 dns_tailscale 的规则
+	filteredRules := make([]any, 0)
+	for _, rule := range rulesArray {
+		if ruleMap, ok := rule.(map[string]any); ok {
+			if server, serverOk := ruleMap["server"].(string); serverOk && server == "dns_tailscale" {
+				continue // 跳过这个规则
+			}
+			filteredRules = append(filteredRules, rule)
+		}
+	}
+
+	if len(filteredRules) > 0 {
+		dnsMap["rules"] = filteredRules
+	} else {
+		delete(dnsMap, "rules")
+	}
+}
+
+// removeDNSServers 删除 dns.servers 中 tag 为 dns_tailscale 的 dns 服务
+func (t *EmbedTemplate) removeDNSServers(config map[string]any) {
+	dns, ok := config["dns"]
+	if !ok {
+		return
+	}
+
+	dnsMap, ok := dns.(map[string]any)
+	if !ok {
+		return
+	}
+
+	servers, ok := dnsMap["servers"]
+	if !ok {
+		return
+	}
+
+	serversArray, ok := servers.([]any)
+	if !ok {
+		return
+	}
+
+	// 过滤掉 tag 为 dns_tailscale 的服务
+	filteredServers := make([]any, 0)
+	for _, server := range serversArray {
+		if serverMap, ok := server.(map[string]any); ok {
+			if tag, tagOk := serverMap["tag"].(string); tagOk && tag == "dns_tailscale" {
+				continue // 跳过这个服务
+			}
+			filteredServers = append(filteredServers, server)
+		}
+	}
+
+	if len(filteredServers) > 0 {
+		dnsMap["servers"] = filteredServers
+	} else {
+		delete(dnsMap, "servers")
+	}
 }

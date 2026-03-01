@@ -12,10 +12,12 @@ dns:
   servers:
     - {tag: dns_local, type: udp, server: 114.114.114.114}
     - {tag: dns_proxy, type: https, server: 8.8.8.8, detour: DNS}
+    - {tag: dns_tailscale,type: tailscale, endpoint: ts-node}
     - {tag: fakeip, type: fakeip, inet4_range: 198.18.0.0/15, inet6_range: fc00::/18}
   rules:
     - {clash_mode: Direct, server: dns_local}
     - {clash_mode: Global, server: dns_proxy}
+    - {domain_suffix: [ts.net],server: dns_tailscale}
     - {rule_set: geosite-cn, server: dns_local}
     - {rule_set: geosite-geolocation-!cn, server: dns_proxy}
   final: dns_proxy
@@ -79,6 +81,7 @@ route:
   rules:
     - {action: sniff, inbound: [http, tls, quic, dns]}
     - {action: hijack-dns, type: logical, mode: or, rules: [{port: 53}, {protocol: dns}]}
+    - {ip_cidr: [ "100.64.0.0/10","fd7a:115c:a1e0::/48"],outbound: ts-node}
     - {ip_is_private: true, outbound: DirectConn}
     - {action: reject, rule_set: [geosite-ad1, geosite-ad2]}
     - {action: route, rule_set: geosite-steam, outbound: Steam}
@@ -165,3 +168,5 @@ route:
     - {tag: geosite-tencent, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/tencent.srs", download_detour: DirectConn }
 certificate:
   store: mozilla
+endpoints:
+   - {type: tailscale, tag: ts-node, auth_key: ts_auth_key ,system_interface: true,system_interface_name: tailscale0,accept_routes: true,advertise_routes: [ts_lan_ipcidr]}

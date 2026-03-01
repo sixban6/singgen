@@ -71,6 +71,10 @@ type GenerateOptions struct {
 	// External services
 	ExternalController string
 
+	// Tailscale configuration
+	TSAuthKey   string
+	TSLanIPCIDR string
+
 	// Logging
 	Logger *slog.Logger
 }

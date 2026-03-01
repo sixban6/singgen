@@ -9,6 +9,7 @@ type Config struct {
 	Outbounds    []map[string]any `json:"outbounds"`
 	Route        map[string]any   `json:"route"`
 	Certificate  map[string]any   `json:"certificate,omitempty"`
+	Endpoints    []map[string]any `json:"endpoints,omitempty"`
 }
 
 // TemplateOptions 模板选项
@@ -19,4 +20,6 @@ type TemplateOptions struct {
 	RemoveEmoji        bool
 	DNSLocalServer     string
 	Platform           string
+	TSAuthKey          string
+	TSLanIPCIDR        string
 }

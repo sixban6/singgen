@@ -169,4 +169,4 @@ route:
 certificate:
   store: mozilla
 endpoints:
-   - {type: tailscale, tag: ts-node, auth_key: ts_auth_key ,system_interface: false,system_interface_name: "",accept_routes: true,advertise_routes: [ts_lan_ipcidr]}
+   - {type: tailscale, tag: ts-node, auth_key: ts_auth_key, ephemeral: false,system_interface: false,system_interface_name: "",accept_routes: true,advertise_routes: [ts_lan_ipcidr]}

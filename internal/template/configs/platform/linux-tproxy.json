@@ -5,5 +5,11 @@
     "listen": "::",
     "listen_port": 7895,
     "udp_timeout": "5m"
+  },
+  {
+    "type": "mixed",
+    "tag": "mixed-in",
+    "listen": "127.0.0.1",
+    "listen_port": 2080
   }
 ]

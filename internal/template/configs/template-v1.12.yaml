@@ -26,7 +26,6 @@ dns:
   client_subnet: 223.5.5.5/24
 inbounds:
   - {type: tproxy, tag: tproxy-in, listen: "::", listen_port: 7895, udp_timeout: 1m}
-  - {type: mixed,  tag: mixed-in, listen: "127.0.0.1", listen_port: 2080}
 outbounds:
   - {tag: Test, type: selector, outbounds: [AAA]}
   - {tag: Proxy, type: selector, outbounds: [Sec-SubStore, AutoSelect-HK, AutoSelect-JP, AutoSelect-US, AutoSelect-SG, AutoSelect-TW, AutoSelect-KR, Select, HK, JP, DirectConn], interrupt_exist_connections: true}

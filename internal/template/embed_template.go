@@ -399,6 +399,7 @@ func (t *EmbedTemplate) updateTailscaleEndpoints(config map[string]any, options 
 		if endpointMap, ok := endpoint.(map[string]any); ok {
 			if tag, tagOk := endpointMap["tag"].(string); tagOk && tag == "ts-node" {
 				endpointMap["auth_key"] = options.TSAuthKey
+				endpointMap["advertise_routes"] = []string{}
 				if options.TSLanIPCIDR != "" {
 					endpointMap["advertise_routes"] = []string{options.TSLanIPCIDR}
 				}

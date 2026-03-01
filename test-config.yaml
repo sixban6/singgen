@@ -11,7 +11,7 @@ global:
   up_mbps: 25
   down_mbps: 300
   ts_auth_key: ts-abcd123456
-  ts_lan_ipcidr: 192.168.31.0/24
+  ts_lan_ipcidr: ""
 
 subscriptions:
   - url: ./test-nodes.txt

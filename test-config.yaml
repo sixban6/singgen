@@ -10,7 +10,7 @@ global:
   format: json
   up_mbps: 25
   down_mbps: 300
-  ts_auth_key: ts-abcd123456
+  ts_auth_key: ""
   ts_lan_ipcidr: ""
 
 subscriptions:

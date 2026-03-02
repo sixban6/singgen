@@ -457,6 +457,29 @@ func (t *EmbedTemplate) removeRouteRules(config map[string]any) {
 		}
 	}
 
+	// 1. 构建第一条 IP 规则
+	rule1 := map[string]any{
+		"ip_cidr": []string{
+			"100.64.0.0/10",
+			"fd7a:115c:a1e0::/48",
+		},
+		"outbound": "DirectConn",
+	}
+
+	// 2. 构建第二条域名规则
+	rule2 := map[string]any{
+		"domain_suffix": []string{
+			"ts.net",
+		},
+		"outbound": "DirectConn",
+	}
+
+	// 3. 将这两条新规则组合成一个切片 []any
+	newRules := []any{rule1, rule2}
+
+	// 4. 将原有的 filteredRules 追加到新规则的后面，实现“插入到最前面”
+	filteredRules = append(filteredRules[:1], append(newRules, filteredRules[1:]...)...)
+
 	if len(filteredRules) > 0 {
 		routeMap["rules"] = filteredRules
 	} else {

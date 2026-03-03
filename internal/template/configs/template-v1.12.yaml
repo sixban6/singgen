@@ -79,7 +79,7 @@ route:
   final: Proxy
   default_mark: 1
   rules:
-    - {process_name: [ "tailscaled" ], outbound: direct},
+    - {process_name: [ "tailscaled" ], outbound: direct}
     - {interface_name: [ "tailscale0" ], outbound: direct}
     - {action: sniff, inbound: [http, tls, quic, dns]}
     - {action: hijack-dns, protocol: dns }

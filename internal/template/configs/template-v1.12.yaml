@@ -10,7 +10,7 @@ experimental:
   cache_file: {enabled: true, path: /etc/sing-box/cache.db}
 dns:
   servers:
-    - {tag: dns_local, type: udp, server: 114.114.114.114}
+    - {tag: dns_local, type: https, server: https://223.5.5.5/dns-query, detour: DirectConn}
     - {tag: dns_proxy, type: https, server: 8.8.8.8, detour: DNS}
     - {tag: dns_jp, type: https, server: 8.8.8.8, detour: Auto-JP }
     - {tag: dns_tailscale,type: tailscale, endpoint: ts-node}
@@ -55,14 +55,14 @@ outbounds:
   - {tag: BTC, type: selector, outbounds: [Auto-JP, JP, Proxy,DirectConn, Auto-SG, SG, Auto-TW, TW]}
   - {tag: HoK, type: selector, outbounds: [Auto-Game, DIY-Node, HK, JP, SG], interrupt_exist_connections: true}
   - {tag: DIY-Node, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "sec_" ] } ] }
-  - {tag: Auto-Game,     type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: [ "cr" ]}, {action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]} ], url: https://cp.cloudflare.com/generate_204, interval: 20m, tolerance: 200, interrupt_exist_connections: false }
-  - {tag: Auto-HK, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["香港|港|HK|Hong Kong|🇭🇰"]}], url: https://cp.cloudflare.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
-  - {tag: Auto-JP, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["日本|日|JP|Japan|🇯🇵"]}], url: https://cp.cloudflare.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
-  - {tag: Auto-US, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["美国|美國|美|US|USA|America|🇺🇸"]}], url: https://cp.cloudflare.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
+  - {tag: Auto-Game,     type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: [ "cr" ]}, {action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]} ], url: https://connectivitycheck.gstatic.com/generate_204, interval: 20m, tolerance: 200, interrupt_exist_connections: false }
+  - {tag: Auto-HK, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["香港|港|HK|Hong Kong|🇭🇰"]}], url: https://captive.apple.com/hotspot-detect.html, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
+  - {tag: Auto-JP, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["日本|日|JP|Japan|🇯🇵"]}], url: https://www.gstatic.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
+  - {tag: Auto-US, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["美国|美國|美|US|USA|America|🇺🇸"]}], url: https://www.gstatic.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
   - {tag: Auto-SG, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["新加坡|狮城|獅城|坡|SG|Singapore|🇸🇬"]}], url: https://cp.cloudflare.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
   - {tag: Auto-TW, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["台湾|台灣|台|TW|Taiwan|🇹🇼"]}], url: https://cp.cloudflare.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
-  - {tag: Auto-KR, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["韩国|韓國|韩|KR|Korea|🇰🇷"]}], url: https://cp.cloudflare.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
-  - {tag: Auto, type: urltest, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]}], url: https://cp.cloudflare.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
+  - {tag: Auto-KR, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["韩国|韓國|韩|KR|Korea|🇰🇷"]}], url: https://www.v2ex.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
+  - {tag: Auto, type: urltest, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]}], url: https://captive.apple.com/hotspot-detect.html, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
   - {tag: Select, type: selector, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]}]}
   - {tag: DirectConn, type: direct}
   - {tag: JP, type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["日本|日|JP|Japan|🇯🇵"]}]}
@@ -76,12 +76,12 @@ outbounds:
   - {tag: CA, type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["加拿大|CA|Canada|🇨🇦"]}]}
   - {type: socks, tag: block, server: 0.0.0.0, server_port: 1080}
 route:
-  default_domain_resolver: {server: dns_local, rewrite_tll: 60, client_subnet: 223.5.5.5/24}
+  default_domain_resolver: {server: dns_local, rewrite_ttl: 60, client_subnet: 223.5.5.5/24}
   auto_detect_interface: true
   final: Proxy
   default_mark: 1
   rules:
-    - {process_name: [ "tailscaled" ], outbound: direct}
+    - {process_name: [ "tailscaled" ], outbound: DirectConn}
     - {action: sniff}
     - {action: hijack-dns, protocol: dns }
     - {action: hijack-dns, port: 53 }

@@ -55,7 +55,7 @@ outbounds:
   - {tag: BTC, type: selector, outbounds: [Auto-JP, JP, Proxy,DirectConn, Auto-SG, SG, Auto-TW, TW]}
   - {tag: HoK, type: selector, outbounds: [Auto-Game, DIY-Node, HK, JP, SG], interrupt_exist_connections: true}
   - {tag: DIY-Node, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "sec_" ] } ] }
-  - {tag: Auto-Game,     type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: [ "cr" ]}, {action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]} ], url: https://connectivitycheck.gstatic.com/generate_204, interval: 20m, tolerance: 200, interrupt_exist_connections: false }
+  - {tag: Auto-Game,type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: [ "cr" ]}, {action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]} ], url: https://connectivitycheck.gstatic.com/generate_204, interval: 20m, tolerance: 200, interrupt_exist_connections: false }
   - {tag: Auto-HK, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["香港|港|HK|Hong Kong|🇭🇰"]}], url: https://captive.apple.com/hotspot-detect.html, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
   - {tag: Auto-JP, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["日本|日|JP|Japan|🇯🇵"]}], url: https://www.gstatic.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
   - {tag: Auto-US, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["美国|美國|美|US|USA|America|🇺🇸"]}], url: https://www.gstatic.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}

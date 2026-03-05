@@ -33,7 +33,7 @@ inbounds:
 outbounds:
   - {tag: Test, type: selector, outbounds: [AAA]}
   - {tag: Proxy, type: selector, outbounds: [DIY-Node, Auto-HK, Auto-JP, Auto-US, Auto-SG, Auto-TW, Auto-KR, Select, HK, JP, DirectConn], interrupt_exist_connections: true}
-  - {tag: DNS, type: selector, outbounds: [Proxy, Auto-HK, Auto-JP, DIY-Node, block], interrupt_exist_connections: true}
+  - {tag: DNS, type: selector, outbounds: [Proxy, Auto-HK, Auto-JP, DIY-Node], interrupt_exist_connections: true}
   - {tag: YouTube, type: selector, outbounds: [Proxy, DIY-Node, Auto-HK, HK, JP], interrupt_exist_connections: true}
   - {tag: OpenAI, type: selector, outbounds: [Proxy, DIY-Node, Auto-JP, JP, Auto-US, US], interrupt_exist_connections: true}
   - {tag: Google, type: selector, outbounds: [Proxy, DIY-Node,Auto-US, Select, Auto], interrupt_exist_connections: true}
@@ -74,7 +74,6 @@ outbounds:
   - {tag: KR, type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["韩国|韓國|韩|KR|Korea|🇰🇷"]}]}
   - {tag: DE, type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["德国|德國|德|DE|Germany|🇩🇪"]}]}
   - {tag: CA, type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["加拿大|CA|Canada|🇨🇦"]}]}
-  - {type: socks, tag: block, server: 0.0.0.0, server_port: 1080}
 route:
   default_domain_resolver: {server: dns_local, rewrite_ttl: 60, client_subnet: 223.5.5.5/24}
   auto_detect_interface: true

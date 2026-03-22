@@ -51,6 +51,7 @@ outbounds:
   - {tag: Epic, type: selector, outbounds: [Proxy,Auto-HK, HK, Auto-US, US, DirectConn]}
   - {tag: PlayStation, type: selector, outbounds: [Proxy,Auto-HK, HK, Auto-JP, JP, US]}
   - {tag: Xbox, type: selector, outbounds: [Proxy,Auto-HK, HK, Auto-SG, SG, US]}
+  - {tag: Porn, type: selector, outbounds: [Proxy,Auto-HK] }
   - {tag: BTC, type: selector, outbounds: [Auto-JP, JP, Proxy,DirectConn, Auto-SG, SG, Auto-TW, TW]}
   - {tag: HoK, type: selector, outbounds: [Auto-Game, DIY-Node, HK, JP, SG], interrupt_exist_connections: true}
   - {tag: DIY-Node, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "sec_" ] } ] }
@@ -101,8 +102,9 @@ route:
     - {action: route, clash_mode: global, outbound: Proxy}
     - {action: route, rule_set: geosite-hok, outbound: HoK}
     - {action: route, domain: [clash.razord.top, yacd.metacubex.one, yacd.haishan.me, d.metacubex.one], outbound: DirectConn}
-    - {action: route, domain_suffix: [z-lib.gs, missav.com, missav.ws, follow.is, folo.is], outbound: Proxy}
+    - {action: route, domain_suffix: [z-lib.gs, follow.is, folo.is], outbound: Proxy}
     - {action: route, rule_set: geosite-cryptocurrency, outbound: BTC}
+    - {action: route, rule_set: geosite-porn, outbound: Porn}
     - {action: route, rule_set: geosite-private, outbound: DirectConn}
     - {action: route, rule_set: geosite-jd, outbound: DirectConn}
     - {action: route, rule_set: geosite-ali, outbound: DirectConn }
@@ -168,6 +170,7 @@ route:
     - {tag: geosite-meituan, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/meituan.srs", download_detour: DirectConn }
     - {tag: geosite-ctrip, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/ctrip.srs", download_detour: DirectConn }
     - {tag: geosite-tencent, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/tencent.srs", download_detour: DirectConn }
+    - {tag: geosite-porn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-porn.srs", download_detour: DirectConn }
 certificate:
   store: mozilla
 endpoints:

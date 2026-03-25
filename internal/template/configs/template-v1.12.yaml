@@ -80,7 +80,6 @@ route:
   final: Proxy
   default_mark: 1
   rules:
-    - {process_name: [ "tailscaled" ], outbound: DirectConn}
     - {action: sniff}
     - {action: hijack-dns, protocol: dns }
     - {action: hijack-dns, port: 53 }

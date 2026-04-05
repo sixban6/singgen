@@ -41,10 +41,11 @@ outbounds:
   - {tag: Telegram, type: selector, outbounds: [ DIY-Node, Proxy, Auto-SG, SG, Select], interrupt_exist_connections: true}
   - {tag: Microsoft, type: selector, outbounds: [DirectConn, DIY-Node, Proxy, SG], interrupt_exist_connections: true}
   - {tag: Apple, type: selector, outbounds: [DirectConn,  DIY-Node, Proxy, Auto], interrupt_exist_connections: true}
-  - {tag: Paypal, type: selector, outbounds: [ DIY-Node, Proxy, Select, Auto, DirectConn], interrupt_exist_connections: true}
-  - {tag: Netflix, type: selector, outbounds: [ DIY-Node, Proxy, Auto-SG, SG, Auto-HK, HK], interrupt_exist_connections: true}
-  - {tag: TikTok, type: selector, outbounds: [ DIY-Node, Proxy,Auto-SG, SG, Auto-JP, JP, US]}
-  - {tag: Steam, type: selector, outbounds: [ DIY-Node, Proxy,Auto-HK, Auto-SG, HK, SG, DirectConn]}
+  - {tag: Paypal, type: selector, outbounds: [ DIY-Node, Proxy, Select], interrupt_exist_connections: true}
+  - {tag: Netflix, type: selector, outbounds: [ DIY-Node, Proxy, Select], interrupt_exist_connections: true}
+  - {tag: TikTok, type: selector, outbounds: [ DIY-Node, Proxy, Select]}
+  - {tag: Steam, type: selector, outbounds: [ DIY-Node, Proxy, Select, DirectConn]}
+  - {tag: X, type: selector, outbounds: [ DIY-Node, Proxy, DirectConn ] }
   - {tag: Porn, type: selector, outbounds: [ DIY-Node, Proxy,Auto-HK] }
   - {tag: BTC, type: selector, outbounds: [Auto-JP, JP, Proxy,DirectConn, Auto-SG, SG, Auto-TW, TW]}
   - {tag: HoK, type: selector, outbounds: [DIY-Node, HK, JP, SG], interrupt_exist_connections: true}
@@ -88,7 +89,7 @@ route:
     - {action: route, rule_set: geosite-primevideo, outbound: PrimeVideo}
     - {action: route, rule_set: geosite-spotify, outbound: Spotify}
     - {action: route, rule_set: geosite-tiktok, outbound: TikTok}
-    - {action: route, rule_set: geosite-x, outbound: DIY-Node }
+    - {action: route, rule_set: geosite-x, outbound: X }
     - {action: route, protocol: ssh, outbound: DirectConn}
     - {action: route, protocol: bittorrent, outbound: DirectConn}
     - {action: route, clash_mode: direct, outbound: DirectConn}

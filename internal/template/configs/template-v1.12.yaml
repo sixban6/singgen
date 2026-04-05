@@ -88,6 +88,7 @@ route:
     - {action: route, rule_set: geosite-primevideo, outbound: PrimeVideo}
     - {action: route, rule_set: geosite-spotify, outbound: Spotify}
     - {action: route, rule_set: geosite-tiktok, outbound: TikTok}
+    - {action: route, rule_set: geosite-x, outbound: DIY-Node }
     - {action: route, protocol: ssh, outbound: DirectConn}
     - {action: route, protocol: bittorrent, outbound: DirectConn}
     - {action: route, clash_mode: direct, outbound: DirectConn}
@@ -164,6 +165,7 @@ route:
     - {tag: geosite-tencent, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/tencent.srs", download_detour: DirectConn }
     - {tag: geosite-porn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-porn.srs", download_detour: DirectConn }
     - {tag: geosite-sourcehut, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/sourcehut.srs", download_detour: DirectConn }
+    - {tag: geosite-x, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/x.srs", download_detour: DirectConn }
 certificate:
   store: mozilla
 endpoints:

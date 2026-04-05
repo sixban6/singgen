@@ -31,24 +31,23 @@ inbounds:
   - {type: tproxy, tag: tproxy-in, listen: "::", listen_port: 7895, udp_timeout: 1m}
 outbounds:
   - {tag: Test, type: selector, outbounds: [AAA]}
-  - {tag: Proxy, type: selector, outbounds: [DIY-Node, Auto-HK, Auto-JP, Auto-US, Auto-SG, Auto-TW, Auto-KR, Select, HK, JP, DirectConn], interrupt_exist_connections: true}
-  - {tag: DNS, type: selector, outbounds: [Proxy, Auto-HK, Auto-JP, DIY-Node], interrupt_exist_connections: true}
-  - {tag: YouTube, type: selector, outbounds: [Proxy, DIY-Node, Auto-HK, HK, JP], interrupt_exist_connections: true}
-  - {tag: OpenAI, type: selector, outbounds: [Proxy, DIY-Node, Auto-JP, JP, Auto-US, US], interrupt_exist_connections: true}
-  - {tag: Google, type: selector, outbounds: [Proxy, DIY-Node,Auto-US, Select, Auto], interrupt_exist_connections: true}
-  - {tag: Github, type: selector, outbounds: [Proxy, DIY-Node, Auto-SG, Select, Auto, DirectConn], interrupt_exist_connections: true}
-  - {tag: Telegram, type: selector, outbounds: [Proxy, DIY-Node, Auto-SG, SG, Select], interrupt_exist_connections: true}
-  - {tag: Microsoft, type: selector, outbounds: [DirectConn,Proxy, DIY-Node, SG], interrupt_exist_connections: true}
-  - {tag: Apple, type: selector, outbounds: [DirectConn, Proxy, DIY-Node, Auto], interrupt_exist_connections: true}
-  - {tag: Paypal, type: selector, outbounds: [Proxy, DIY-Node, Select, Auto, DirectConn], interrupt_exist_connections: true}
-  - {tag: Netflix, type: selector, outbounds: [Proxy, Auto-SG, SG, Auto-HK, HK, DIY-Node ], interrupt_exist_connections: true}
-  - {tag: TikTok, type: selector, outbounds: [Proxy,Auto-SG, SG, Auto-JP, JP, US]}
-  - {tag: Steam, type: selector, outbounds: [Proxy,Auto-HK, Auto-SG, HK, SG, DirectConn]}
-  - {tag: Porn, type: selector, outbounds: [Proxy,Auto-HK] }
+  - {tag: Proxy, type: selector, outbounds: [DIY-Node, DirectConn, Auto-HK, Auto-JP, Select], interrupt_exist_connections: true}
+  - {tag: DNS, type: selector, outbounds: [DIY-Node, Proxy, Auto-HK, Auto-JP], interrupt_exist_connections: true}
+  - {tag: YouTube, type: selector, outbounds: [ DIY-Node, Proxy, Auto-HK, HK, JP], interrupt_exist_connections: true}
+  - {tag: OpenAI, type: selector, outbounds: [ DIY-Node, Proxy, Auto-JP, JP, Auto-US, US], interrupt_exist_connections: true}
+  - {tag: Google, type: selector, outbounds: [ DIY-Node, Proxy,Auto-US, Select, Auto], interrupt_exist_connections: true}
+  - {tag: Github, type: selector, outbounds: [ DIY-Node, Proxy, Auto-SG, Select, Auto, DirectConn], interrupt_exist_connections: true}
+  - {tag: Telegram, type: selector, outbounds: [ DIY-Node, Proxy, Auto-SG, SG, Select], interrupt_exist_connections: true}
+  - {tag: Microsoft, type: selector, outbounds: [DirectConn, DIY-Node, Proxy, SG], interrupt_exist_connections: true}
+  - {tag: Apple, type: selector, outbounds: [DirectConn,  DIY-Node, Proxy, Auto], interrupt_exist_connections: true}
+  - {tag: Paypal, type: selector, outbounds: [ DIY-Node, Proxy, Select, Auto, DirectConn], interrupt_exist_connections: true}
+  - {tag: Netflix, type: selector, outbounds: [ DIY-Node, Proxy, Auto-SG, SG, Auto-HK, HK], interrupt_exist_connections: true}
+  - {tag: TikTok, type: selector, outbounds: [ DIY-Node, Proxy,Auto-SG, SG, Auto-JP, JP, US]}
+  - {tag: Steam, type: selector, outbounds: [ DIY-Node, Proxy,Auto-HK, Auto-SG, HK, SG, DirectConn]}
+  - {tag: Porn, type: selector, outbounds: [ DIY-Node, Proxy,Auto-HK] }
   - {tag: BTC, type: selector, outbounds: [Auto-JP, JP, Proxy,DirectConn, Auto-SG, SG, Auto-TW, TW]}
-  - {tag: HoK, type: selector, outbounds: [Game, DIY-Node, HK, JP, SG], interrupt_exist_connections: true}
+  - {tag: HoK, type: selector, outbounds: [DIY-Node, HK, JP, SG], interrupt_exist_connections: true}
   - {tag: DIY-Node, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "sec_" ] } ] }
-  - {tag: Game,type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: [ "cr" ]}, {action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]} ]}
   - {tag: JP, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "日本|日|JP|Japan|🇯🇵" ] } ] }
   - {tag: HK, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "香港|港|HK|Hong Kong|🇭🇰" ] } ] }
   - {tag: US, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "美国|美國|美|US|USA|America|🇺🇸" ] } ] }

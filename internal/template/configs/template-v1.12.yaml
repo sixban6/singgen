@@ -31,6 +31,7 @@ inbounds:
   - {type: tproxy, tag: tproxy-in, listen: "::", listen_port: 7895, udp_timeout: 1m}
 outbounds:
   - {tag: Test, type: selector, outbounds: [AAA]}
+  - {tag: DIY-Node, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "sec_" ] } ] }
   - {tag: Proxy, type: selector, outbounds: [DIY-Node, DirectConn, Auto-HK, Auto-JP, Select], interrupt_exist_connections: true}
   - {tag: DNS, type: selector, outbounds: [DIY-Node, Proxy, Auto-HK, Auto-JP], interrupt_exist_connections: true}
   - {tag: YouTube, type: selector, outbounds: [ DIY-Node, Proxy, Auto-HK, HK, JP], interrupt_exist_connections: true}
@@ -47,7 +48,6 @@ outbounds:
   - {tag: Porn, type: selector, outbounds: [ DIY-Node, Proxy,Auto-HK] }
   - {tag: BTC, type: selector, outbounds: [Auto-JP, JP, Proxy,DirectConn, Auto-SG, SG, Auto-TW, TW]}
   - {tag: HoK, type: selector, outbounds: [DIY-Node, HK, JP, SG], interrupt_exist_connections: true}
-  - {tag: DIY-Node, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "sec_" ] } ] }
   - {tag: JP, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "日本|日|JP|Japan|🇯🇵" ] } ] }
   - {tag: HK, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "香港|港|HK|Hong Kong|🇭🇰" ] } ] }
   - {tag: US, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "美国|美國|美|US|USA|America|🇺🇸" ] } ] }
@@ -104,13 +104,13 @@ route:
     - {action: route, rule_set: geosite-bytedance, outbound: DirectConn }
     - {action: route, rule_set: geosite-pdd, outbound: DirectConn }
     - {action: route, rule_set: geosite-bili, outbound: DirectConn }
-    - { action: route, rule_set: geosite-meituan, outbound: DirectConn }
-    - { action: route, rule_set: geosite-ctrip, outbound: DirectConn }
-    - { action: route, rule_set: geosite-tencent, outbound: DirectConn }
+    - {action: route, rule_set: geosite-meituan, outbound: DirectConn }
+    - {action: route, rule_set: geosite-ctrip, outbound: DirectConn }
+    - {action: route, rule_set: geosite-tencent, outbound: DirectConn }
     - {action: route, rule_set: geosite-ctm_cn, outbound: DirectConn}
     - {action: route, rule_set: geosite-chat, domain_suffix: [grok.com], outbound: OpenAI}
     - {action: route, rule_set: geosite-youtube, outbound: YouTube}
-    - {action: route, rule_set: geosite-github, outbound: Github}
+    - {action: route, rule_set: [geosite-github, geosite-sourcehut], outbound: Github}
     - {action: route, rule_set: [geosite-google, geoip-google], outbound: Google}
     - {action: route, rule_set: [geosite-telegram, geoip-telegram], outbound: Telegram}
     - {action: route, rule_set: [geosite-apple, geoip-apple], outbound: Apple}
@@ -163,6 +163,7 @@ route:
     - {tag: geosite-ctrip, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/ctrip.srs", download_detour: DirectConn }
     - {tag: geosite-tencent, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/tencent.srs", download_detour: DirectConn }
     - {tag: geosite-porn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-porn.srs", download_detour: DirectConn }
+    - {tag: geosite-sourcehut, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/sourcehut.srs", download_detour: DirectConn }
 certificate:
   store: mozilla
 endpoints:

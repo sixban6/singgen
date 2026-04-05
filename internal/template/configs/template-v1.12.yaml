@@ -12,13 +12,11 @@ dns:
   servers:
     - {tag: dns_local, type: udp, server: 114.114.114.114}
     - {tag: dns_proxy, type: https, server: 8.8.8.8, detour: DNS}
-    - {tag: dns_jp, type: https, server: 8.8.8.8, detour: Auto-JP }
     - {tag: dns_tailscale,type: tailscale, endpoint: ts-node}
     - {tag: fakeip, type: fakeip, inet4_range: 198.18.0.0/15, inet6_range: fc00::/18}
   rules:
     - {clash_mode: Direct, server: dns_local, client_subnet: 223.5.5.5/24}
     - {clash_mode: Global, server: dns_proxy}
-    - {rule_set: geosite-cryptocurrency, server: dns_jp }
     - {domain_suffix: [ts.net],server: dns_tailscale}
     - {rule_set: geosite-cn, server: dns_local, client_subnet: 223.5.5.5/24}
     - {rule_set: geosite-geolocation-!cn, server: dns_proxy}

@@ -32,39 +32,24 @@ inbounds:
 outbounds:
   - {tag: Test, type: selector, outbounds: [AAA]}
   - {tag: DIY-Node, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "sec_" ] } ] }
-  - {tag: Proxy, type: selector, outbounds: [DIY-Node, DirectConn, Auto-HK, Auto-JP, Select], interrupt_exist_connections: true}
-  - {tag: DNS, type: selector, outbounds: [DIY-Node, Proxy, Auto-HK, Auto-JP], interrupt_exist_connections: true}
-  - {tag: YouTube, type: selector, outbounds: [ DIY-Node, Proxy, Auto-HK, HK, JP], interrupt_exist_connections: true}
-  - {tag: OpenAI, type: selector, outbounds: [ DIY-Node, Proxy, Auto-JP, JP, Auto-US, US], interrupt_exist_connections: true}
-  - {tag: Google, type: selector, outbounds: [ DIY-Node, Proxy,Auto-US, Select, Auto], interrupt_exist_connections: true}
-  - {tag: Github, type: selector, outbounds: [ DIY-Node, Proxy, Auto-SG, Select, Auto, DirectConn], interrupt_exist_connections: true}
-  - {tag: Telegram, type: selector, outbounds: [ DIY-Node, Proxy, Auto-SG, SG, Select], interrupt_exist_connections: true}
-  - {tag: Microsoft, type: selector, outbounds: [DirectConn, DIY-Node, Proxy, SG], interrupt_exist_connections: true}
-  - {tag: Apple, type: selector, outbounds: [DirectConn,  DIY-Node, Proxy, Auto], interrupt_exist_connections: true}
-  - {tag: Paypal, type: selector, outbounds: [ DIY-Node, Proxy, Select], interrupt_exist_connections: true}
-  - {tag: Netflix, type: selector, outbounds: [ DIY-Node, Proxy, Select], interrupt_exist_connections: true}
-  - {tag: TikTok, type: selector, outbounds: [ DIY-Node, Proxy, Select]}
-  - {tag: Steam, type: selector, outbounds: [ DIY-Node, Proxy, Select, DirectConn]}
+  - {tag: Proxy, type: selector, outbounds: [DIY-Node, DirectConn, Auto, Select], interrupt_exist_connections: true}
+  - {tag: DNS, type: selector, outbounds: [DIY-Node, Proxy], interrupt_exist_connections: true}
+  - {tag: YouTube, type: selector, outbounds: [ DIY-Node, Proxy], interrupt_exist_connections: true}
+  - {tag: OpenAI, type: selector, outbounds: [ DIY-Node, Proxy], interrupt_exist_connections: true}
+  - {tag: Google, type: selector, outbounds: [ DIY-Node, Proxy], interrupt_exist_connections: true}
+  - {tag: Github, type: selector, outbounds: [ DIY-Node, Proxy, DirectConn], interrupt_exist_connections: true}
+  - {tag: Telegram, type: selector, outbounds: [ DIY-Node, Proxy], interrupt_exist_connections: true}
+  - {tag: Microsoft, type: selector, outbounds: [DirectConn, DIY-Node, Proxy], interrupt_exist_connections: true}
+  - {tag: Apple, type: selector, outbounds: [DirectConn,  DIY-Node, Proxy], interrupt_exist_connections: true}
+  - {tag: Paypal, type: selector, outbounds: [ DIY-Node, Proxy], interrupt_exist_connections: true}
+  - {tag: Netflix, type: selector, outbounds: [ DIY-Node, Proxy], interrupt_exist_connections: true}
+  - {tag: TikTok, type: selector, outbounds: [ DIY-Node, Proxy]}
+  - {tag: Steam, type: selector, outbounds: [ DIY-Node, Proxy]}
   - {tag: X, type: selector, outbounds: [ DIY-Node, Proxy, DirectConn ] }
-  - {tag: Porn, type: selector, outbounds: [ DIY-Node, Proxy,Auto-HK] }
-  - {tag: BTC, type: selector, outbounds: [Auto-JP, JP, Proxy,DirectConn, Auto-SG, SG, Auto-TW, TW]}
-  - {tag: HoK, type: selector, outbounds: [DIY-Node, HK, JP, SG], interrupt_exist_connections: true}
-  - {tag: JP, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "日本|日|JP|Japan|🇯🇵" ] } ] }
-  - {tag: HK, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "香港|港|HK|Hong Kong|🇭🇰" ] } ] }
-  - {tag: US, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "美国|美國|美|US|USA|America|🇺🇸" ] } ] }
-  - {tag: SG, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "新加坡|狮城|獅城|坡|SG|Singapore|🇸🇬" ] } ] }
-  - {tag: UK, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "英国|英國|英|UK|Britain|🇬🇧" ] } ] }
-  - {tag: TW, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "台湾|台灣|台|TW|Taiwan|🇹🇼" ] } ] }
-  - {tag: KR, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "韩国|韓國|韩|KR|Korea|🇰🇷" ] } ] }
-  - {tag: DE, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "德国|德國|德|DE|Germany|🇩🇪" ] } ] }
-  - {tag: CA, type: selector, outbounds: [ "{all}" ], filter: [ { action: include, keywords: [ "加拿大|CA|Canada|🇨🇦" ] } ] }
+  - {tag: Porn, type: selector, outbounds: [DIY-Node, Proxy] }
+  - {tag: BTC, type: selector, outbounds: [DIY-Node, Auto, Select]}
+  - {tag: HoK, type: selector, outbounds: [DIY-Node, Auto, Select], interrupt_exist_connections: true}
   - {tag: Select, type: selector, outbounds: [ "{all}" ], filter: [ { action: exclude, keywords: [ "网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期" ] } ] }
-  - {tag: Auto-HK, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["香港|港|HK|Hong Kong|🇭🇰"]}], url: https://captive.apple.com/hotspot-detect.html, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
-  - {tag: Auto-JP, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["日本|日|JP|Japan|🇯🇵"]}], url: https://www.gstatic.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
-  - {tag: Auto-US, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["美国|美國|美|US|USA|America|🇺🇸"]}], url: https://www.gstatic.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
-  - {tag: Auto-SG, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["新加坡|狮城|獅城|坡|SG|Singapore|🇸🇬"]}], url: https://cp.cloudflare.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
-  - {tag: Auto-TW, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["台湾|台灣|台|TW|Taiwan|🇹🇼"]}], url: https://cp.cloudflare.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
-  - {tag: Auto-KR, type: urltest, outbounds: ["{all}"], filter: [{action: include, keywords: ["韩国|韓國|韩|KR|Korea|🇰🇷"]}], url: https://www.v2ex.com/generate_204, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
   - {tag: Auto, type: urltest, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]}], url: https://captive.apple.com/hotspot-detect.html, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
   - {tag: DirectConn, type: direct}
 

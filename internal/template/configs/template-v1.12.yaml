@@ -19,6 +19,7 @@ dns:
     - {clash_mode: Global, server: dns_proxy}
     - {domain_suffix: [ts.net],server: dns_tailscale}
     - {rule_set: geosite-cn, server: dns_local, client_subnet: 223.5.5.5/24}
+    - {domain_suffix: [ tradingview.com ], outbound: DNS }
     - {rule_set: geosite-geolocation-!cn, server: dns_proxy}
   final: dns_proxy
   strategy: prefer_ipv4

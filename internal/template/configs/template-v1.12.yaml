@@ -79,6 +79,7 @@ route:
     - {action: route, clash_mode: global, outbound: Proxy}
     - {action: route, rule_set: geosite-hok, outbound: HoK}
     - {action: route, domain: [clash.razord.top, yacd.metacubex.one, yacd.haishan.me, d.metacubex.one], outbound: DirectConn}
+    - {action: route, domain_suffix: [tradingview.com], outbound: DNS}
     - {action: route, domain_suffix: [z-lib.gs, follow.is, folo.is], outbound: Proxy}
     - {action: route, rule_set: geosite-cryptocurrency, outbound: BTC}
     - {action: route, rule_set: geosite-porn, outbound: Porn}

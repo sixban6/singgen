@@ -41,7 +41,7 @@ func (v *InputValidator) ValidateInput(raw []byte) error {
 	}
 
 	data := string(raw)
-	
+
 	// 检查行数和行长度
 	lines := strings.Split(data, "\n")
 	if len(lines) > MaxLines {
@@ -71,12 +71,12 @@ func (v *InputValidator) SanitizeString(s string) string {
 			cleaned.WriteRune(r)
 		}
 	}
-	
+
 	result := cleaned.String()
-	
+
 	// 规范化空白字符
 	result = strings.TrimSpace(result)
-	
+
 	// 移除多余的空行
 	lines := strings.Split(result, "\n")
 	var filteredLines []string
@@ -86,7 +86,7 @@ func (v *InputValidator) SanitizeString(s string) string {
 			filteredLines = append(filteredLines, trimmed)
 		}
 	}
-	
+
 	return strings.Join(filteredLines, "\n")
 }
 
@@ -120,7 +120,7 @@ func (v *InputValidator) checkSuspiciousContent(data string) error {
 			asciiCount++
 		}
 	}
-	
+
 	if totalCount > 100 { // 只对足够长的输入进行检查
 		asciiRatio := float64(asciiCount) / float64(totalCount)
 		if asciiRatio < 0.7 { // 如果ASCII字符少于70%，可能是二进制数据或损坏数据
@@ -134,9 +134,9 @@ func (v *InputValidator) checkSuspiciousContent(data string) error {
 // ExtractProtocolHints 从数据中提取协议提示信息
 func (v *InputValidator) ExtractProtocolHints(data string) []string {
 	var hints []string
-	
-	protocols := []string{"vmess://", "vless://", "trojan://", "ss://", "hysteria2://", "hy2://"}
-	
+
+	protocols := []string{"vmess://", "vless://", "trojan://", "ss://", "hysteria2://", "hy2://", "anytls://"}
+
 	for _, protocol := range protocols {
 		if strings.Contains(data, protocol) {
 			protocolName := strings.TrimSuffix(protocol, "://")
@@ -148,6 +148,6 @@ func (v *InputValidator) ExtractProtocolHints(data string) []string {
 			hints = append(hints, protocolName)
 		}
 	}
-	
+
 	return hints
 }

@@ -36,37 +36,37 @@ func DetectFormatWithHint(raw []byte, mediaTypeHint string) string {
 	}
 
 	data := validator.SanitizeString(string(raw))
-	
+
 	// 根据mediaTypeHint进行快速检测
 	if mediaTypeHint != "" {
 		if quickFormat := detectWithHint(data, mediaTypeHint); quickFormat != "" {
 			return quickFormat
 		}
 	}
-	
+
 	// Try to decode base64 if it looks like base64 data
 	if isLikelyBase64(data) {
 		if decoded, err := util.DecodeBase64(data); err == nil {
 			data = validator.SanitizeString(string(decoded))
 		}
 	}
-	
+
 	// 提取协议提示进行优化
 	protocolHints := validator.ExtractProtocolHints(data)
 	if len(protocolHints) == 1 {
 		// 如果只检测到一种协议，直接返回
 		return protocolHints[0]
 	}
-	
+
 	lines := strings.Split(data, "\n")
 	var protocols []string
-	
+
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
 		}
-		
+
 		if strings.HasPrefix(line, "vmess://") {
 			protocols = append(protocols, "vmess")
 		} else if strings.HasPrefix(line, "vless://") {
@@ -75,26 +75,28 @@ func DetectFormatWithHint(raw []byte, mediaTypeHint string) string {
 			protocols = append(protocols, "trojan")
 		} else if strings.HasPrefix(line, "hysteria2://") || strings.HasPrefix(line, "hy2://") {
 			protocols = append(protocols, "hysteria2")
+		} else if strings.HasPrefix(line, "anytls://") {
+			protocols = append(protocols, "anytls")
 		} else if strings.HasPrefix(line, "ss://") {
 			protocols = append(protocols, "shadowsocks")
 		}
 	}
-	
+
 	if len(protocols) == 0 {
 		return "unknown"
 	}
-	
+
 	if len(protocols) == 1 {
 		return protocols[0]
 	}
-	
+
 	firstProtocol := protocols[0]
 	for _, protocol := range protocols[1:] {
 		if protocol != firstProtocol {
 			return "mixed"
 		}
 	}
-	
+
 	return firstProtocol
 }
 
@@ -124,13 +126,13 @@ func isLikelyBase64(data string) bool {
 	if strings.Contains(data, "://") {
 		return false
 	}
-	
+
 	// Base64 data should not contain spaces or newlines (except at the end)
 	trimmed := strings.TrimSpace(data)
 	if strings.Contains(trimmed, " ") {
 		return false
 	}
-	
+
 	// Should be mostly base64 characters (A-Z, a-z, 0-9, +, /, =)
 	base64Chars := 0
 	for _, r := range trimmed {
@@ -138,7 +140,7 @@ func isLikelyBase64(data string) bool {
 			base64Chars++
 		}
 	}
-	
+
 	// If more than 90% are base64 characters, likely base64
 	return float64(base64Chars)/float64(len(trimmed)) > 0.9
 }

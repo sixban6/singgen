@@ -13,19 +13,22 @@ import (
 )
 
 type Outbound struct {
-	Type       string         `json:"type"`
-	Tag        string         `json:"tag"`
-	Server     string         `json:"server"`
-	ServerPort uint16         `json:"server_port"`
-	UUID       string         `json:"uuid,omitempty"`
-	Password   string         `json:"password,omitempty"`
-	Method     string         `json:"method,omitempty"`
-	Flow       string         `json:"flow,omitempty"`
-	UpMbps     int            `json:"up_mbps,omitempty"`
-	DownMbps   int            `json:"down_mbps,omitempty"`
-	Transport  map[string]any `json:"transport,omitempty"`
-	TLS        map[string]any `json:"tls,omitempty"`
-	Multiplex  map[string]any `json:"multiplex,omitempty"`
+	Type                     string         `json:"type"`
+	Tag                      string         `json:"tag"`
+	Server                   string         `json:"server"`
+	ServerPort               uint16         `json:"server_port"`
+	UUID                     string         `json:"uuid,omitempty"`
+	Password                 string         `json:"password,omitempty"`
+	Method                   string         `json:"method,omitempty"`
+	Flow                     string         `json:"flow,omitempty"`
+	UpMbps                   int            `json:"up_mbps,omitempty"`
+	DownMbps                 int            `json:"down_mbps,omitempty"`
+	IdleSessionCheckInterval string         `json:"idle_session_check_interval,omitempty"`
+	IdleSessionTimeout       string         `json:"idle_session_timeout,omitempty"`
+	MinIdleSession           int            `json:"min_idle_session,omitempty"`
+	Transport                map[string]any `json:"transport,omitempty"`
+	TLS                      map[string]any `json:"tls,omitempty"`
+	Multiplex                map[string]any `json:"multiplex,omitempty"`
 }
 
 func NewDefaultBlockOutound() Outbound {
@@ -226,6 +229,8 @@ func (t *SingBoxTransformer) transformNode(node model.Node) (*Outbound, error) {
 		return t.transformTrojan(node, outbound)
 	case constant.ProtocolHysteria2:
 		return t.transformHysteria2(node, outbound)
+	case constant.ProtocolAnyTLS:
+		return t.transformAnyTLS(node, outbound)
 	case constant.ProtocolSS:
 		return t.transformShadowsocks(node, outbound)
 	default:
@@ -393,6 +398,32 @@ func (t *SingBoxTransformer) transformHysteria2(node model.Node, outbound *Outbo
 	}
 	if downMbps, ok := node.Extra["down_mbps"]; ok {
 		outbound.DownMbps = toInt(downMbps)
+	}
+
+	return outbound, nil
+}
+
+func (t *SingBoxTransformer) transformAnyTLS(node model.Node, outbound *Outbound) (*Outbound, error) {
+	outbound.Type = "anytls"
+	outbound.Password = node.Password
+
+	outbound.TLS = map[string]any{
+		"enabled":     true,
+		"insecure":    node.Security.SkipVerify,
+		"server_name": node.Security.ServerName,
+	}
+	if len(node.Security.ALPN) > 0 {
+		outbound.TLS["alpn"] = node.Security.ALPN
+	}
+
+	if interval, ok := node.Extra["idle_session_check_interval"].(string); ok && interval != "" {
+		outbound.IdleSessionCheckInterval = interval
+	}
+	if timeout, ok := node.Extra["idle_session_timeout"].(string); ok && timeout != "" {
+		outbound.IdleSessionTimeout = timeout
+	}
+	if minIdleSession, ok := node.Extra["min_idle_session"]; ok {
+		outbound.MinIdleSession = toInt(minIdleSession)
 	}
 
 	return outbound, nil

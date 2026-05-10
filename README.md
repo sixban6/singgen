@@ -78,6 +78,11 @@ trojan://password@server:port?type=ws&host=example.com&path=/path#name
 hysteria2://password@server:port#name
 ```
 
+### AnyTLS
+```
+anytls://password@server:port/?sni=example.com#name
+```
+
 ### Shadowsocks
 ```
 ss://method:password@server:port#name

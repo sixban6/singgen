@@ -133,6 +133,7 @@
 //   - VLESS (vless://)
 //   - Trojan (trojan://)
 //   - Hysteria2 (hysteria2://, hy2://)
+//   - AnyTLS (anytls://)
 //   - Shadowsocks (ss://)
 //   - Mixed subscriptions with multiple protocols
 //

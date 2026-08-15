@@ -18,11 +18,12 @@ dns:
     - {clash_mode: Direct, server: dns_local, client_subnet: 223.5.5.5/24}
     - {clash_mode: Global, server: dns_proxy}
     - {domain_suffix: [ts.net],server: dns_tailscale}
+    - {domain_suffix: [htsc.com.cn, htsc.com, zhangle.com, htzq.com.cn, htfc.com, 10jqka.com.cn, thsi.cn, eastmoney.com, dfcfw.com], server: dns_local, client_subnet: 223.5.5.5/24}
     - {rule_set: geosite-cn, server: dns_local, client_subnet: 223.5.5.5/24}
-    - {domain_suffix: [ tradingview.com ], server: DNS}
+    - {domain_suffix: [ tradingview.com ], server: dns_proxy}
     - {rule_set: geosite-geolocation-!cn, server: dns_proxy}
   final: dns_proxy
-  strategy: prefer_ipv4
+  strategy: ipv4_only
   disable_cache: false
   disable_expire: false
   independent_cache: true
@@ -58,20 +59,16 @@ route:
   final: Proxy
   default_mark: 1
   rules:
+    - {action: reject, protocol: udp, port: 443 }
     - {action: sniff}
     - {action: hijack-dns, protocol: dns }
     - {action: hijack-dns, port: 53 }
     - {ip_cidr: [ "100.64.0.0/10","fd7a:115c:a1e0::/48"],outbound: ts-node}
     - {ip_is_private: true, outbound: DirectConn}
     - {action: reject, rule_set: [geosite-ad1, geosite-ad2]}
+    - {action: route, rule_set: [ geosite-bank-cn ], outbound: DirectConn }
+    - {action: route, domain_suffix: [htsc.com.cn, htsc.com, zhangle.com, htzq.com.cn, htfc.com, 10jqka.com.cn, thsi.cn, eastmoney.com, dfcfw.com], outbound: DirectConn}
     - {action: route, rule_set: geosite-steam, outbound: Steam}
-    - {action: route, rule_set: geosite-epic, outbound: Epic}
-    - {action: route, rule_set: geosite-playstation, outbound: PlayStation}
-    - {action: route, rule_set: geosite-xbox, outbound: Xbox}
-    - {action: route, rule_set: geosite-disney, outbound: Disney+}
-    - {action: route, rule_set: geosite-hbo, outbound: HBO}
-    - {action: route, rule_set: geosite-primevideo, outbound: PrimeVideo}
-    - {action: route, rule_set: geosite-spotify, outbound: Spotify}
     - {action: route, rule_set: geosite-tiktok, outbound: TikTok}
     - {action: route, rule_set: geosite-x, outbound: X }
     - {action: route, protocol: ssh, outbound: DirectConn}
@@ -95,7 +92,7 @@ route:
     - {action: route, rule_set: geosite-ctrip, outbound: DirectConn }
     - {action: route, rule_set: geosite-tencent, outbound: DirectConn }
     - {action: route, rule_set: geosite-ctm_cn, outbound: DirectConn}
-    - {action: route, rule_set: geosite-chat, domain_suffix: [grok.com], outbound: OpenAI}
+    - {action: route, rule_set: geosite-chat, domain_suffix: [grok.com, z.ai], outbound: OpenAI}
     - {action: route, rule_set: geosite-youtube, outbound: YouTube}
     - {action: route, rule_set: [geosite-github, geosite-sourcehut], outbound: Github}
     - {action: route, rule_set: [geosite-google, geoip-google], outbound: Google}
@@ -107,6 +104,7 @@ route:
     - {action: route, rule_set: geosite-geolocation-!cn, outbound: Proxy}
     - {action: route, rule_set: [geosite-cn, geoip-cn], outbound: DirectConn}
   rule_set:
+    - {tag: geosite-bank-cn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-bank-cn.srs" }
     - {tag: geosite-ad1, type: remote, format: binary, url: "{mirror_url}/https://github.com/Toperlock/sing-box-geosite/raw/main/rule/adservers.srs", download_detour: DirectConn}
     - {tag: geosite-ad2, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/privacy-protection-tools/anti-ad.github.io/master/docs/anti-ad-sing-box.srs", download_detour: DirectConn}
     - {tag: geosite-ctm_cn, type: remote, format: binary, url: "{mirror_url}/https://github.com/sixban6/rulesets/raw/refs/heads/main/rule/direct_cn.srs", download_detour: DirectConn}

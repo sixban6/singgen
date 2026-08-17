@@ -1,0 +1,190 @@
+log:
+  disabled: false
+  level: info
+  timestamp: true
+
+experimental:
+  clash_api:
+    external_controller: 192.168.31.1:9090
+    external_ui: /etc/sing-box/ui
+    secret: ""
+    external_ui_download_detour: DirectConn
+    default_mode: rule
+    external_ui_download_url: "{mirror_url}/https://github.com/MetaCubeX/metacubexd/archive/gh-pages.zip"
+
+dns:
+  servers:
+    - tag: dns_local
+      type: udp
+      server: 114.114.114.114
+      client_subnet: 223.5.5.5/24
+    - tag: dns_proxy
+      type: https
+      server: 8.8.8.8
+      detour: DNS
+    - tag: dns_tailscale
+      type: tailscale
+      endpoint: ts-node
+    - tag: fakeip
+      type: fakeip
+      inet4_range: 198.18.0.0/15
+      inet6_range: fc00::/18
+  rules:
+    - clash_mode: Direct
+      server: dns_local
+    - clash_mode: Global
+      server: dns_proxy
+    - domain_suffix: [ts.net]
+      server: dns_tailscale
+    - domain_suffix: [htsc.com.cn, htsc.com, zhangle.com, htzq.com.cn, htfc.com, 10jqka.com.cn, thsi.cn, eastmoney.com, dfcfw.com]
+      server: dns_local
+    - rule_set: geosite-cn
+      server: dns_local
+    - domain_suffix: [tradingview.com]
+      server: dns_proxy
+    - rule_set: geosite-geolocation-!cn
+      server: dns_proxy
+  final: dns_proxy
+  strategy: ipv4_only
+  disable_cache: false
+  disable_expire: false
+  independent_cache: true
+
+inbounds:
+  - type: tproxy
+    tag: tproxy-in
+    listen: "::"
+    listen_port: 7895
+    udp_timeout: 1m
+
+outbounds:
+  - {tag: Test, type: selector, outbounds: [AAA]}
+  - {tag: DIY-Node, type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["sec_"]}]}
+  - {tag: Proxy, type: selector, outbounds: [DIY-Node, DirectConn, Auto, Select], interrupt_exist_connections: true}
+  - {tag: DNS, type: selector, outbounds: [DIY-Node, Proxy], interrupt_exist_connections: true}
+  - {tag: YouTube, type: selector, outbounds: [DIY-Node, Proxy], interrupt_exist_connections: true}
+  - {tag: OpenAI, type: selector, outbounds: [DIY-Node, Proxy], interrupt_exist_connections: true}
+  - {tag: Google, type: selector, outbounds: [DIY-Node, Proxy], interrupt_exist_connections: true}
+  - {tag: Github, type: selector, outbounds: [DIY-Node, Proxy, DirectConn], interrupt_exist_connections: true}
+  - {tag: Telegram, type: selector, outbounds: [DIY-Node, Proxy], interrupt_exist_connections: true}
+  - {tag: Microsoft, type: selector, outbounds: [DirectConn, DIY-Node, Proxy], interrupt_exist_connections: true}
+  - {tag: Apple, type: selector, outbounds: [DirectConn, DIY-Node, Proxy], interrupt_exist_connections: true}
+  - {tag: Paypal, type: selector, outbounds: [DIY-Node, Proxy], interrupt_exist_connections: true}
+  - {tag: Netflix, type: selector, outbounds: [DIY-Node, Proxy], interrupt_exist_connections: true}
+  - {tag: TikTok, type: selector, outbounds: [DIY-Node, Proxy]}
+  - {tag: Steam, type: selector, outbounds: [DIY-Node, Proxy]}
+  - {tag: X, type: selector, outbounds: [DIY-Node, Proxy, DirectConn]}
+  - {tag: Porn, type: selector, outbounds: [DIY-Node, Proxy]}
+  - {tag: BTC, type: selector, outbounds: [DIY-Node, Auto, Select]}
+  - {tag: HoK, type: selector, outbounds: [DIY-Node, Auto, Select], interrupt_exist_connections: true}
+  - {tag: Select, type: selector, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]}]}
+  - {tag: Auto, type: urltest, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]}], url: https://captive.apple.com/hotspot-detect.html, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
+  - {tag: DirectConn, type: direct}
+
+route:
+  cache_file:
+    enabled: true
+    path: /etc/sing-box/cache.db
+    store_fakeip: true
+  default_domain_resolver: dns_local
+  auto_detect_interface: true
+  final: Proxy
+  default_mark: 1
+  rules:
+    - {action: reject, protocol: udp, port: 443}
+    - {action: sniff}
+    - {action: hijack-dns, protocol: dns}
+    - {action: hijack-dns, port: 53}
+    - {ip_cidr: ["100.64.0.0/10", "fd7a:115c:a1e0::/48"], outbound: ts-node}
+    - {ip_is_private: true, outbound: DirectConn}
+    - {action: reject, rule_set: [geosite-ad1, geosite-ad2]}
+    - {action: route, rule_set: [geosite-bank-cn], outbound: DirectConn}
+    - {action: route, domain_suffix: [htsham.com, htsc.com.cn, htsc.com, zhangle.com, htzq.com.cn, htfc.com, 10jqka.com.cn, thsi.cn, eastmoney.com, dfcfw.com], outbound: DirectConn}
+    - {action: route, rule_set: geosite-steam, outbound: Steam}
+    - {action: route, rule_set: geosite-tiktok, outbound: TikTok}
+    - {action: route, rule_set: geosite-x, outbound: X}
+    - {action: route, protocol: ssh, outbound: DirectConn}
+    - {action: route, protocol: bittorrent, outbound: DirectConn}
+    - {action: route, clash_mode: direct, outbound: DirectConn}
+    - {action: route, clash_mode: global, outbound: Proxy}
+    - {action: route, rule_set: geosite-hok, outbound: HoK}
+    - {action: route, domain: [clash.razord.top, yacd.metacubex.one, yacd.haishan.me, d.metacubex.one], outbound: DirectConn}
+    - {action: route, domain_suffix: [tradingview.com], outbound: DNS}
+    - {action: route, domain_suffix: [z-lib.gs, follow.is, folo.is], outbound: Proxy}
+    - {action: route, rule_set: geosite-cryptocurrency, outbound: BTC}
+    - {action: route, rule_set: geosite-porn, outbound: Porn}
+    - {action: route, rule_set: geosite-private, outbound: DirectConn}
+    - {action: route, rule_set: geosite-jd, outbound: DirectConn}
+    - {action: route, rule_set: geosite-ali, outbound: DirectConn}
+    - {action: route, rule_set: geosite-baidu, outbound: DirectConn}
+    - {action: route, rule_set: geosite-bytedance, outbound: DirectConn}
+    - {action: route, rule_set: geosite-pdd, outbound: DirectConn}
+    - {action: route, rule_set: geosite-bili, outbound: DirectConn}
+    - {action: route, rule_set: geosite-meituan, outbound: DirectConn}
+    - {action: route, rule_set: geosite-ctrip, outbound: DirectConn}
+    - {action: route, rule_set: geosite-tencent, outbound: DirectConn}
+    - {action: route, rule_set: geosite-ctm_cn, outbound: DirectConn}
+    - {action: route, rule_set: geosite-chat, outbound: OpenAI}
+    - {action: route, domain_suffix: [grok.com, z.ai], outbound: OpenAI}
+    - {action: route, rule_set: geosite-youtube, outbound: YouTube}
+    - {action: route, rule_set: [geosite-github, geosite-sourcehut], outbound: Github}
+    - {action: route, rule_set: [geosite-google, geoip-google], outbound: Google}
+    - {action: route, rule_set: [geosite-telegram, geoip-telegram], outbound: Telegram}
+    - {action: route, rule_set: [geosite-apple, geoip-apple], outbound: Apple}
+    - {action: route, rule_set: geosite-microsoft, outbound: Microsoft}
+    - {action: route, rule_set: geosite-paypal, outbound: Paypal}
+    - {action: route, rule_set: geosite-netflix, outbound: Netflix}
+    - {action: route, rule_set: geosite-geolocation-!cn, outbound: Proxy}
+    - {action: route, rule_set: [geosite-cn, geoip-cn], outbound: DirectConn}
+
+  rule_set:
+    - {tag: geosite-bank-cn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-bank-cn.srs", download_detour: DirectConn}
+    - {tag: geosite-ad1, type: remote, format: binary, url: "{mirror_url}/https://github.com/Toperlock/sing-box-geosite/raw/main/rule/adservers.srs", download_detour: DirectConn}
+    - {tag: geosite-ad2, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/privacy-protection-tools/anti-ad.github.io/master/docs/anti-ad-sing-box.srs", download_detour: DirectConn}
+    - {tag: geosite-ctm_cn, type: remote, format: binary, url: "{mirror_url}/https://github.com/sixban6/rulesets/raw/refs/heads/main/rule/direct_cn.srs", download_detour: DirectConn}
+    - {tag: geosite-chat, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-ai-chat-!cn.srs", download_detour: DirectConn}
+    - {tag: geosite-steam, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/steam.srs", download_detour: DirectConn}
+    - {tag: geosite-youtube, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/youtube.srs", download_detour: DirectConn}
+    - {tag: geosite-google, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/google.srs", download_detour: DirectConn}
+    - {tag: geosite-github, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/github.srs", download_detour: DirectConn}
+    - {tag: geosite-telegram, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/telegram.srs", download_detour: DirectConn}
+    - {tag: geosite-tiktok, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/tiktok.srs", download_detour: DirectConn}
+    - {tag: geosite-netflix, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/netflix.srs", download_detour: DirectConn}
+    - {tag: geosite-apple, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/apple.srs", download_detour: DirectConn}
+    - {tag: geosite-microsoft, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/microsoft.srs", download_detour: DirectConn}
+    - {tag: geosite-geolocation-!cn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/geolocation-!cn.srs", download_detour: DirectConn}
+    - {tag: geosite-cn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/cn.srs", download_detour: DirectConn}
+    - {tag: geosite-private, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/private.srs", download_detour: DirectConn}
+    - {tag: geoip-google, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/google.srs", download_detour: DirectConn}
+    - {tag: geoip-telegram, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/telegram.srs", download_detour: DirectConn}
+    - {tag: geoip-apple, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo-lite/geoip/apple.srs", download_detour: DirectConn}
+    - {tag: geoip-cn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/cn.srs", download_detour: DirectConn}
+    - {tag: geosite-paypal, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/paypal.srs", download_detour: DirectConn}
+    - {tag: geosite-hok, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/sixban6/rulesets/refs/heads/main/rule/hok.srs", download_detour: DirectConn}
+    - {tag: geosite-cryptocurrency, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-cryptocurrency.srs", download_detour: DirectConn}
+    - {tag: geosite-jd, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/jd.srs", download_detour: DirectConn}
+    - {tag: geosite-ali, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/alibaba.srs", download_detour: DirectConn}
+    - {tag: geosite-baidu, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/baidu.srs", download_detour: DirectConn}
+    - {tag: geosite-bytedance, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/bytedance.srs", download_detour: DirectConn}
+    - {tag: geosite-pdd, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/pinduoduo.srs", download_detour: DirectConn}
+    - {tag: geosite-bili, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/bilibili.srs", download_detour: DirectConn}
+    - {tag: geosite-meituan, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/meituan.srs", download_detour: DirectConn}
+    - {tag: geosite-ctrip, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/ctrip.srs", download_detour: DirectConn}
+    - {tag: geosite-tencent, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/tencent.srs", download_detour: DirectConn}
+    - {tag: geosite-porn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-porn.srs", download_detour: DirectConn}
+    - {tag: geosite-sourcehut, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/sourcehut.srs", download_detour: DirectConn}
+    - {tag: geosite-x, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/x.srs", download_detour: DirectConn}
+
+certificate:
+  store: mozilla
+
+endpoints:
+  - type: tailscale
+    tag: ts-node
+    auth_key: ts_auth_key
+    directory: /var/lib/sing-box/ts
+    ephemeral: false
+    system_interface: false
+    system_interface_name: ""
+    accept_routes: true
+    advertise_routes: [ts_lan_ipcidr]

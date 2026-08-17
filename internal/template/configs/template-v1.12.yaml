@@ -67,7 +67,7 @@ route:
     - {ip_is_private: true, outbound: DirectConn}
     - {action: reject, rule_set: [geosite-ad1, geosite-ad2]}
     - {action: route, rule_set: [ geosite-bank-cn ], outbound: DirectConn }
-    - {action: route, domain_suffix: [htsc.com.cn, htsc.com, zhangle.com, htzq.com.cn, htfc.com, 10jqka.com.cn, thsi.cn, eastmoney.com, dfcfw.com], outbound: DirectConn}
+    - {action: route, domain_suffix: [htsham.com, htsc.com.cn, htsc.com, zhangle.com, htzq.com.cn, htfc.com, 10jqka.com.cn, thsi.cn, eastmoney.com, dfcfw.com], outbound: DirectConn}
     - {action: route, rule_set: geosite-steam, outbound: Steam}
     - {action: route, rule_set: geosite-tiktok, outbound: TikTok}
     - {action: route, rule_set: geosite-x, outbound: X }

@@ -1,7 +1,14 @@
-log:
-  disabled: false
-  level: info
-  timestamp: true
+# sing-box v1.14.0 模板
+# 相对 v1.12 的适配点：
+# 1. experimental.cache_file 新增 store_dns（持久化 DNS 缓存，替代已弃用的 store_rdrc）
+# 2. dns.independent_cache 已弃用（1.16 移除）→ 迁移到 dns.optimistic 乐观缓存
+# 3. remote rule-set 的 download_detour 已弃用（1.16 移除）→ 顶层 http_clients + route.default_http_client
+# 4. 新增顶层 services: api 服务 + 官方 Dashboard（gRPC，配合 dash.sing-box.app 或本机托管面板）
+# 5. DNS server 不再支持 server 级 client_subnet，client_subnet 保持在 DNS 规则的 route 动作上
+# 6. tailscale endpoint 的 directory 字段更名为 state_directory
+# 7. {action: sniff} 在 1.14 自动获得 pre-match 阶段 UDP 首包嗅探，无需改动
+
+log: {disabled: false, level: info, timestamp: true}
 
 experimental:
   clash_api:
@@ -11,51 +18,54 @@ experimental:
     external_ui_download_detour: DirectConn
     default_mode: rule
     external_ui_download_url: "{mirror_url}/https://github.com/MetaCubeX/metacubexd/archive/gh-pages.zip"
+  cache_file:
+    enabled: true
+    path: /etc/sing-box/cache.db
+    store_fakeip: true
+    store_dns: true
+
+# 1.14: 统一 HTTP 客户端，供远程规则集 / Dashboard 下载引用，替代各组件的 download_detour
+http_clients:
+  - {tag: hc-direct, detour: DirectConn}
+
+# 1.14: 原生 gRPC API 服务，可被官方 Dashboard / 图形客户端远程控制
+services:
+  - type: api
+    tag: api-in
+    listen: 192.168.31.1
+    listen_port: 9091
+    secret: ""
+    access_control_allow_private_network: true
+    dashboard:
+      enabled: true
+      path: /etc/sing-box/dashboard
+      download_url: "{mirror_url}/https://github.com/sing-box/sing-box-dashboard/archive/refs/heads/gh-pages.zip"
+      http_client: hc-direct
+      update_interval: 1d
 
 dns:
   servers:
-    - tag: dns_local
-      type: udp
-      server: 114.114.114.114
-      client_subnet: 223.5.5.5/24
-    - tag: dns_proxy
-      type: https
-      server: 8.8.8.8
-      detour: DNS
-    - tag: dns_tailscale
-      type: tailscale
-      endpoint: ts-node
-    - tag: fakeip
-      type: fakeip
-      inet4_range: 198.18.0.0/15
-      inet6_range: fc00::/18
+    - {tag: dns_local, type: udp, server: 114.114.114.114}
+    - {tag: dns_proxy, type: https, server: 8.8.8.8, detour: DNS}
+    - {tag: dns_tailscale, type: tailscale, endpoint: ts-node}
+    - {tag: fakeip, type: fakeip, inet4_range: 198.18.0.0/15, inet6_range: fc00::/18}
   rules:
-    - clash_mode: Direct
-      server: dns_local
-    - clash_mode: Global
-      server: dns_proxy
-    - domain_suffix: [ts.net]
-      server: dns_tailscale
-    - domain_suffix: [htsc.com.cn, htsc.com, zhangle.com, htzq.com.cn, htfc.com, 10jqka.com.cn, thsi.cn, eastmoney.com, dfcfw.com]
-      server: dns_local
-    - rule_set: geosite-cn
-      server: dns_local
-    - domain_suffix: [tradingview.com]
-      server: dns_proxy
-    - rule_set: geosite-geolocation-!cn
-      server: dns_proxy
+    - {clash_mode: Direct, server: dns_local, client_subnet: 223.5.5.5/24}
+    - {clash_mode: Global, server: dns_proxy}
+    - {domain_suffix: [ts.net], server: dns_tailscale}
+    - {domain_suffix: [htsc.com.cn, htsc.com, zhangle.com, htzq.com.cn, htfc.com, 10jqka.com.cn, thsi.cn, eastmoney.com, dfcfw.com], server: dns_local, client_subnet: 223.5.5.5/24}
+    - {rule_set: geosite-cn, server: dns_local, client_subnet: 223.5.5.5/24}
+    - {domain_suffix: [tradingview.com], server: dns_proxy}
+    - {rule_set: geosite-geolocation-!cn, server: dns_proxy}
   final: dns_proxy
   strategy: ipv4_only
   disable_cache: false
   disable_expire: false
-  independent_cache: true
+  # 1.14: 乐观缓存——过期条目立即返回旧响应并后台刷新；independent_cache 已弃用
+  optimistic: true
 
 inbounds:
-  - type: tproxy
-    tag: tproxy-in
-    listen: "::"
-    listen_port: 7895
-    udp_timeout: 1m
+  - {type: tproxy, tag: tproxy-in, listen: "::", listen_port: 7895, udp_timeout: 1m}
 
 outbounds:
   - {tag: Test, type: selector, outbounds: [AAA]}
@@ -82,10 +92,8 @@ outbounds:
   - {tag: DirectConn, type: direct}
 
 route:
-  cache_file:
-    enabled: true
-    path: /etc/sing-box/cache.db
-    store_fakeip: true
+  # 1.14: 远程规则集默认走 hc-direct 下载，替代逐条 download_detour
+  default_http_client: hc-direct
   default_domain_resolver: dns_local
   auto_detect_interface: true
   final: Proxy
@@ -138,42 +146,42 @@ route:
     - {action: route, rule_set: [geosite-cn, geoip-cn], outbound: DirectConn}
 
   rule_set:
-    - {tag: geosite-bank-cn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-bank-cn.srs", download_detour: DirectConn}
-    - {tag: geosite-ad1, type: remote, format: binary, url: "{mirror_url}/https://github.com/Toperlock/sing-box-geosite/raw/main/rule/adservers.srs", download_detour: DirectConn}
-    - {tag: geosite-ad2, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/privacy-protection-tools/anti-ad.github.io/master/docs/anti-ad-sing-box.srs", download_detour: DirectConn}
-    - {tag: geosite-ctm_cn, type: remote, format: binary, url: "{mirror_url}/https://github.com/sixban6/rulesets/raw/refs/heads/main/rule/direct_cn.srs", download_detour: DirectConn}
-    - {tag: geosite-chat, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-ai-chat-!cn.srs", download_detour: DirectConn}
-    - {tag: geosite-steam, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/steam.srs", download_detour: DirectConn}
-    - {tag: geosite-youtube, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/youtube.srs", download_detour: DirectConn}
-    - {tag: geosite-google, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/google.srs", download_detour: DirectConn}
-    - {tag: geosite-github, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/github.srs", download_detour: DirectConn}
-    - {tag: geosite-telegram, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/telegram.srs", download_detour: DirectConn}
-    - {tag: geosite-tiktok, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/tiktok.srs", download_detour: DirectConn}
-    - {tag: geosite-netflix, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/netflix.srs", download_detour: DirectConn}
-    - {tag: geosite-apple, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/apple.srs", download_detour: DirectConn}
-    - {tag: geosite-microsoft, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/microsoft.srs", download_detour: DirectConn}
-    - {tag: geosite-geolocation-!cn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/geolocation-!cn.srs", download_detour: DirectConn}
-    - {tag: geosite-cn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/cn.srs", download_detour: DirectConn}
-    - {tag: geosite-private, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/private.srs", download_detour: DirectConn}
-    - {tag: geoip-google, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/google.srs", download_detour: DirectConn}
-    - {tag: geoip-telegram, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/telegram.srs", download_detour: DirectConn}
-    - {tag: geoip-apple, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo-lite/geoip/apple.srs", download_detour: DirectConn}
-    - {tag: geoip-cn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/cn.srs", download_detour: DirectConn}
-    - {tag: geosite-paypal, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/paypal.srs", download_detour: DirectConn}
-    - {tag: geosite-hok, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/sixban6/rulesets/refs/heads/main/rule/hok.srs", download_detour: DirectConn}
-    - {tag: geosite-cryptocurrency, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-cryptocurrency.srs", download_detour: DirectConn}
-    - {tag: geosite-jd, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/jd.srs", download_detour: DirectConn}
-    - {tag: geosite-ali, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/alibaba.srs", download_detour: DirectConn}
-    - {tag: geosite-baidu, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/baidu.srs", download_detour: DirectConn}
-    - {tag: geosite-bytedance, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/bytedance.srs", download_detour: DirectConn}
-    - {tag: geosite-pdd, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/pinduoduo.srs", download_detour: DirectConn}
-    - {tag: geosite-bili, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/bilibili.srs", download_detour: DirectConn}
-    - {tag: geosite-meituan, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/meituan.srs", download_detour: DirectConn}
-    - {tag: geosite-ctrip, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/ctrip.srs", download_detour: DirectConn}
-    - {tag: geosite-tencent, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/tencent.srs", download_detour: DirectConn}
-    - {tag: geosite-porn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-porn.srs", download_detour: DirectConn}
-    - {tag: geosite-sourcehut, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/sourcehut.srs", download_detour: DirectConn}
-    - {tag: geosite-x, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/x.srs", download_detour: DirectConn}
+    - {tag: geosite-bank-cn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-bank-cn.srs"}
+    - {tag: geosite-ad1, type: remote, format: binary, url: "{mirror_url}/https://github.com/Toperlock/sing-box-geosite/raw/main/rule/adservers.srs"}
+    - {tag: geosite-ad2, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/privacy-protection-tools/anti-ad.github.io/master/docs/anti-ad-sing-box.srs"}
+    - {tag: geosite-ctm_cn, type: remote, format: binary, url: "{mirror_url}/https://github.com/sixban6/rulesets/raw/refs/heads/main/rule/direct_cn.srs"}
+    - {tag: geosite-chat, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-ai-chat-!cn.srs"}
+    - {tag: geosite-steam, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/steam.srs"}
+    - {tag: geosite-youtube, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/youtube.srs"}
+    - {tag: geosite-google, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/google.srs"}
+    - {tag: geosite-github, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/github.srs"}
+    - {tag: geosite-telegram, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/telegram.srs"}
+    - {tag: geosite-tiktok, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/tiktok.srs"}
+    - {tag: geosite-netflix, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/netflix.srs"}
+    - {tag: geosite-apple, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/apple.srs"}
+    - {tag: geosite-microsoft, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/microsoft.srs"}
+    - {tag: geosite-geolocation-!cn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/geolocation-!cn.srs"}
+    - {tag: geosite-cn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/cn.srs"}
+    - {tag: geosite-private, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/private.srs"}
+    - {tag: geoip-google, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/google.srs"}
+    - {tag: geoip-telegram, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/telegram.srs"}
+    - {tag: geoip-apple, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo-lite/geoip/apple.srs"}
+    - {tag: geoip-cn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/cn.srs"}
+    - {tag: geosite-paypal, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/paypal.srs"}
+    - {tag: geosite-hok, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/sixban6/rulesets/refs/heads/main/rule/hok.srs"}
+    - {tag: geosite-cryptocurrency, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-cryptocurrency.srs"}
+    - {tag: geosite-jd, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/jd.srs"}
+    - {tag: geosite-ali, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/alibaba.srs"}
+    - {tag: geosite-baidu, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/baidu.srs"}
+    - {tag: geosite-bytedance, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/bytedance.srs"}
+    - {tag: geosite-pdd, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/pinduoduo.srs"}
+    - {tag: geosite-bili, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/bilibili.srs"}
+    - {tag: geosite-meituan, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/meituan.srs"}
+    - {tag: geosite-ctrip, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/ctrip.srs"}
+    - {tag: geosite-tencent, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/tencent.srs"}
+    - {tag: geosite-porn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-porn.srs"}
+    - {tag: geosite-sourcehut, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/sourcehut.srs"}
+    - {tag: geosite-x, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/x.srs"}
 
 certificate:
   store: mozilla
@@ -182,7 +190,7 @@ endpoints:
   - type: tailscale
     tag: ts-node
     auth_key: ts_auth_key
-    directory: /var/lib/sing-box/ts
+    state_directory: /var/lib/sing-box/ts
     ephemeral: false
     system_interface: false
     system_interface_name: ""

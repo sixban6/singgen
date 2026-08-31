@@ -71,12 +71,14 @@ func TestTailscaleConfigWithAuthKey(t *testing.T) {
 				t.Errorf("Expected type 'tailscale', got %v", endpoint["type"])
 			}
 
-			if endpoint["system_interface"] != true {
-				t.Errorf("Expected system_interface true, got %v", endpoint["system_interface"])
+			// 模板自带 ts-node endpoint，注入逻辑仅更新 auth_key/advertise_routes，
+			// 其余字段以模板定义为准（system_interface: false，避免依赖内核 tailscale0 接口）
+			if endpoint["system_interface"] != false {
+				t.Errorf("Expected system_interface false (template-defined), got %v", endpoint["system_interface"])
 			}
 
-			if endpoint["system_interface_name"] != "tailscale0" {
-				t.Errorf("Expected system_interface_name 'tailscale0', got %v", endpoint["system_interface_name"])
+			if name, _ := endpoint["system_interface_name"].(string); name != "" {
+				t.Errorf("Expected system_interface_name '' (template-defined), got %v", endpoint["system_interface_name"])
 			}
 
 			if endpoint["accept_routes"] != true {

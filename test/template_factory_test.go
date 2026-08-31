@@ -22,21 +22,21 @@ func TestTemplateFactory(t *testing.T) {
 	
 	// 验证包含预期版本
 	hasV112 := false
-	hasV113 := false
+	hasV114 := false
 	for _, version := range versions {
 		if version == "v1.12" {
 			hasV112 = true
 		}
-		if version == "v1.13" {
-			hasV113 = true
+		if version == "v1.14" {
+			hasV114 = true
 		}
 	}
 	
 	if !hasV112 {
 		t.Error("Expected to find v1.12 template")
 	}
-	if !hasV113 {
-		t.Error("Expected to find v1.13 template")
+	if !hasV114 {
+		t.Error("Expected to find v1.14 template")
 	}
 }
 
@@ -53,13 +53,13 @@ func TestCreateTemplate(t *testing.T) {
 		t.Error("Expected non-nil template")
 	}
 	
-	// 测试创建 v1.13 模板
-	tmpl113, err := factory.CreateTemplate("v1.13")
+	// 测试创建 v1.14 模板
+	tmpl114, err := factory.CreateTemplate("v1.14")
 	if err != nil {
-		t.Errorf("Failed to create v1.13 template: %v", err)
+		t.Errorf("Failed to create v1.14 template: %v", err)
 	}
 	
-	if tmpl113 == nil {
+	if tmpl114 == nil {
 		t.Error("Expected non-nil template")
 	}
 	
@@ -141,7 +141,7 @@ func TestMirrorURLReplacement(t *testing.T) {
 	experimental := config.Experimental
 	if clashAPI, ok := experimental["clash_api"].(map[string]any); ok {
 		if downloadURL, ok := clashAPI["external_ui_download_url"].(string); ok {
-			expected := mirrorURL + "/https://github.com/MetaCubeX/Yacd-meta/archive/gh-pages.zip"
+			expected := mirrorURL + "/https://github.com/MetaCubeX/metacubexd/archive/gh-pages.zip"
 			if downloadURL != expected {
 				t.Errorf("Mirror URL replacement failed. Expected %s, got %s", expected, downloadURL)
 			}

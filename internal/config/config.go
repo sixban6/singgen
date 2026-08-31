@@ -10,6 +10,9 @@ type Config struct {
 	Route        map[string]any   `json:"route"`
 	Certificate  map[string]any   `json:"certificate,omitempty"`
 	Endpoints    []map[string]any `json:"endpoints,omitempty"`
+	// sing-box 1.14+: 顶层 services（api 等）与 http_clients
+	Services    []map[string]any `json:"services,omitempty"`
+	HTTPClients []map[string]any `json:"http_clients,omitempty"`
 }
 
 // TemplateOptions 模板选项

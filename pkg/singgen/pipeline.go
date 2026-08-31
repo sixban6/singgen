@@ -135,6 +135,8 @@ func (p *Pipeline) Execute(ctx context.Context, source string) (*PipelineResult,
 		RemoveEmoji:        p.options.RemoveEmoji,
 		DNSLocalServer:     p.options.DNSLocalServer,
 		Platform:           p.options.Platform,
+		TSAuthKey:          p.options.TSAuthKey,
+		TSLanIPCIDR:        p.options.TSLanIPCIDR,
 	}
 	
 	cfg := p.template.InjectWithOptions(outbounds, templateOptions)

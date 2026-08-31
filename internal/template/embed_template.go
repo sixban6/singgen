@@ -86,6 +86,9 @@ func (t *EmbedTemplate) InjectWithOptions(outbounds []transformer.Outbound, opti
 		Route:        t.convertToMap(configData["route"]),
 		Certificate:  t.convertToMap(configData["certificate"]),
 		Endpoints:    t.convertToMapArray(configData["endpoints"]),
+		// sing-box 1.14+: 顶层 services 与 http_clients
+		Services:    t.convertToMapArray(configData["services"]),
+		HTTPClients: t.convertToMapArray(configData["http_clients"]),
 	}
 
 	// 应用平台适配（使用嵌入的平台配置）
@@ -264,10 +267,12 @@ func (t *EmbedTemplate) injectExternalController(config map[string]any, external
 	clashAPI["external_controller"] = externalController
 }
 
+// injectClientSubnet 注入客户端子网配置
 func (t *EmbedTemplate) injectClientSubnet(config map[string]any, clientSubnet string) {
 	// Use walkAndReplace to replace all client_subnet occurrences
 	t.walkAndReplace(config, func(s string) string {
-		if s == "223.5.5.5/32" { // Replace the default client subnet
+		// 模板中的默认 client_subnet 字面量（/32 旧写法与 /24 新写法）都需替换
+		if s == "223.5.5.5/32" || s == "223.5.5.5/24" { // Replace the default client subnet
 			return clientSubnet
 		}
 		return s

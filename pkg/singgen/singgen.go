@@ -191,6 +191,8 @@ func (g *Generator) Generate(ctx context.Context, source string) (*Config, error
 		RemoveEmoji:        g.options.RemoveEmoji,
 		DNSLocalServer:     g.options.DNSLocalServer,
 		Platform:           g.options.Platform,
+		TSAuthKey:          g.options.TSAuthKey,
+		TSLanIPCIDR:        g.options.TSLanIPCIDR,
 	}
 
 	cfg := tmpl.InjectWithOptions(outbounds, templateOptions)

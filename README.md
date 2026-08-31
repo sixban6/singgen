@@ -8,7 +8,7 @@ SingGen 是一个用于生成 sing-box 配置文件的工具，支持从各种�
 - 🔧 支持多种协议：VMess, VLESS, Trojan, Hysteria2, Shadowsocks
 - 📄 支持多种输出格式：JSON, YAML
 - 🌐 支持订阅链接和本地文件
-- 🎯 多版本 sing-box 配置模板 (v1.11, v1.12+)
+- 🎯 多版本 sing-box 配置模板 (v1.12, v1.14+)
 - 🔄 模板系统支持热更新和扩展
 - 🚀 高性能模块化设计
 - 🧪 完整的测试覆盖
@@ -49,7 +49,7 @@ SingGen 是一个用于生成 sing-box 配置文件的工具，支持从各种�
 - `-url`: 订阅URL或文件路径（必需）
 - `-out`: 输出文件路径（默认: config.json）
 - `-format`: 输出格式 json/yaml（默认: json）
-- `-template`: 模板版本 v1.12/v1.13等（默认: v1.12）
+- `-template`: 模板版本 v1.12/v1.14（默认: v1.12）
 - `-mirror`: 规则集下载镜像URL
 - `-log`: 日志级别 debug/info/warn/error（默认: warn）
 - `--list-templates`: 列出可用的模板版本

@@ -104,7 +104,7 @@ func TestTailscaleConfigGeneration(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, cfg)
 
-		// 验证 endpoints 已被删除
+		// 验证 endpoints 已被删除（唯一 endpoint 被移除后 Endpoints 为空是预期结果）
 		if cfg.Endpoints != nil && len(cfg.Endpoints) > 0 {
 			var found bool
 			for _, ep := range cfg.Endpoints {
@@ -114,8 +114,6 @@ func TestTailscaleConfigGeneration(t *testing.T) {
 				}
 			}
 			assert.False(t, found, "Expected ts-node endpoint to be removed")
-		} else {
-			t.Fatal("Expected endpoints to exist")
 		}
 
 		// 验证 DNS servers 中没有 dns_tailscale
@@ -177,7 +175,7 @@ func TestTailscaleConfigGeneration(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, cfg)
 
-		// 验证 endpoints 已被删除
+		// 验证 endpoints 已被删除（唯一 endpoint 被移除后 Endpoints 为空是预期结果）
 		if cfg.Endpoints != nil && len(cfg.Endpoints) > 0 {
 			var found bool
 			for _, ep := range cfg.Endpoints {
@@ -187,8 +185,6 @@ func TestTailscaleConfigGeneration(t *testing.T) {
 				}
 			}
 			assert.False(t, found, "Expected ts-node endpoint to be removed")
-		} else {
-			t.Fatal("Expected endpoints to exist")
 		}
 
 		// 验证 DNS servers 中没有 dns_tailscale

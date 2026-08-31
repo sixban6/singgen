@@ -33,7 +33,7 @@ func main() {
 		// Global options (can override config file)
 		mirrorURL          = flag.String("mirror", "https://ghfast.top", "mirror URL for downloading rule sets")
 		logLevel           = flag.String("log", "warn", "log level (debug, info, warn, error)")
-		templateVer        = flag.String("template", "v1.12", "sing-box template version (v1.12, v1.13, etc.)")
+		templateVer        = flag.String("template", "v1.12", "sing-box template version (v1.12, v1.14, etc.)")
 		externalController = flag.String("external-controller", "127.0.0.1:9095", "external controller address for Clash API")
 		clientSubnet       = flag.String("subnet", "", "client subnet for DNS queries (e.g., 202.101.170.1/24)")
 		removeEmoji        = flag.Bool("emoji", true, "remove emoji characters from node tags")

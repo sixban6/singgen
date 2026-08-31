@@ -19,7 +19,7 @@ func NewTemplateFactory() *TemplateFactory {
 
 func (f *TemplateFactory) CreateTemplate(version string) (Template, error) {
 	if version == "" {
-		version = "v1.12" // 默认版本
+		version = "v1.14" // 默认版本
 	}
 
 	templateFile := fmt.Sprintf("template-%s.yaml", version)

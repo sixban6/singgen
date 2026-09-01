@@ -219,6 +219,19 @@ func (t *EmbedTemplate) transformerOutboundToMap(outbound transformer.Outbound) 
 	if outbound.DownMbps > 0 {
 		result["down_mbps"] = outbound.DownMbps
 	}
+	// Hysteria2: obfs 混淆与端口跳跃（1.14 新增 hop_interval_max）
+	if len(outbound.Obfs) > 0 {
+		result["obfs"] = outbound.Obfs
+	}
+	if len(outbound.ServerPorts) > 0 {
+		result["server_ports"] = outbound.ServerPorts
+	}
+	if outbound.HopInterval != "" {
+		result["hop_interval"] = outbound.HopInterval
+	}
+	if outbound.HopIntervalMax != "" {
+		result["hop_interval_max"] = outbound.HopIntervalMax
+	}
 
 	return result
 }

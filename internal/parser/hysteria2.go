@@ -94,6 +94,22 @@ func (p *Hysteria2Parser) parseHysteria2URL(hysteria2URL string) (*model.Node, e
 		}
 	}
 
+	// 端口跳跃：mport 为通行约定（部分机场用 ports），值形如 20000-30000 或 443,8443
+	serverPorts := query.Get("mport")
+	if serverPorts == "" {
+		serverPorts = query.Get("ports")
+	}
+	if serverPorts != "" {
+		node.Extra["server_ports"] = normalizeHy2ServerPorts(serverPorts)
+		// 跳跃间隔，sing-box 默认 30s；hop_interval_max 为 1.14 新增（随机化跳跃间隔，更难被识别）
+		if hopInterval := query.Get("hop_interval"); hopInterval != "" {
+			node.Extra["hop_interval"] = hopInterval
+		}
+		if hopIntervalMax := query.Get("hop_interval_max"); hopIntervalMax != "" {
+			node.Extra["hop_interval_max"] = hopIntervalMax
+		}
+	}
+
 	// 解析带宽限制参数
 	if upMbps := query.Get("up_mbps"); upMbps != "" {
 		node.Extra["up_mbps"] = upMbps
@@ -112,4 +128,30 @@ func (p *Hysteria2Parser) parseHysteria2URL(hysteria2URL string) (*model.Node, e
 
 func init() {
 	Register(constant.ProtocolHysteria2, func() Parser { return &Hysteria2Parser{} })
+}
+
+// normalizeHy2ServerPorts 将订阅链接的端口跳跃表示规范化为 sing-box server_ports 格式：
+// sing-box 仅接受 "起始:结束" 范围语法，单端口需展开为 N:N：
+// "20000-30000" -> ["20000:30000"]，"443" -> ["443:443"]，
+// "443,8443,2053" -> ["443:443","8443:8443","2053:2053"]，"443,20000-30000" -> ["443:443","20000:30000"]
+func normalizeHy2ServerPorts(raw string) []string {
+	tokens := strings.Split(raw, ",")
+	result := make([]string, 0, len(tokens))
+	for _, token := range tokens {
+		token = strings.TrimSpace(token)
+		if token == "" {
+			continue
+		}
+		switch {
+		case strings.Contains(token, ":"):
+			// 已是范围语法，保持原样
+		case strings.Contains(token, "-"):
+			token = strings.ReplaceAll(token, "-", ":")
+		default:
+			// 单端口展开为 N:N 范围（sing-box 不接受裸端口）
+			token = token + ":" + token
+		}
+		result = append(result, token)
+	}
+	return result
 }

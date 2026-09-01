@@ -29,6 +29,12 @@ type Outbound struct {
 	Transport                map[string]any `json:"transport,omitempty"`
 	TLS                      map[string]any `json:"tls,omitempty"`
 	Multiplex                map[string]any `json:"multiplex,omitempty"`
+	// Hysteria2: obfs 混淆（salamander/gecko）
+	Obfs map[string]any `json:"obfs,omitempty"`
+	// Hysteria2: 端口跳跃（1.14 新增 hop_interval_max 随机化）
+	ServerPorts    []string `json:"server_ports,omitempty"`
+	HopInterval    string   `json:"hop_interval,omitempty"`
+	HopIntervalMax string   `json:"hop_interval_max,omitempty"`
 }
 
 func NewDefaultBlockOutound() Outbound {
@@ -398,6 +404,28 @@ func (t *SingBoxTransformer) transformHysteria2(node model.Node, outbound *Outbo
 	}
 	if downMbps, ok := node.Extra["down_mbps"]; ok {
 		outbound.DownMbps = toInt(downMbps)
+	}
+
+	// obfs 混淆（salamander / gecko）：服务端启用混淆时缺失会导致无法连接
+	if obfsData, ok := node.Extra["obfs"]; ok {
+		if obfsMap, ok := obfsData.(map[string]string); ok && obfsMap["type"] != "" {
+			obfs := map[string]any{"type": obfsMap["type"]}
+			if obfsMap["password"] != "" {
+				obfs["password"] = obfsMap["password"]
+			}
+			outbound.Obfs = obfs
+		}
+	}
+
+	// 端口跳跃：解析器已规范化为 sing-box 的 []string 冒号格式，1.14 新增 hop_interval_max 随机化跳跃间隔
+	if serverPorts, ok := node.Extra["server_ports"].([]string); ok && len(serverPorts) > 0 {
+		outbound.ServerPorts = serverPorts
+	}
+	if hopInterval, ok := node.Extra["hop_interval"].(string); ok && hopInterval != "" {
+		outbound.HopInterval = hopInterval
+	}
+	if hopIntervalMax, ok := node.Extra["hop_interval_max"].(string); ok && hopIntervalMax != "" {
+		outbound.HopIntervalMax = hopIntervalMax
 	}
 
 	return outbound, nil

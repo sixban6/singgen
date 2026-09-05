@@ -24,6 +24,25 @@ func (a *IOSAdapter) AdaptConfig(config *config.Config, options config.TemplateO
 	// iOS不需要default_mark，删除它
 	delete(config.Route, "default_mark")
 
+	// iOS(SFI 沙盒)剥离桌面专属的 api service:
+	// 模板的 api service 绑定桌面局域网 IP(如 listen: 192.168.31.1)供远程 Dashboard 使用,
+	// iPhone 上该 IP 不存在, bind 失败会导致 SFI 无法启动("bind: can't assign requested address");
+	// 其 dashboard 路径(/etc/sing-box/...)在 iOS 沙盒内同样无意义
+	if len(config.Services) > 0 {
+		kept := make([]map[string]any, 0, len(config.Services))
+		for _, sv := range config.Services {
+			if t, _ := sv["type"].(string); t == "api" {
+				continue
+			}
+			kept = append(kept, sv)
+		}
+		if len(kept) == 0 {
+			config.Services = nil // omitempty 移除该 key
+		} else {
+			config.Services = kept
+		}
+	}
+
 	// iOS默认使用external_controller，无需用户传入
 	experimental := config.Experimental
 	if experimental == nil {
@@ -65,10 +84,10 @@ func (a *IOSAdapter) GetInboundConfig() ([]map[string]any, error) {
 		// 如果配置文件不存在，返回默认配置
 		return []map[string]any{
 			{
-				"type":    "tun",
-				"tag":     "tun-in",
-				"address": []string{"10.8.8.8/30"},
-				"mtu":     9000,
+				"type":       "tun",
+				"tag":        "tun-in",
+				"address":    []string{"10.8.8.8/30"},
+				"mtu":        9000,
 				"auto_route": true,
 				"stack":      "system",
 				"route_exclude_address_set": []string{

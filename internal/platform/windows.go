@@ -23,6 +23,10 @@ func (a *WindowsAdapter) AdaptConfig(config *config.Config, options config.Templ
 	// Windows不需要default_mark，删除它
 	delete(config.Route, "default_mark")
 
+	// Windows 目标设备不拥有模板硬编码的部署机 IP, 剥离桌面专属 api service
+	// (详见 stripDesktopAPIServices)
+	stripDesktopAPIServices(config)
+
 	// macOS默认使用external_controller，无需用户传入
 	experimental := config.Experimental
 	if experimental == nil {

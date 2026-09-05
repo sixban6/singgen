@@ -24,6 +24,10 @@ func (a *DarwinAdapter) AdaptConfig(config *config.Config, options config.Templa
 	// macOS不需要default_mark，删除它
 	delete(config.Route, "default_mark")
 
+	// macOS(SFM 沙盒)剥离桌面专属的 api service(详见 stripDesktopAPIServices):
+	// 目标 Mac 不拥有模板硬编码的部署机 IP, bind 失败会导致 SFM 无法启动
+	stripDesktopAPIServices(config)
+
 	// macOS默认使用external_controller，无需用户传入
 	experimental := config.Experimental
 	if experimental == nil {

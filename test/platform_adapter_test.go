@@ -9,6 +9,48 @@ import (
 	"github.com/sixban6/singgen/internal/platform"
 )
 
+// TestAllClientAdaptersStripDesktopAPIService macOS/Windows/iOS 三个终端平台
+// 都必须剥离桌面专属 api service(linux 保留, 供 Dashboard 远程控制)
+func TestAllClientAdaptersStripDesktopAPIService(t *testing.T) {
+	adapters := map[string]platform.PlatformAdapter{
+		"darwin":  platform.NewDarwinAdapter(""),
+		"windows": platform.NewWindowsAdapter(""),
+		"ios":     platform.NewIOSAdapter(""),
+	}
+	for name, adapter := range adapters {
+		t.Run(name, func(t *testing.T) {
+			cfg := &config.Config{
+				Services: []map[string]any{
+					{"type": "api", "tag": "api-in", "listen": "192.168.31.1", "listen_port": 9091.0},
+				},
+			}
+			if err := adapter.AdaptConfig(cfg, config.TemplateOptions{Platform: name}); err != nil {
+				t.Fatal(err)
+			}
+			if cfg.Services != nil {
+				t.Fatalf("[%s] api service should be stripped, got: %v", name, cfg.Services)
+			}
+		})
+	}
+}
+
+// TestClientPlatformTemplatesNoHTTPProxy mac/win/ios 三个平台模板都不得启用
+// platform.http_proxy: 模板没有本地入站监听 7890, 客户端把它应用为系统代理后
+// 走系统代理的应用 HTTP 请求会全部打到死端口(linux-tproxy 无此字段)
+func TestClientPlatformTemplatesNoHTTPProxy(t *testing.T) {
+	for _, f := range []string{"ios-tun.json", "mac-tun.json", "win-tun.json"} {
+		t.Run(f, func(t *testing.T) {
+			data, err := os.ReadFile("../internal/template/configs/platform/" + f)
+			if err != nil {
+				t.Fatalf("read %s: %v", f, err)
+			}
+			if strings.Contains(string(data), "http_proxy") {
+				t.Fatalf("%s should not enable platform.http_proxy (no local inbound backs port 7890):\n%s", f, data)
+			}
+		})
+	}
+}
+
 // TestIOSAdapterStripsDesktopAPIService iOS 沙盒必须剥离桌面专属的 api service:
 // 模板 api service 绑定桌面局域网 IP(如 192.168.31.1), iPhone 上 bind 失败导致 SFI 无法启动
 func TestIOSAdapterStripsDesktopAPIService(t *testing.T) {

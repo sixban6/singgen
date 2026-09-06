@@ -39,7 +39,7 @@ services:
     dashboard:
       enabled: true
       path: /etc/sing-box/dashboard
-      download_url: "{mirror_url}/https://github.com/sing-box/sing-box-dashboard/archive/refs/heads/gh-pages.zip"
+      download_url: "{mirror_url}/https://github.com/SagerNet/sing-box-dashboard/archive/refs/heads/gh-pages.zip"
       http_client: hc-direct
       update_interval: 1d
 

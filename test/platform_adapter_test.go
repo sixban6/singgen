@@ -51,6 +51,47 @@ func TestClientPlatformTemplatesNoHTTPProxy(t *testing.T) {
 	}
 }
 
+// TestClientAdaptersUseLegacyRuleSetDownload 客户端平台(iOS/mac/win)必须把规则集
+// 下载通道切换为 legacy download_detour: sing-box 1.14.0 的 http_client 对
+// detour=空 direct 出站校验过严, 经 hc-direct 的下载会直接报错
+func TestClientAdaptersUseLegacyRuleSetDownload(t *testing.T) {
+	adapters := map[string]platform.PlatformAdapter{
+		"darwin":  platform.NewDarwinAdapter(""),
+		"windows": platform.NewWindowsAdapter(""),
+		"ios":     platform.NewIOSAdapter(""),
+	}
+	for name, adapter := range adapters {
+		t.Run(name, func(t *testing.T) {
+			cfg := &config.Config{
+				Outbounds: []map[string]any{
+					{"type": "selector", "tag": "Proxy"},
+					{"type": "direct", "tag": "DirectConn"},
+				},
+				HTTPClients: []map[string]any{{"tag": "hc-direct", "detour": "DirectConn"}},
+				Route: map[string]any{
+					"default_http_client": "hc-direct",
+					"rule_set": []map[string]any{
+						{"type": "remote", "tag": "rs1", "url": "https://x/rs1.srs"},
+					},
+				},
+			}
+			if err := adapter.AdaptConfig(cfg, config.TemplateOptions{Platform: name}); err != nil {
+				t.Fatal(err)
+			}
+			if _, has := cfg.Route["default_http_client"]; has {
+				t.Fatalf("[%s] default_http_client should be removed", name)
+			}
+			if cfg.HTTPClients != nil {
+				t.Fatalf("[%s] http_clients should be removed", name)
+			}
+			rs := cfg.Route["rule_set"].([]map[string]any)[0]
+			if rs["download_detour"] != "DirectConn" {
+				t.Fatalf("[%s] download_detour should be DirectConn, got %v", name, rs["download_detour"])
+			}
+		})
+	}
+}
+
 // TestIOSAdapterStripsDesktopAPIService iOS 沙盒必须剥离桌面专属的 api service:
 // 模板 api service 绑定桌面局域网 IP(如 192.168.31.1), iPhone 上 bind 失败导致 SFI 无法启动
 func TestIOSAdapterStripsDesktopAPIService(t *testing.T) {

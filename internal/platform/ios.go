@@ -27,6 +27,9 @@ func (a *IOSAdapter) AdaptConfig(config *config.Config, options config.TemplateO
 	// iOS(SFI 沙盒)剥离桌面专属的 api service(详见 stripDesktopAPIServices)
 	stripDesktopAPIServices(config)
 
+	// 客户端平台规则集下载切换为 legacy download_detour(绕过 1.14.0 http_client 校验 bug)
+	useLegacyRuleSetDownload(config)
+
 	// iOS默认使用external_controller，无需用户传入
 	experimental := config.Experimental
 	if experimental == nil {

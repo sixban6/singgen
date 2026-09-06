@@ -28,6 +28,9 @@ func (a *DarwinAdapter) AdaptConfig(config *config.Config, options config.Templa
 	// 目标 Mac 不拥有模板硬编码的部署机 IP, bind 失败会导致 SFM 无法启动
 	stripDesktopAPIServices(config)
 
+	// 客户端平台规则集下载切换为 legacy download_detour(绕过 1.14.0 http_client 校验 bug)
+	useLegacyRuleSetDownload(config)
+
 	// macOS默认使用external_controller，无需用户传入
 	experimental := config.Experimental
 	if experimental == nil {

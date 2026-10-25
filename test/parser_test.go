@@ -188,6 +188,89 @@ func TestAnyTLSParserDefaultPort(t *testing.T) {
 	}
 }
 
+func TestTuicParser(t *testing.T) {
+	tuicURL := `tuic://12345678-abcd-1234-5678-123456789abc:password123@example.com:8443/?sni=real.example.com&insecure=1&alpn=h3&congestion_control=bbr&udp_relay_mode=native&zero_rtt_handshake=1&heartbeat=10s#test%20node`
+
+	parser := &parser.TuicParser{}
+
+	if !parser.Accept("", []byte(tuicURL)) {
+		t.Error("TUIC parser should accept tuic URL")
+	}
+
+	nodes, err := parser.Parse([]byte(tuicURL))
+	if err != nil {
+		t.Fatalf("TUIC parser failed: %v", err)
+	}
+
+	if len(nodes) != 1 {
+		t.Fatalf("Expected 1 node, got %d", len(nodes))
+	}
+
+	node := nodes[0]
+	if node.Type != "tuic" {
+		t.Errorf("Expected type tuic, got %s", node.Type)
+	}
+	if node.UUID != "12345678-abcd-1234-5678-123456789abc" {
+		t.Errorf("Expected UUID 12345678-abcd-1234-5678-123456789abc, got %s", node.UUID)
+	}
+	if node.Password != "password123" {
+		t.Errorf("Expected password password123, got %s", node.Password)
+	}
+	if node.Port != 8443 {
+		t.Errorf("Expected port 8443, got %d", node.Port)
+	}
+	if !node.Security.TLS {
+		t.Error("Expected TLS to be true for TUIC")
+	}
+	if !node.Security.SkipVerify {
+		t.Error("Expected SkipVerify to be true")
+	}
+	if node.Security.ServerName != "real.example.com" {
+		t.Errorf("Expected SNI real.example.com, got %s", node.Security.ServerName)
+	}
+	if len(node.Security.ALPN) != 1 || node.Security.ALPN[0] != "h3" {
+		t.Errorf("Expected ALPN [h3], got %v", node.Security.ALPN)
+	}
+	if cc := node.Extra["congestion_control"]; cc != "bbr" {
+		t.Errorf("Expected congestion_control bbr, got %v", cc)
+	}
+	if udpMode := node.Extra["udp_relay_mode"]; udpMode != "native" {
+		t.Errorf("Expected udp_relay_mode native, got %v", udpMode)
+	}
+	if zeroRtt := node.Extra["zero_rtt_handshake"]; zeroRtt != true {
+		t.Errorf("Expected zero_rtt_handshake true, got %v", zeroRtt)
+	}
+	if heartbeat := node.Extra["heartbeat"]; heartbeat != "10s" {
+		t.Errorf("Expected heartbeat 10s, got %v", heartbeat)
+	}
+}
+
+func TestTuicParserDefaultPort(t *testing.T) {
+	tuicURL := `tuic://token123@example.com/?peer=real.example.com&heartbeat=5000#test%20node`
+
+	parser := &parser.TuicParser{}
+	nodes, err := parser.Parse([]byte(tuicURL))
+	if err != nil {
+		t.Fatalf("TUIC parser failed: %v", err)
+	}
+
+	if nodes[0].Port != 443 {
+		t.Errorf("Expected default port 443, got %d", nodes[0].Port)
+	}
+	if nodes[0].UUID != "token123" {
+		t.Errorf("Expected UUID token123, got %s", nodes[0].UUID)
+	}
+	if nodes[0].Password != "token123" {
+		t.Errorf("Expected Password fallback to token123, got %s", nodes[0].Password)
+	}
+	if nodes[0].Security.ServerName != "real.example.com" {
+		t.Errorf("Expected peer to map to server name, got %s", nodes[0].Security.ServerName)
+	}
+	if nodes[0].Extra["heartbeat"] != "5s" {
+		t.Errorf("Expected heartbeat 5s, got %v", nodes[0].Extra["heartbeat"])
+	}
+}
+
 func TestShadowsocksParser(t *testing.T) {
 	ssURL := `ss://YWVzLTI1Ni1nY206cGFzc3dvcmQxMjM@example.com:8388#test%20node`
 
@@ -222,7 +305,8 @@ func TestMixedParser(t *testing.T) {
 	mixedURLs := `vmess://eyJ2IjoiMiIsInBzIjoidm1lc3MgdGVzdCIsImFkZCI6ImV4YW1wbGUuY29tIiwicG9ydCI6NDQzLCJpZCI6IjEyMzQ1Njc4LWFiY2QtMTIzNC01Njc4LTEyMzQ1Njc4OWFiYyIsImFpZCI6MCwibmV0Ijoid3MiLCJob3N0IjoiZXhhbXBsZS5jb20iLCJwYXRoIjoiL3dzIiwidGxzIjoidGxzIn0=
 vless://12345678-abcd-1234-5678-123456789abc@example.com:443?type=ws&host=example.com&path=/ws&security=tls#vless%20test
 trojan://password123@example.com:443?type=ws&host=example.com&path=/ws#trojan%20test
-anytls://password123@example.com:443/?sni=example.com#anytls%20test`
+anytls://password123@example.com:443/?sni=example.com#anytls%20test
+tuic://uuid123:password123@example.com:8443/?sni=example.com#tuic%20test`
 
 	parser := &parser.MixedParser{}
 
@@ -235,11 +319,11 @@ anytls://password123@example.com:443/?sni=example.com#anytls%20test`
 		t.Errorf("Mixed parser failed: %v", err)
 	}
 
-	if len(nodes) != 4 {
-		t.Errorf("Expected 4 nodes, got %d", len(nodes))
+	if len(nodes) != 5 {
+		t.Errorf("Expected 5 nodes, got %d", len(nodes))
 	}
 
-	types := []string{"vmess", "vless", "trojan", "anytls"}
+	types := []string{"vmess", "vless", "trojan", "anytls", "tuic"}
 	for i, expectedType := range types {
 		if nodes[i].Type != expectedType {
 			t.Errorf("Expected node %d type %s, got %s", i, expectedType, nodes[i].Type)
@@ -258,6 +342,7 @@ func TestDetectFormat(t *testing.T) {
 		{"hysteria2://password@host:port", "hysteria2"},
 		{"hy2://password@host:port", "hysteria2"},
 		{"anytls://password@host:port", "anytls"},
+		{"tuic://uuid:password@host:port", "tuic"},
 		{"ss://method:password@host:port", "shadowsocks"},
 		{"vmess://xxx\nvless://yyy", "mixed"},
 		{"invalid data", "unknown"},

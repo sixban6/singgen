@@ -135,7 +135,7 @@ func (v *InputValidator) checkSuspiciousContent(data string) error {
 func (v *InputValidator) ExtractProtocolHints(data string) []string {
 	var hints []string
 
-	protocols := []string{"vmess://", "vless://", "trojan://", "ss://", "hysteria2://", "hy2://", "anytls://"}
+	protocols := []string{"vmess://", "vless://", "trojan://", "ss://", "hysteria2://", "hy2://", "anytls://", "tuic://"}
 
 	for _, protocol := range protocols {
 		if strings.Contains(data, protocol) {

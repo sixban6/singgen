@@ -6,6 +6,8 @@ const (
 	ProtocolTrojan    = "trojan"
 	ProtocolHysteria2 = "hysteria2"
 	ProtocolAnyTLS    = "anytls"
+	ProtocolTuic      = "tuic"
+	ProtocolTUIC      = ProtocolTuic
 	ProtocolSS        = "shadowsocks"
 	ProtocolSocks     = "socks"
 )

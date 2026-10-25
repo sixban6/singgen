@@ -516,7 +516,7 @@ The CLI has been enhanced to support multi-subscription functionality while main
 - ✅ **Per-subscription settings**: Individual emoji removal, TLS verification, timeouts
 - ✅ **Name prefixes**: Auto-prefix node names with subscription identifiers (`[primary] Node1`)
 - ✅ **Graceful degradation**: Single subscription failure doesn't affect others
-- ✅ **Mixed protocols**: Support SS, VMess, VLESS, Trojan, Hysteria2 in same config
+- ✅ **Mixed protocols**: Support SS, VMess, VLESS, Trojan, Hysteria2, AnyTLS, TUIC in same config
 
 ### Enhanced APIs
 - ✅ `GenerateConfigFromFile()` - Generate from config file

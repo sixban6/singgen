@@ -15,3 +15,7 @@ hysteria2://password127@127.0.0.5:9004#🌈 英国-HY2-5-🎪
 # AnyTLS节点（带emoji）
 anytls://password128@127.0.0.6:9443/?sni=example.com#🛡️ 美国-AnyTLS-1-✨
 anytls://password129@127.0.0.7:9444/?sni=secure.example.com&alpn=h2,http/1.1#🔒 日本-AnyTLS-2-⚡
+
+# TUIC节点（带emoji）
+tuic://12345678-abcd-1234-5678-123456789abc:password130@127.0.0.8:9445/?sni=example.com#🚀 美国-TUIC-1-🎯
+tuic://12345678-abcd-1234-5678-123456789abd:password131@127.0.0.9:9446/?sni=secure.example.com&alpn=h3#⚡ 日本-TUIC-2-💫

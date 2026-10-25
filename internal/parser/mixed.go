@@ -46,6 +46,8 @@ func (p *MixedParser) Parse(raw []byte) ([]model.Node, error) {
 			parser = &Hysteria2Parser{}
 		} else if strings.HasPrefix(line, "anytls://") {
 			parser = &AnyTLSParser{}
+		} else if strings.HasPrefix(line, "tuic://") {
+			parser = &TuicParser{}
 		} else if strings.HasPrefix(line, "ss://") {
 			parser = &ShadowsocksParser{}
 		} else {

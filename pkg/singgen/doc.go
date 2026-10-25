@@ -4,7 +4,7 @@
 // # Overview
 //
 // Singgen transforms proxy subscription URLs and files into sing-box configurations
-// with support for multiple protocols (VMess, VLESS, Trojan, Hysteria2, Shadowsocks)
+// with support for multiple protocols (VMess, VLESS, Trojan, Hysteria2, AnyTLS, TUIC, Shadowsocks)
 // and platforms (Linux, macOS, iOS).
 //
 // # API Levels
@@ -134,6 +134,7 @@
 //   - Trojan (trojan://)
 //   - Hysteria2 (hysteria2://, hy2://)
 //   - AnyTLS (anytls://)
+//   - TUIC (tuic://)
 //   - Shadowsocks (ss://)
 //   - Mixed subscriptions with multiple protocols
 //

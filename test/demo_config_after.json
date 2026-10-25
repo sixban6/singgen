@@ -59,7 +59,9 @@
         "💎 新加坡-HY2-4-✨",
         "🌈 英国-HY2-5-🎪",
         "🛡️ 美国-AnyTLS-1-✨",
-        "🔒 日本-AnyTLS-2-⚡"
+        "🔒 日本-AnyTLS-2-⚡",
+        "🚀 美国-TUIC-1-🎯",
+        "⚡ 日本-TUIC-2-💫"
       ],
       "tag": "Proxy",
       "type": "selector"
@@ -68,7 +70,8 @@
       "outbounds": [
         "🇺🇸 美国-SS-节点1",
         "🚀 美国-HY2-1-🎯",
-        "🛡️ 美国-AnyTLS-1-✨"
+        "🛡️ 美国-AnyTLS-1-✨",
+        "🚀 美国-TUIC-1-🎯"
       ],
       "tag": "US-Nodes",
       "type": "selector"
@@ -77,7 +80,8 @@
       "outbounds": [
         "🇯🇵 日本-SS-节点2",
         "⚡ 日本-HY2-2-💫",
-        "🔒 日本-AnyTLS-2-⚡"
+        "🔒 日本-AnyTLS-2-⚡",
+        "⚡ 日本-TUIC-2-💫"
       ],
       "tag": "JP-Nodes",
       "type": "selector"
@@ -89,7 +93,9 @@
         "🚀 美国-HY2-1-🎯",
         "⚡ 日本-HY2-2-💫",
         "🔥 香港-HY2-3-🌟",
-        "🔒 日本-AnyTLS-2-⚡"
+        "🔒 日本-AnyTLS-2-⚡",
+        "🚀 美国-TUIC-1-🎯",
+        "⚡ 日本-TUIC-2-💫"
       ],
       "tag": "High-Speed",
       "type": "selector"

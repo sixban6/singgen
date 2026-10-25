@@ -102,6 +102,28 @@ func TestSingBoxTransformer(t *testing.T) {
 				"min_idle_session":            "2",
 			},
 		},
+		{
+			ID:       "7",
+			Tag:      "tuic-test",
+			Type:     "tuic",
+			Addr:     "example.com",
+			Port:     8443,
+			UUID:     "2dd61d93-75d8-4da4-ac0e-6aece7eac365",
+			Password: "password-tuic",
+			Security: model.Security{
+				TLS:        true,
+				SkipVerify: true,
+				ServerName: "real.example.com",
+				ALPN:       []string{"h3"},
+			},
+			Extra: map[string]any{
+				"congestion_control": "bbr",
+				"udp_relay_mode":     "native",
+				"zero_rtt_handshake": true,
+				"heartbeat":          "10s",
+				"disable_sni":        true,
+			},
+		},
 	}
 
 	outbounds, err := transformer.Transform(nodes)
@@ -109,8 +131,8 @@ func TestSingBoxTransformer(t *testing.T) {
 		t.Errorf("Transform failed: %v", err)
 	}
 
-	if len(outbounds) != 6 {
-		t.Errorf("Expected 6 outbounds, got %d", len(outbounds))
+	if len(outbounds) != 7 {
+		t.Errorf("Expected 7 outbounds, got %d", len(outbounds))
 	}
 
 	vmessOut := outbounds[0]
@@ -168,5 +190,34 @@ func TestSingBoxTransformer(t *testing.T) {
 	}
 	if anyTLSOut.MinIdleSession != 2 {
 		t.Errorf("Expected min idle session 2, got %d", anyTLSOut.MinIdleSession)
+	}
+
+	tuicOut := outbounds[6]
+	if tuicOut.Type != "tuic" {
+		t.Errorf("Expected tuic type, got %s", tuicOut.Type)
+	}
+	if tuicOut.UUID != "2dd61d93-75d8-4da4-ac0e-6aece7eac365" {
+		t.Errorf("Expected UUID 2dd61d93-75d8-4da4-ac0e-6aece7eac365, got %s", tuicOut.UUID)
+	}
+	if tuicOut.Password != "password-tuic" {
+		t.Errorf("Expected password-tuic, got %s", tuicOut.Password)
+	}
+	if tuicOut.TLS == nil {
+		t.Error("Expected TLS config for TUIC")
+	}
+	if tuicOut.TLS["disable_sni"] != true {
+		t.Errorf("Expected disable_sni true, got %v", tuicOut.TLS["disable_sni"])
+	}
+	if tuicOut.CongestionControl != "bbr" {
+		t.Errorf("Expected congestion control bbr, got %s", tuicOut.CongestionControl)
+	}
+	if tuicOut.UDPRelayMode != "native" {
+		t.Errorf("Expected udp relay mode native, got %s", tuicOut.UDPRelayMode)
+	}
+	if !tuicOut.ZeroRttHandshake {
+		t.Error("Expected zero rtt handshake to be true")
+	}
+	if tuicOut.Heartbeat != "10s" {
+		t.Errorf("Expected heartbeat 10s, got %s", tuicOut.Heartbeat)
 	}
 }

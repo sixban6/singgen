@@ -232,6 +232,35 @@ func (t *EmbedTemplate) transformerOutboundToMap(outbound transformer.Outbound) 
 	if outbound.HopIntervalMax != "" {
 		result["hop_interval_max"] = outbound.HopIntervalMax
 	}
+	// TUIC
+	if outbound.CongestionControl != "" {
+		result["congestion_control"] = outbound.CongestionControl
+	}
+	if outbound.UDPRelayMode != "" {
+		result["udp_relay_mode"] = outbound.UDPRelayMode
+	}
+	if outbound.UDPOverStream {
+		result["udp_over_stream"] = outbound.UDPOverStream
+	}
+	if outbound.ZeroRttHandshake {
+		result["zero_rtt_handshake"] = outbound.ZeroRttHandshake
+	}
+	if outbound.Heartbeat != "" {
+		result["heartbeat"] = outbound.Heartbeat
+	}
+	if outbound.Network != "" {
+		result["network"] = outbound.Network
+	}
+	// AnyTLS
+	if outbound.IdleSessionCheckInterval != "" {
+		result["idle_session_check_interval"] = outbound.IdleSessionCheckInterval
+	}
+	if outbound.IdleSessionTimeout != "" {
+		result["idle_session_timeout"] = outbound.IdleSessionTimeout
+	}
+	if outbound.MinIdleSession > 0 {
+		result["min_idle_session"] = outbound.MinIdleSession
+	}
 
 	return result
 }

@@ -77,6 +77,8 @@ func DetectFormatWithHint(raw []byte, mediaTypeHint string) string {
 			protocols = append(protocols, "hysteria2")
 		} else if strings.HasPrefix(line, "anytls://") {
 			protocols = append(protocols, "anytls")
+		} else if strings.HasPrefix(line, "tuic://") {
+			protocols = append(protocols, "tuic")
 		} else if strings.HasPrefix(line, "ss://") {
 			protocols = append(protocols, "shadowsocks")
 		}
@@ -106,6 +108,10 @@ func detectWithHint(data, hint string) string {
 	case "vmess":
 		if strings.Contains(data, `"v":`) && strings.Contains(data, `"ps":`) {
 			return "vmess"
+		}
+	case "tuic":
+		if strings.Contains(data, "tuic://") {
+			return "tuic"
 		}
 	case "base64":
 		if isLikelyBase64(data) {

@@ -35,6 +35,13 @@ type Outbound struct {
 	ServerPorts    []string `json:"server_ports,omitempty"`
 	HopInterval    string   `json:"hop_interval,omitempty"`
 	HopIntervalMax string   `json:"hop_interval_max,omitempty"`
+	// TUIC fields
+	CongestionControl string `json:"congestion_control,omitempty"`
+	UDPRelayMode      string `json:"udp_relay_mode,omitempty"`
+	UDPOverStream     bool   `json:"udp_over_stream,omitempty"`
+	ZeroRttHandshake  bool   `json:"zero_rtt_handshake,omitempty"`
+	Heartbeat         string `json:"heartbeat,omitempty"`
+	Network           string `json:"network,omitempty"`
 }
 
 func NewDefaultBlockOutound() Outbound {
@@ -237,6 +244,8 @@ func (t *SingBoxTransformer) transformNode(node model.Node) (*Outbound, error) {
 		return t.transformHysteria2(node, outbound)
 	case constant.ProtocolAnyTLS:
 		return t.transformAnyTLS(node, outbound)
+	case constant.ProtocolTuic:
+		return t.transformTuic(node, outbound)
 	case constant.ProtocolSS:
 		return t.transformShadowsocks(node, outbound)
 	default:
@@ -452,6 +461,48 @@ func (t *SingBoxTransformer) transformAnyTLS(node model.Node, outbound *Outbound
 	}
 	if minIdleSession, ok := node.Extra["min_idle_session"]; ok {
 		outbound.MinIdleSession = toInt(minIdleSession)
+	}
+
+	return outbound, nil
+}
+
+func (t *SingBoxTransformer) transformTuic(node model.Node, outbound *Outbound) (*Outbound, error) {
+	outbound.Type = "tuic"
+	outbound.UUID = node.UUID
+	outbound.Password = node.Password
+
+	tls := map[string]any{
+		"enabled":     true,
+		"insecure":    node.Security.SkipVerify,
+		"server_name": node.Security.ServerName,
+	}
+	if len(node.Security.ALPN) > 0 {
+		tls["alpn"] = node.Security.ALPN
+	} else {
+		tls["alpn"] = []string{"h3"}
+	}
+	if disableSNI, ok := node.Extra["disable_sni"].(bool); ok && disableSNI {
+		tls["disable_sni"] = true
+	}
+	outbound.TLS = tls
+
+	if cc, ok := node.Extra["congestion_control"].(string); ok && cc != "" {
+		outbound.CongestionControl = cc
+	}
+	if udpMode, ok := node.Extra["udp_relay_mode"].(string); ok && udpMode != "" {
+		outbound.UDPRelayMode = udpMode
+	}
+	if udpOverStream, ok := node.Extra["udp_over_stream"].(bool); ok && udpOverStream {
+		outbound.UDPOverStream = true
+	}
+	if zeroRtt, ok := node.Extra["zero_rtt_handshake"].(bool); ok && zeroRtt {
+		outbound.ZeroRttHandshake = true
+	}
+	if heartbeat, ok := node.Extra["heartbeat"].(string); ok && heartbeat != "" {
+		outbound.Heartbeat = heartbeat
+	}
+	if network, ok := node.Extra["network"].(string); ok && network != "" {
+		outbound.Network = network
 	}
 
 	return outbound, nil

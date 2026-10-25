@@ -5,7 +5,7 @@ SingGen 是一个用于生成 sing-box 配置文件的工具，支持从各种�
 [![Go Version](https://img.shields.io/github/go-mod/go-version/sixban6/singgen)](https://golang.org/)
 [![License](https://img.shields.io/github/license/sixban6/singgen)](https://github.com/sixban6/singgen/blob/main/LICENSE)
 ## 特性
-- 🔧 支持多种协议：VMess, VLESS, Trojan, Hysteria2, Shadowsocks
+- 🔧 支持多种协议：VMess, VLESS, Trojan, Hysteria2, AnyTLS, TUIC, Shadowsocks
 - 📄 支持多种输出格式：JSON, YAML
 - 🌐 支持订阅链接和本地文件
 - 🎯 多版本 sing-box 配置模板 (v1.12, v1.14+)
@@ -81,6 +81,11 @@ hysteria2://password@server:port#name
 ### AnyTLS
 ```
 anytls://password@server:port/?sni=example.com#name
+```
+
+### TUIC
+```
+tuic://uuid:password@server:port/?congestion_control=bbr&alpn=h3&sni=example.com#name
 ```
 
 ### Shadowsocks

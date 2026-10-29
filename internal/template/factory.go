@@ -3,9 +3,9 @@ package template
 import (
 	"embed"
 	"fmt"
-	"github.com/sixban6/singgen/internal/util"
-	"io/fs"
 	"strings"
+
+	"github.com/sixban6/singgen/internal/util"
 )
 
 //go:embed configs
@@ -22,10 +22,9 @@ func (f *TemplateFactory) CreateTemplate(version string) (Template, error) {
 		version = "v1.14" // 默认版本
 	}
 
-	templateFile := fmt.Sprintf("template-%s.yaml", version)
-	templateData, err := f.getTemplateData(templateFile)
+	templateData, err := f.getAdaptedTemplateData(version)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get template data: %w", err)
+		return nil, fmt.Errorf("failed to get template data for %s: %w", version, err)
 	}
 
 	return NewEmbedTemplate(templateData)
@@ -36,27 +35,40 @@ func (f *TemplateFactory) GetAvailableVersions() ([]string, error) {
 }
 
 func (f *TemplateFactory) getTemplateData(filename string) ([]byte, error) {
-	filePath := "configs/" + filename
-	yamlData, err := templatesFS.ReadFile(filePath)
-	data, err := util.YamlToJson(yamlData)
-	if err != nil {
-		return nil, fmt.Errorf("template file not found: %s", filename)
+	version := "v1.14"
+	if strings.HasPrefix(filename, "template-") && strings.HasSuffix(filename, ".yaml") {
+		version = strings.TrimSuffix(strings.TrimPrefix(filename, "template-"), ".yaml")
 	}
-	return data, nil
+	return f.getAdaptedTemplateData(version)
+}
+
+func (f *TemplateFactory) getAdaptedTemplateData(version string) ([]byte, error) {
+	// 读取唯一的基准配置模板 template.yaml
+	yamlData, err := templatesFS.ReadFile("configs/template.yaml")
+	if err != nil {
+		// 容错回退
+		yamlData, err = templatesFS.ReadFile("configs/template-v1.14.yaml")
+		if err != nil {
+			return nil, fmt.Errorf("baseline template not found: %w", err)
+		}
+	}
+
+	jsonData, err := util.YamlToJson(yamlData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert template YAML to JSON: %w", err)
+	}
+
+	var configMap map[string]any
+	if err := util.Unmarshal(jsonData, &configMap); err != nil {
+		return nil, fmt.Errorf("failed to parse template JSON: %w", err)
+	}
+
+	// 在内存中根据目标版本进行 AST/字段转换
+	adaptedMap := adaptTemplateForVersion(configMap, version)
+	return util.Marshal(adaptedMap)
 }
 
 func (f *TemplateFactory) listEmbeddedTemplates() ([]string, error) {
-	var versions []string
-	err := fs.WalkDir(templatesFS, "configs", func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if !d.IsDir() && strings.HasPrefix(d.Name(), "template-") && strings.HasSuffix(d.Name(), ".yaml") {
-			version := strings.TrimPrefix(d.Name(), "template-")
-			version = strings.TrimSuffix(version, ".yaml")
-			versions = append(versions, version)
-		}
-		return nil
-	})
-	return versions, err
+	// 支持的模板版本列表
+	return []string{"v1.12", "v1.14"}, nil
 }

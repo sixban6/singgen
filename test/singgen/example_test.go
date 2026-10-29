@@ -58,8 +58,8 @@ func Example_highLevelAPI() {
 	fmt.Printf("Parsed %d nodes\n", len(nodes))
 
 	// Output:
-	// Generated config with 21 outbounds
-	// Generated 23718 bytes of JSON configuration
+	// Generated config with 20 outbounds
+	// Generated 22957 bytes of JSON configuration
 	// Parsed 1 nodes
 }
 

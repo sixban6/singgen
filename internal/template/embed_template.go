@@ -2,6 +2,7 @@ package template
 
 import (
 	"fmt"
+	"net"
 	"strings"
 
 	"github.com/sixban6/singgen/internal/config"
@@ -307,6 +308,19 @@ func (t *EmbedTemplate) injectExternalController(config map[string]any, external
 
 	// 只更新external_controller字段，保留其他字段
 	clashAPI["external_controller"] = externalController
+
+	// 同步更新 services[0].listen（用于 sing-box 1.14+ gRPC API），避免绑定无效 IP
+	host := externalController
+	if h, _, err := net.SplitHostPort(externalController); err == nil {
+		host = h
+	}
+	if services, ok := config["services"].([]any); ok && len(services) > 0 {
+		if svc, ok := services[0].(map[string]any); ok {
+			svc["listen"] = host
+		}
+	} else if servicesMap, ok := config["services"].([]map[string]any); ok && len(servicesMap) > 0 {
+		servicesMap[0]["listen"] = host
+	}
 }
 
 // injectClientSubnet 注入客户端子网配置

@@ -152,3 +152,44 @@ func TestMirrorURLReplacement(t *testing.T) {
 		t.Error("clash_api not found or wrong type")
 	}
 }
+
+func TestVersionAdaptation(t *testing.T) {
+	factory := template.NewTemplateFactory()
+
+	// v1.12 template adaptation check
+	tmpl112, err := factory.CreateTemplate("v1.12")
+	if err != nil {
+		t.Fatalf("failed to create v1.12: %v", err)
+	}
+	cfg112 := tmpl112.Inject([]transformer.Outbound{}, "")
+	if len(cfg112.HTTPClients) > 0 {
+		t.Errorf("v1.12 should not have top-level http_clients, got %v", cfg112.HTTPClients)
+	}
+	if len(cfg112.Services) > 0 {
+		t.Errorf("v1.12 should not have services, got %v", cfg112.Services)
+	}
+	if _, ok := cfg112.Route["default_http_client"]; ok {
+		t.Errorf("v1.12 route should not have default_http_client")
+	}
+	if ruleSets, ok := cfg112.Route["rule_set"].([]map[string]any); ok && len(ruleSets) > 0 {
+		if detour, ok := ruleSets[0]["download_detour"].(string); !ok || detour != "DirectConn" {
+			t.Errorf("v1.12 remote rule_set expected download_detour=DirectConn, got %v", ruleSets[0]["download_detour"])
+		}
+	}
+
+	// v1.14 template adaptation check
+	tmpl114, err := factory.CreateTemplate("v1.14")
+	if err != nil {
+		t.Fatalf("failed to create v1.14: %v", err)
+	}
+	cfg114 := tmpl114.Inject([]transformer.Outbound{}, "")
+	if len(cfg114.HTTPClients) == 0 {
+		t.Errorf("v1.14 expected http_clients to be present")
+	}
+	if client, ok := cfg114.Route["default_http_client"].(string); !ok || client != "hc-direct" {
+		t.Errorf("v1.14 route expected default_http_client=hc-direct, got %v", cfg114.Route["default_http_client"])
+	}
+	if optim, ok := cfg114.DNS["optimistic"].(bool); !ok || !optim {
+		t.Errorf("v1.14 dns expected optimistic=true")
+	}
+}

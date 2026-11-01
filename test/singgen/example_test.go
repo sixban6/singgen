@@ -59,7 +59,7 @@ func Example_highLevelAPI() {
 
 	// Output:
 	// Generated config with 21 outbounds
-	// Generated 23473 bytes of JSON configuration
+	// Generated 23674 bytes of JSON configuration
 	// Parsed 1 nodes
 }
 

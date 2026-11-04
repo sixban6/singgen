@@ -3,6 +3,7 @@ package singgen
 import (
 	"context"
 	"fmt"
+	"github.com/sixban6/singgen/internal/logx"
 	"log/slog"
 
 	"github.com/sixban6/singgen/internal/registry"
@@ -51,7 +52,7 @@ func GenerateConfigFromMulti(ctx context.Context, multiConfig *MultiConfig, opts
 			logger.Info("Processing subscription",
 				"index", i+1,
 				"name", subConfig.Name,
-				"url", subConfig.URL)
+				"url", logx.RedactSource(subConfig.URL))
 		}
 
 		// Merge global and subscription-specific options

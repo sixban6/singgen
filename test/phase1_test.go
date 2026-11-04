@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/sixban6/singgen/internal/logx"
 	"github.com/sixban6/singgen/pkg/singgen"
@@ -173,5 +174,30 @@ func TestMultiExplicitOptionsOverrideConfig(t *testing.T) {
 	}
 	if _, isV114 := cfg.DNS["optimistic"]; isV114 {
 		t.Error("template version from config (v1.12) must be kept when not overridden")
+	}
+}
+
+func TestRedactSource(t *testing.T) {
+	cases := map[string]string{
+		"https://sub.example.com/api/v1/client/subscribe?token=abc123": "https://sub.example.com/***",
+		"https://sub.example.com":                                      "https://sub.example.com",
+		"./nodes.txt":                                                  "./nodes.txt",
+	}
+	for in, want := range cases {
+		if got := logx.RedactSource(in); got != want {
+			t.Errorf("RedactSource(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+// TestSubscriptionTokenNotLogged 订阅链接中的令牌不得出现在日志中
+func TestSubscriptionTokenNotLogged(t *testing.T) {
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	_, _ = singgen.GenerateConfigBytes(context.Background(),
+		"http://127.0.0.1:1/api/v1/client/subscribe?token=SECRETTOKEN123",
+		singgen.WithLogger(logger), singgen.WithHTTPTimeout(500*time.Millisecond))
+	if strings.Contains(buf.String(), "SECRETTOKEN123") {
+		t.Errorf("subscription token leaked into logs:\n%s", buf.String())
 	}
 }

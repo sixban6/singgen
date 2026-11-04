@@ -77,7 +77,7 @@ func (f *HTTPFetcher) FetchContext(ctx context.Context, urlStr string) ([]byte, 
 		return nil, fmt.Errorf("read response body failed: %w", err)
 	}
 
-	f.logger().Info("HTTP fetch successful", "url", urlStr, "size", len(body))
+	f.logger().Info("HTTP fetch successful", "url", logx.RedactSource(urlStr), "size", len(body))
 
 	return body, nil
 }
@@ -102,7 +102,7 @@ func (f *HTTPFetcher) validateURL(urlStr string) error {
 
 	// 访问本地 / 内网地址时给出警告（可选的安全措施）
 	if isLocalHost(parsedURL.Hostname()) {
-		f.logger().Warn("Accessing local/private network address", "url", urlStr)
+		f.logger().Warn("Accessing local/private network address", "url", logx.RedactSource(urlStr))
 	}
 
 	return nil

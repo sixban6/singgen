@@ -53,3 +53,27 @@ func Err(err error) string {
 	}
 	return userinfoPattern.ReplaceAllString(err.Error(), "${1}***@")
 }
+
+// RedactSource 用于记录订阅来源：URL 只保留协议与主机（订阅链接的路径/参数通常包含访问令牌），
+// 本地文件路径原样返回。
+func RedactSource(source string) string {
+	u, err := url.Parse(source)
+	if err != nil || u.Scheme == "" || u.Host == "" {
+		return source
+	}
+	redacted := u.Scheme + "://" + u.Host
+	if u.Path != "" && u.Path != "/" || u.RawQuery != "" {
+		redacted += "/***"
+	}
+	return redacted
+}
+
+var httpURLPattern = regexp.MustCompile(`https?://[^\s"'<>]+`)
+
+// ErrSource 返回脱敏后的错误信息：节点链接凭据与订阅 URL 的路径/参数均被隐藏。
+func ErrSource(err error) string {
+	if err == nil {
+		return ""
+	}
+	return httpURLPattern.ReplaceAllStringFunc(Err(err), RedactSource)
+}

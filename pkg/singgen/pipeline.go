@@ -3,6 +3,7 @@ package singgen
 import (
 	"context"
 	"fmt"
+	"github.com/sixban6/singgen/internal/logx"
 	"strings"
 
 	"github.com/sixban6/singgen/internal/config"
@@ -80,7 +81,7 @@ func (p *Pipeline) Execute(ctx context.Context, source string) (*PipelineResult,
 		},
 	}
 
-	p.logf("Starting pipeline execution for source: %s", source)
+	p.logf("Starting pipeline execution for source: %s", logx.RedactSource(source))
 
 	// Step 1: Fetch data
 	data, err := p.fetcher.Fetch(ctx, source)

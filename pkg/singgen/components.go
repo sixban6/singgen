@@ -3,6 +3,7 @@ package singgen
 import (
 	"context"
 	"fmt"
+	"github.com/sixban6/singgen/internal/logx"
 	"net/url"
 
 	"github.com/sixban6/singgen/internal/fetcher"
@@ -50,7 +51,7 @@ func (f *contextFetcher) Fetch(ctx context.Context, source string) ([]byte, erro
 	var fetcher fetcher.Fetcher
 	if f.isURL(source) {
 		fetcher = f.httpFetcher
-		f.logf("Fetching from URL: %s", source)
+		f.logf("Fetching from URL: %s", logx.RedactSource(source))
 	} else {
 		fetcher = f.fileFetcher
 		f.logf("Reading from file: %s", source)

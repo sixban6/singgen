@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/sixban6/singgen/internal/logx"
 	"log"
 	"log/slog"
 	"os"
@@ -117,13 +118,13 @@ func main() {
 			downMbps:           *downMbps,
 		}
 		if err := runMultiSubscriptionMode(logger, *configFile, *outFile, overrides); err != nil {
-			logger.Error("Multi-subscription mode failed", "error", err)
+			logger.Error("Multi-subscription mode failed", "error", logx.ErrSource(err))
 			os.Exit(1)
 		}
 	} else if *subURL != "" {
 		// Single subscription mode (legacy)
 		if err := runSingleSubscriptionMode(logger, *subURL, *outFile, *templateVer, *platform, *mirrorURL, *dnsLocalServer, *externalController, *clientSubnet, *format, *removeEmoji, *upMbps, *downMbps); err != nil {
-			logger.Error("Single subscription mode failed", "error", err)
+			logger.Error("Single subscription mode failed", "error", logx.ErrSource(err))
 			os.Exit(1)
 		}
 	} else {
@@ -234,7 +235,7 @@ func runMultiSubscriptionMode(logger *slog.Logger, configFile string, outFile st
 
 // runSingleSubscriptionMode handles single subscription configuration generation (legacy)
 func runSingleSubscriptionMode(logger *slog.Logger, subURL, outFile, templateVer, platform, mirrorURL, dnsLocalServer, externalController, clientSubnet, format string, removeEmoji bool, upMbps, downMbps int) error {
-	logger.Info("Running in single subscription mode", "url", subURL)
+	logger.Info("Running in single subscription mode", "url", logx.RedactSource(subURL))
 
 	// Validate inputs
 	if err := validateInputs(dnsLocalServer, platform, logger); err != nil {

@@ -79,6 +79,19 @@ func GenerateConfigFromMulti(ctx context.Context, multiConfig *MultiConfig, opts
 			continue
 		}
 
+		// Apply include/exclude/rename rules (patterns validated in ValidateConfig)
+		rules, _ := multiConfig.nodeRulesFor(subConfig)
+		nodes, dropped := rules.apply(nodes)
+		if dropped > 0 && logger != nil {
+			logger.Info("Node rules applied", "name", subConfig.Name, "dropped", dropped, "kept", len(nodes))
+		}
+		if len(nodes) == 0 {
+			if logger != nil {
+				logger.Warn("All nodes were filtered out by node rules", "name", subConfig.Name)
+			}
+			continue
+		}
+
 		// Process subscription nodes (name prefix, emoji removal, TLS settings)
 		processedNodes := processSubscriptionNodes(nodes, SubscriptionProcessOptions{
 			NamePrefix:    subConfig.Name,
@@ -105,6 +118,14 @@ func GenerateConfigFromMulti(ctx context.Context, multiConfig *MultiConfig, opts
 		}
 
 		allOutbounds = append(allOutbounds, outbounds...)
+	}
+
+	if multiConfig.Global.DedupeByServer {
+		var removed int
+		allOutbounds, removed = dedupeOutboundsByServer(allOutbounds)
+		if logger != nil && removed > 0 {
+			logger.Info("Removed duplicate nodes across subscriptions", "removed", removed)
+		}
 	}
 
 	if len(allOutbounds) == 0 {

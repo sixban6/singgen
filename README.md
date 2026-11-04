@@ -62,6 +62,24 @@ SingGen 是一个用于生成 sing-box 配置文件的工具，支持从各种�
 - `-check`: 本机安装了 sing-box 时，先用 `sing-box check` 校验生成的配置，**校验通过才替换输出文件**（默认: true，`-check=false` 关闭）。linux 专用配置在非 linux 机器上会跳过校验
 - `-cache-dir`: 订阅缓存目录（默认: 系统用户缓存目录下的 `singgen`）。订阅拉取失败时使用上一次成功的副本并给出警告；设为空字符串 `-cache-dir=""` 关闭
 
+### 节点过滤 / 重命名 / 去重（多订阅配置文件）
+规则使用 Go 正则表达式，匹配订阅中原始的节点名（在移除 emoji、添加订阅名前缀之前）。
+`global` 中的规则对所有订阅生效；订阅中设置同名字段会覆盖全局规则（设为 `""` 表示对该订阅关闭）。
+
+```yaml
+global:
+  exclude: "剩余|到期|官网|流量"          # 命中即丢弃
+  include: ""                            # 非空时只保留命中的节点
+  rename:                                # 按顺序依次替换
+    - {match: " Premium$", replace: ""}
+    - {match: "^HK-", replace: "香港-"}
+  dedupe_by_server: true                 # 跨订阅去重：同一协议+服务器+端口只保留第一个
+subscriptions:
+  - name: backup
+    url: https://example.com/sub
+    include: "US|JP"                     # 只覆盖这个订阅的规则
+```
+
 ### 可靠性
 - 订阅拉取遇到网络错误、5xx、429 时自动重试（最多 3 次，指数退避）
 - 多订阅并发拉取（最多 4 个同时进行），输出顺序与配置文件一致

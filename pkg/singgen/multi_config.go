@@ -11,6 +11,13 @@ type SubscriptionConfig struct {
 	RemoveEmoji   *bool          `json:"remove_emoji,omitempty" yaml:"remove_emoji,omitempty"`
 	SkipTLSVerify *bool          `json:"skip_tls_verify,omitempty" yaml:"skip_tls_verify,omitempty"`
 	HTTPTimeout   *time.Duration `json:"http_timeout,omitempty" yaml:"http_timeout,omitempty"`
+
+	// Node rules (Go regular expressions, matched against the node name from the
+	// subscription). When set they replace the corresponding global rule;
+	// an empty value disables it for this subscription.
+	Include *string      `json:"include,omitempty" yaml:"include,omitempty"`
+	Exclude *string      `json:"exclude,omitempty" yaml:"exclude,omitempty"`
+	Rename  []RenameRule `json:"rename,omitempty" yaml:"rename,omitempty"`
 }
 
 // GlobalConfig represents global default configuration
@@ -29,6 +36,16 @@ type GlobalConfig struct {
 	TSLanIPCIDR    string        `json:"ts_lan_ipcidr,omitempty" yaml:"ts_lan_ipcidr,omitempty"`
 	UpMbps         int           `json:"up_mbps" yaml:"up_mbps"`
 	DownMbps       int           `json:"down_mbps" yaml:"down_mbps"`
+
+	// Node rules applied to every subscription unless overridden per subscription.
+	// Include keeps only matching nodes, Exclude drops matching nodes, Rename
+	// rewrites names in order. Patterns are Go regular expressions.
+	Include string       `json:"include,omitempty" yaml:"include,omitempty"`
+	Exclude string       `json:"exclude,omitempty" yaml:"exclude,omitempty"`
+	Rename  []RenameRule `json:"rename,omitempty" yaml:"rename,omitempty"`
+	// DedupeByServer keeps only the first node for each protocol+server+port
+	// across all subscriptions.
+	DedupeByServer bool `json:"dedupe_by_server,omitempty" yaml:"dedupe_by_server,omitempty"`
 }
 
 // MultiConfig represents configuration supporting multiple subscriptions
@@ -118,6 +135,10 @@ func (mc *MultiConfig) ValidateConfig() error {
 			return ErrDuplicateSubscriptionName
 		}
 		nameMap[sub.Name] = true
+
+		if _, err := mc.nodeRulesFor(sub); err != nil {
+			return err
+		}
 	}
 
 	return nil

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -277,5 +278,72 @@ func TestMultiSubscriptionFetchesConcurrently(t *testing.T) {
 	}
 	if strings.Join(order, ",") != "[c] node-c,[a] node-a,[b] node-b" {
 		t.Errorf("output order must follow config order, got %v", order)
+	}
+}
+
+// TestNodeRulesFromConfigFile 过滤 / 重命名 / 跨订阅去重
+func TestNodeRulesFromConfigFile(t *testing.T) {
+	dir := t.TempDir()
+	nodes := strings.Join([]string{
+		"trojan://pw@1.1.1.1:443?sni=a.com#HK-01",
+		"trojan://pw@1.1.1.2:443?sni=a.com#JP-01",
+		"trojan://pw@1.1.1.3:443?sni=a.com#剩余流量 10GB",
+		"trojan://pw@1.1.1.4:443?sni=a.com#HK-02 Premium",
+	}, "\n")
+	other := "trojan://pw@1.1.1.1:443?sni=a.com#Dup-of-HK-01\ntrojan://pw@9.9.9.9:443?sni=a.com#US-01"
+	os.WriteFile(filepath.Join(dir, "a.txt"), []byte(nodes), 0o600)
+	os.WriteFile(filepath.Join(dir, "b.txt"), []byte(other), 0o600)
+
+	cfgYAML := `
+global:
+  platform: darwin
+  exclude: "剩余|到期|官网"
+  rename:
+    - {match: " Premium$", replace: ""}
+    - {match: "^HK-", replace: "香港-"}
+  dedupe_by_server: true
+subscriptions:
+  - name: a
+    url: ` + filepath.Join(dir, "a.txt") + `
+  - name: b
+    url: ` + filepath.Join(dir, "b.txt") + `
+    exclude: ""
+    include: "US|Dup"
+`
+	cfgPath := filepath.Join(dir, "singgen.yaml")
+	os.WriteFile(cfgPath, []byte(cfgYAML), 0o600)
+
+	cfg, err := singgen.GenerateConfigFromFile(context.Background(), cfgPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var tags []string
+	for _, ob := range cfg.Outbounds {
+		if typ, _ := ob["type"].(string); typ == "trojan" {
+			tags = append(tags, ob["tag"].(string))
+		}
+	}
+	want := "[a] 香港-01,[a] JP-01,[a] 香港-02,[b] US-01"
+	if strings.Join(tags, ",") != want {
+		t.Errorf("tags = %v\nwant  %s", tags, want)
+	}
+}
+
+func TestNodeRulesInvalidRegexRejected(t *testing.T) {
+	mc := singgen.GetDefaultMultiConfig()
+	bad := "(["
+	mc.Subscriptions = []singgen.SubscriptionConfig{{Name: "a", URL: singboxCheckFixture, Exclude: &bad}}
+	err := mc.ValidateConfig()
+	if !errors.Is(err, singgen.ErrInvalidNodeRule) || !strings.Contains(err.Error(), `"a"`) {
+		t.Errorf("expected ErrInvalidNodeRule mentioning the subscription, got %v", err)
+	}
+}
+
+func TestNodeRulesFilterEverything(t *testing.T) {
+	mc := singgen.GetDefaultMultiConfig()
+	mc.Global.Include = "^nothing-matches$"
+	mc.Subscriptions = []singgen.SubscriptionConfig{{Name: "a", URL: singboxCheckFixture}}
+	if _, err := singgen.GenerateConfigFromMulti(context.Background(), mc); !errors.Is(err, singgen.ErrNoValidNodes) {
+		t.Errorf("expected ErrNoValidNodes when every node is filtered, got %v", err)
 	}
 }

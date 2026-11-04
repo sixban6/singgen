@@ -1,11 +1,19 @@
 # sing-box 基准配置模板 (Base Template)
 # 针对不同 sing-box 版本 (如 v1.12 vs v1.14+), 由程序在内存中自动进行 AST 转换
+#
+# 占位符（生成时替换，未指定时使用默认值）:
+#   {mirror_url}           规则集/面板下载镜像；为空时连同后面的 "/" 一起去掉
+#   {dns_local}            本地 DNS 服务器，默认 114.114.114.114
+#   {client_subnet}        DNS ECS 子网，默认 223.5.5.5/24
+#   {external_controller}  Clash API 监听地址，默认 127.0.0.1:9090
+#   {ts_auth_key} / {ts_lan_ipcidr}  Tailscale 参数；未提供 auth key 时整个 tailscale 配置被移除
+#   {all}                  代理组中展开为全部订阅节点（支持 filter）
 
 log: {disabled: false, level: info, timestamp: true}
 
 experimental:
   clash_api:
-    external_controller: 127.0.0.1:9090
+    external_controller: "{external_controller}"   # 默认 127.0.0.1:9090
     external_ui: /etc/sing-box/ui
     secret: ""
     external_ui_download_detour: DirectConn
@@ -38,17 +46,17 @@ services:
 
 dns:
   servers:
-    - {tag: dns_local, type: udp, server: 114.114.114.114}
+    - {tag: dns_local, type: udp, server: "{dns_local}"}   # 默认 114.114.114.114
     - {tag: dns_proxy, type: https, server: 8.8.8.8, detour: DNS}
     - {tag: dns_hok, type: https, server: 8.8.8.8, detour: HoK}
     - {tag: dns_tailscale, type: tailscale, endpoint: ts-node}
     - {tag: fakeip, type: fakeip, inet4_range: 198.18.0.0/15, inet6_range: fc00::/18}
   rules:
-    - {clash_mode: Direct, server: dns_local, client_subnet: 223.5.5.5/24}
+    - {clash_mode: Direct, server: dns_local, client_subnet: "{client_subnet}"}   # 默认 223.5.5.5/24
     - {clash_mode: Global, server: dns_proxy}
     - {domain_suffix: [ts.net], server: dns_tailscale}
     - {rule_set: geosite-hok, server: dns_hok}
-    - {rule_set: geosite-cn, server: dns_local, client_subnet: 223.5.5.5/24}
+    - {rule_set: geosite-cn, server: dns_local, client_subnet: "{client_subnet}"}
     - {rule_set: geosite-geolocation-!cn, server: dns_proxy}
   final: dns_proxy
   strategy: ipv4_only
@@ -191,10 +199,10 @@ certificate:
 endpoints:
   - type: tailscale
     tag: ts-node
-    auth_key: ts_auth_key
+    auth_key: "{ts_auth_key}"
     state_directory: /var/lib/sing-box/ts
     ephemeral: false
     system_interface: false
     system_interface_name: ""
     accept_routes: true
-    advertise_routes: [ts_lan_ipcidr]
+    advertise_routes: ["{ts_lan_ipcidr}"]

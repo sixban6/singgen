@@ -2,11 +2,8 @@ package template
 
 import (
 	"fmt"
-	"net"
-	"strings"
 
 	"github.com/sixban6/singgen/internal/config"
-	"github.com/sixban6/singgen/internal/constant"
 	"github.com/sixban6/singgen/internal/logx"
 	"github.com/sixban6/singgen/internal/platform"
 	"github.com/sixban6/singgen/internal/transformer"
@@ -49,29 +46,22 @@ func (t *EmbedTemplate) InjectWithOptions(outbounds []transformer.Outbound, opti
 	// 节点 tag 去重（需在 emoji 移除之后进行，移除 emoji 可能产生新的重名）
 	processedOutbounds = dedupeOutboundTags(processedOutbounds, collectReservedTags(configData))
 
-	// 处理镜像URL占位符
-	if options.MirrorURL != "" {
-		t.replaceMirrorURL(configData, options.MirrorURL)
-	} else {
-		t.replaceMirrorURL(configData, "")
-	}
+	// 替换显式占位符（{mirror_url}、{dns_local}、{client_subnet}、{external_controller}、{ts_*}）
+	renderPlaceholders(configData, options)
 
 	// 处理 Tailscale 配置
 	t.handleTailscaleConfig(configData, options)
 
-	// 注入外部控制器配置
+	// 外部控制器：同步 sing-box 1.14+ api service 的监听地址
 	if options.ExternalController != "" {
-		t.injectExternalController(configData, options.ExternalController)
+		syncAPIServiceListen(configData, options.ExternalController)
 	}
 
-	// 注入客户端子网配置
+	// 客户端子网：同时写入 dns 顶层 client_subnet
 	if options.ClientSubnet != "" {
-		t.injectClientSubnet(configData, options.ClientSubnet)
-	}
-
-	// 注入DNS本地服务器配置
-	if options.DNSLocalServer != "" {
-		t.injectDNSLocalServer(configData, options.DNSLocalServer)
+		if dns, ok := configData["dns"].(map[string]any); ok {
+			dns["client_subnet"] = options.ClientSubnet
+		}
 	}
 
 	// 处理 {all} 占位符和过滤规则
@@ -110,38 +100,6 @@ func (t *EmbedTemplate) deepCopyConfig() map[string]any {
 	var copy map[string]any
 	util.Unmarshal(data, &copy)
 	return copy
-}
-
-func (t *EmbedTemplate) replaceMirrorURL(config map[string]any, mirrorURL string) {
-	t.walkAndReplace(config, func(s string) string {
-		if mirrorURL == "" {
-			return strings.Replace(s, constant.MirrorURLPlaceholder+"/", "", -1)
-		}
-		return strings.Replace(s, constant.MirrorURLPlaceholder, mirrorURL, -1)
-	})
-}
-
-func (t *EmbedTemplate) walkAndReplace(obj any, replacer func(string) string) {
-	switch v := obj.(type) {
-	case map[string]any:
-		for key, value := range v {
-			switch val := value.(type) {
-			case string:
-				v[key] = replacer(val)
-			case map[string]any, []any:
-				t.walkAndReplace(val, replacer)
-			}
-		}
-	case []any:
-		for i, item := range v {
-			switch val := item.(type) {
-			case string:
-				v[i] = replacer(val)
-			case map[string]any, []any:
-				t.walkAndReplace(val, replacer)
-			}
-		}
-	}
 }
 
 func (t *EmbedTemplate) injectProxyOutbounds(config map[string]any, outbounds []transformer.Outbound) {
@@ -303,54 +261,6 @@ func (t *EmbedTemplate) convertToMapArray(v any) []map[string]any {
 	return []map[string]any{}
 }
 
-func (t *EmbedTemplate) injectExternalController(config map[string]any, externalController string) {
-	experimental, ok := config["experimental"].(map[string]any)
-	if !ok {
-		experimental = make(map[string]any)
-		config["experimental"] = experimental
-	}
-
-	clashAPI, ok := experimental["clash_api"].(map[string]any)
-	if !ok {
-		clashAPI = make(map[string]any)
-		experimental["clash_api"] = clashAPI
-	}
-
-	// 只更新external_controller字段，保留其他字段
-	clashAPI["external_controller"] = externalController
-
-	// 同步更新 services[0].listen（用于 sing-box 1.14+ gRPC API），避免绑定无效 IP
-	host := externalController
-	if h, _, err := net.SplitHostPort(externalController); err == nil {
-		host = h
-	}
-	if services, ok := config["services"].([]any); ok && len(services) > 0 {
-		if svc, ok := services[0].(map[string]any); ok {
-			svc["listen"] = host
-		}
-	} else if servicesMap, ok := config["services"].([]map[string]any); ok && len(servicesMap) > 0 {
-		servicesMap[0]["listen"] = host
-	}
-}
-
-// injectClientSubnet 注入客户端子网配置
-func (t *EmbedTemplate) injectClientSubnet(config map[string]any, clientSubnet string) {
-	// Use walkAndReplace to replace all client_subnet occurrences
-	t.walkAndReplace(config, func(s string) string {
-		// 模板中的默认 client_subnet 字面量（/32 旧写法与 /24 新写法）都需替换
-		if s == "223.5.5.5/32" || s == "223.5.5.5/24" { // Replace the default client subnet
-			return clientSubnet
-		}
-		return s
-	})
-
-	// Also ensure DNS section has the client_subnet field
-	dns, ok := config["dns"].(map[string]any)
-	if ok {
-		dns["client_subnet"] = clientSubnet
-	}
-}
-
 // processEmojiRemoval 处理emoji移除逻辑
 func (t *EmbedTemplate) processEmojiRemoval(outbounds []transformer.Outbound) []transformer.Outbound {
 	processedOutbounds := make([]transformer.Outbound, len(outbounds))
@@ -359,38 +269,6 @@ func (t *EmbedTemplate) processEmojiRemoval(outbounds []transformer.Outbound) []
 		processedOutbounds[i].Tag = util.CleanNodeTag(outbound.Tag, true)
 	}
 	return processedOutbounds
-}
-
-// injectDNSLocalServer 注入DNS本地服务器配置
-func (t *EmbedTemplate) injectDNSLocalServer(config map[string]any, dnsLocalServer string) {
-	// 使用walkAndReplace替换所有DNS服务器地址
-	t.walkAndReplace(config, func(s string) string {
-		if s == "114.114.114.114" { // 替换默认DNS服务器
-			return dnsLocalServer
-		}
-		return s
-	})
-
-	// 确保DNS配置中的servers字段包含本地DNS服务器
-	dns, ok := config["dns"].(map[string]any)
-	if !ok {
-		return
-	}
-
-	servers, ok := dns["servers"].([]any)
-	if !ok {
-		return
-	}
-
-	// 更新DNS服务器配置
-	for _, serverAny := range servers {
-		if server, ok := serverAny.(map[string]any); ok {
-			if tag, tagOk := server["tag"].(string); tagOk && tag == "dns_local" {
-				server["server"] = dnsLocalServer
-				break
-			}
-		}
-	}
 }
 
 // applyEmbedPlatformAdaptation 为嵌入模板应用平台适配

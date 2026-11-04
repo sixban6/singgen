@@ -48,7 +48,7 @@ func TestSingBoxCheck(t *testing.T) {
 					if tailscale {
 						opts = append(opts,
 							singgen.WithTSAuthKey("tskey-auth-test"),
-							singgen.WithTSLanIPCIDR("192.168.31.0/24"),
+							singgen.WithTSLanIPCIDR("192.168.1.0/24"),
 						)
 					}
 

@@ -135,7 +135,7 @@ func (a *Adapter) AdaptConfig(cfg *config.Config, options config.TemplateOptions
 	useLegacyRuleSetDownload(cfg)
 	clashAPI := ensureClashAPI(cfg)
 	if options.ExternalController != "" {
-		// 终端设备只能绑定本机地址：为路由器准备的局域网地址（如 192.168.31.1:9095）
+		// 终端设备只能绑定本机地址：为路由器准备的局域网地址（如 192.168.1.1:9095）
 		// 在客户端上会绑定失败导致 sing-box 无法启动，因此改写为 127.0.0.1 并保留端口
 		controller, rewritten := clientController(options.ExternalController)
 		if rewritten {

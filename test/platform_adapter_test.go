@@ -21,7 +21,7 @@ func TestAllClientAdaptersStripDesktopAPIService(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			cfg := &config.Config{
 				Services: []map[string]any{
-					{"type": "api", "tag": "api-in", "listen": "192.168.31.1", "listen_port": 9091.0},
+					{"type": "api", "tag": "api-in", "listen": "192.168.1.1", "listen_port": 9091.0},
 				},
 			}
 			if err := adapter.AdaptConfig(cfg, config.TemplateOptions{Platform: name}); err != nil {
@@ -93,14 +93,14 @@ func TestClientAdaptersUseLegacyRuleSetDownload(t *testing.T) {
 }
 
 // TestIOSAdapterStripsDesktopAPIService iOS 沙盒必须剥离桌面专属的 api service:
-// 模板 api service 绑定桌面局域网 IP(如 192.168.31.1), iPhone 上 bind 失败导致 SFI 无法启动
+// 模板 api service 绑定桌面局域网 IP(如 192.168.1.1), iPhone 上 bind 失败导致 SFI 无法启动
 func TestIOSAdapterStripsDesktopAPIService(t *testing.T) {
 	adapter := platform.NewIOSAdapter("")
 
 	t.Run("剥离api service并保留其他service", func(t *testing.T) {
 		cfg := &config.Config{
 			Services: []map[string]any{
-				{"type": "api", "tag": "api-in", "listen": "192.168.31.1", "listen_port": 9091.0},
+				{"type": "api", "tag": "api-in", "listen": "192.168.1.1", "listen_port": 9091.0},
 				{"type": "ss", "tag": "ss-in", "listen": "127.0.0.1", "listen_port": 8388.0},
 			},
 		}
@@ -115,7 +115,7 @@ func TestIOSAdapterStripsDesktopAPIService(t *testing.T) {
 	t.Run("全部为api时services置空", func(t *testing.T) {
 		cfg := &config.Config{
 			Services: []map[string]any{
-				{"type": "api", "tag": "api-in", "listen": "192.168.31.1", "listen_port": 9091.0},
+				{"type": "api", "tag": "api-in", "listen": "192.168.1.1", "listen_port": 9091.0},
 			},
 		}
 		if err := adapter.AdaptConfig(cfg, config.TemplateOptions{Platform: "ios"}); err != nil {

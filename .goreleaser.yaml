@@ -1,0 +1,66 @@
+version: 2
+
+project_name: singgen
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: singgen
+    main: ./cmd/singgen
+    binary: singgen
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/sixban6/singgen/internal/version.Version={{ .Tag }}
+      - -X github.com/sixban6/singgen/internal/version.GitCommit={{ .ShortCommit }}
+      - -X 'github.com/sixban6/singgen/internal/version.BuildTime={{ .Date }}'
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64, arm, mipsle]
+    goarm: ["7"]
+    gomips: [softfloat]
+    ignore:
+      # 只为 linux 构建 arm/mipsle（OpenWrt 等路由器）；windows 只提供 amd64
+      - { goos: darwin, goarch: arm }
+      - { goos: darwin, goarch: mipsle }
+      - { goos: windows, goarch: arm }
+      - { goos: windows, goarch: arm64 }
+      - { goos: windows, goarch: mipsle }
+
+archives:
+  - id: default
+    # 与历史发布的文件名保持一致（如 singgen-linux-amd64.tar.gz），避免破坏已有下载脚本
+    name_template: >-
+      {{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}{{ if eq .Arch "mipsle" }}-{{ .Mips }}{{ end }}
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^test:"
+      - "^style:"
+      - "^ci:"
+
+release:
+  footer: |
+    **Usage**
+    ```bash
+    tar -xzf singgen-<os>-<arch>.tar.gz
+    ./singgen -url <subscription> -platform <linux|darwin|ios|windows> -out config.json
+    ```
+    Verify downloads with `sha256sum -c checksums.txt`.
+

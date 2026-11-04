@@ -4,20 +4,22 @@ on:
   push:
     branches: ['**']
   pull_request:
+  # 发布流程在构建前复用本工作流作为门禁
+  workflow_call:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       SING_BOX_VERSION: '1.14.4'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
-          go-version: '1.25'
+          go-version-file: go.mod
 
       - name: Install sing-box ${{ env.SING_BOX_VERSION }}
         run: |
@@ -42,4 +44,3 @@ jobs:
           # 缺少 sing-box 时让端到端用例失败而不是跳过
           SINGGEN_REQUIRE_SINGBOX: '1'
         run: go test -race ./...
-

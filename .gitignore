@@ -50,3 +50,6 @@ temp/
 # Personal tool configs
 opencode.json
 .claude/
+
+# GoReleaser output
+dist/

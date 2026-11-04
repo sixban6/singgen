@@ -16,6 +16,17 @@ SingGen 是一个用于生成 sing-box 配置文件的工具，支持从各种�
 
 ## 安装
 
+从 [Releases](https://github.com/sixban6/singgen/releases) 下载对应平台的压缩包（单文件，模板已内嵌）：
+
+| 平台 | 文件 |
+|---|---|
+| Linux x86_64 / ARM64 | `singgen-linux-amd64.tar.gz` / `singgen-linux-arm64.tar.gz` |
+| OpenWrt 等路由器 | `singgen-linux-armv7.tar.gz` / `singgen-linux-mipsle-softfloat.tar.gz` |
+| macOS Intel / Apple Silicon | `singgen-darwin-amd64.tar.gz` / `singgen-darwin-arm64.tar.gz` |
+| Windows x86_64 | `singgen-windows-amd64.zip` |
+
+可用 `sha256sum -c checksums.txt` 校验下载文件。
+
 ### 基本用法
 
 ```bash

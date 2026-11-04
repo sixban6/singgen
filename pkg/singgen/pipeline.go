@@ -42,7 +42,9 @@ type PipelineMetadata struct {
 	NodesCount      int    `json:"nodes_count"`
 	OutboundsCount  int    `json:"outbounds_count"`
 	TemplateVersion string `json:"template_version"`
-	Platform        string `json:"platform"`
+	// Subscription holds usage info reported by the provider (nil if not reported)
+	Subscription *SubscriptionInfo `json:"subscription,omitempty"`
+	Platform     string            `json:"platform"`
 }
 
 // NewPipeline creates a new Pipeline with the specified options
@@ -90,6 +92,9 @@ func (p *Pipeline) Execute(ctx context.Context, source string) (*PipelineResult,
 	}
 
 	result.Metadata.SourceType = p.getSourceType(source)
+	if cf, ok := p.fetcher.(*contextFetcher); ok {
+		result.Metadata.Subscription = cf.SubscriptionInfo()
+	}
 
 	// Step 2: Detect format
 	format := p.parser.DetectFormat(ctx, data)

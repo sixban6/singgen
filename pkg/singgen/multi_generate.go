@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/sixban6/singgen/internal/logx"
 	"log/slog"
+	"sync"
 
 	"github.com/sixban6/singgen/internal/registry"
 	"github.com/sixban6/singgen/internal/renderer"
@@ -47,6 +48,10 @@ func GenerateConfigFromMulti(ctx context.Context, multiConfig *MultiConfig, opts
 			"subscription_count", len(multiConfig.Subscriptions))
 	}
 
+	// Fetch and parse all subscriptions concurrently (bounded), then process
+	// the results in configuration order so the output stays deterministic.
+	fetched := fetchSubscriptions(ctx, multiConfig, baseOptions)
+
 	for i, subConfig := range multiConfig.Subscriptions {
 		if logger != nil {
 			logger.Info("Processing subscription",
@@ -55,22 +60,14 @@ func GenerateConfigFromMulti(ctx context.Context, multiConfig *MultiConfig, opts
 				"url", logx.RedactSource(subConfig.URL))
 		}
 
-		// Merge global and subscription-specific options
-		subOptions := multiConfig.MergeSubscriptionOptions(subConfig)
-
-		// Override with command line options (highest priority)
-		mergeBaseOptions(&subOptions, baseOptions)
-
-		// Create generator for this subscription
-		generator := newGenerator(subOptions)
-
-		// Parse nodes from this subscription
-		nodes, err := generator.ParseNodes(ctx, subConfig.URL)
+		subOptions := fetched[i].options
+		generator := fetched[i].generator
+		nodes, err := fetched[i].nodes, fetched[i].err
 		if err != nil {
 			if logger != nil {
 				logger.Error("Failed to parse subscription",
 					"name", subConfig.Name,
-					"error", err)
+					"error", logx.ErrSource(err))
 			}
 			continue // Skip failed subscription, don't fail entire operation
 		}
@@ -286,4 +283,42 @@ func mergeBaseOptions(subOptions *GenerateOptions, baseOptions GenerateOptions) 
 	if baseOptions.isSet(optTSLanIPCIDR) {
 		subOptions.TSLanIPCIDR = baseOptions.TSLanIPCIDR
 	}
+	if baseOptions.isSet(optCacheDir) {
+		subOptions.CacheDir = baseOptions.CacheDir
+	}
+}
+
+// maxConcurrentFetches bounds how many subscriptions are fetched at the same time
+const maxConcurrentFetches = 4
+
+type fetchedSubscription struct {
+	options   GenerateOptions
+	generator *Generator
+	nodes     []model.Node
+	err       error
+}
+
+// fetchSubscriptions fetches and parses every subscription with bounded concurrency.
+// Results are indexed like multiConfig.Subscriptions.
+func fetchSubscriptions(ctx context.Context, multiConfig *MultiConfig, baseOptions GenerateOptions) []fetchedSubscription {
+	results := make([]fetchedSubscription, len(multiConfig.Subscriptions))
+	sem := make(chan struct{}, maxConcurrentFetches)
+	var wg sync.WaitGroup
+
+	for i, subConfig := range multiConfig.Subscriptions {
+		// Merge global and subscription-specific options, then explicit caller options
+		subOptions := multiConfig.MergeSubscriptionOptions(subConfig)
+		mergeBaseOptions(&subOptions, baseOptions)
+		results[i] = fetchedSubscription{options: subOptions, generator: newGenerator(subOptions)}
+
+		wg.Add(1)
+		go func(i int, url string) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+			results[i].nodes, results[i].err = results[i].generator.ParseNodes(ctx, url)
+		}(i, subConfig.URL)
+	}
+	wg.Wait()
+	return results
 }

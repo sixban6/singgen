@@ -78,6 +78,10 @@ type GenerateOptions struct {
 	// Logging
 	Logger *slog.Logger
 
+	// CacheDir, when non-empty, stores the last successfully fetched copy of each
+	// URL subscription and uses it if a later fetch fails. Empty disables caching.
+	CacheDir string
+
 	// explicit records which fields were set through Option functions; used by
 	// multi-subscription generation so that only explicitly passed options
 	// override the configuration file.

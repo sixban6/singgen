@@ -2,6 +2,7 @@ package fetcher
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -10,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/sixban6/singgen/internal/constant"
 	"github.com/sixban6/singgen/internal/logx"
@@ -24,7 +26,20 @@ type HTTPFetcher struct {
 	Client *http.Client
 	// Logger 可选；为 nil 时不输出日志
 	Logger *slog.Logger
+	// MaxAttempts 最大尝试次数（含首次），<=0 时使用 DefaultMaxAttempts
+	MaxAttempts int
+	// RetryBackoff 首次重试前的等待时间，之后逐次翻倍；<=0 时使用 DefaultRetryBackoff
+	RetryBackoff time.Duration
 }
+
+const (
+	// DefaultMaxAttempts 默认最多尝试 3 次（仅网络错误、5xx、429 会重试）
+	DefaultMaxAttempts = 3
+	// DefaultRetryBackoff 默认首次重试等待时间
+	DefaultRetryBackoff = 500 * time.Millisecond
+	// maxResponseSize 限制响应大小防止内存耗尽
+	maxResponseSize = 10 * 1024 * 1024 // 10MB
+)
 
 func (f *HTTPFetcher) logger() *slog.Logger { return logx.Or(f.Logger) }
 
@@ -41,45 +56,96 @@ func (f *HTTPFetcher) Fetch(urlStr string) ([]byte, error) {
 }
 
 // FetchContext 与 Fetch 相同，但遵循调用方传入的 ctx（取消 / 超时）。
-// 实际超时由 ctx 与 Client.Timeout 中较早者决定。
+// 单次请求超时由 Client.Timeout 决定；失败可重试时最多尝试 MaxAttempts 次。
 func (f *HTTPFetcher) FetchContext(ctx context.Context, urlStr string) ([]byte, error) {
+	body, _, err := f.FetchWithHeader(ctx, urlStr)
+	return body, err
+}
+
+// retryableError 标记可以重试的失败（网络错误、5xx、429）
+type retryableError struct{ err error }
+
+func (e *retryableError) Error() string { return e.err.Error() }
+func (e *retryableError) Unwrap() error { return e.err }
+
+// FetchWithHeader 拉取订阅并返回响应头（用于读取 subscription-userinfo 等信息）。
+// 网络错误、5xx 与 429 会按指数退避重试；ctx 取消时立即返回。
+func (f *HTTPFetcher) FetchWithHeader(ctx context.Context, urlStr string) ([]byte, http.Header, error) {
 	// 验证URL安全性
 	if err := f.validateURL(urlStr); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
+	attempts := f.MaxAttempts
+	if attempts <= 0 {
+		attempts = DefaultMaxAttempts
+	}
+	backoff := f.RetryBackoff
+	if backoff <= 0 {
+		backoff = DefaultRetryBackoff
+	}
+
+	var lastErr error
+	for attempt := 1; attempt <= attempts; attempt++ {
+		body, header, err := f.fetchOnce(ctx, urlStr)
+		if err == nil {
+			f.logger().Info("HTTP fetch successful", "url", logx.RedactSource(urlStr), "size", len(body), "attempt", attempt)
+			return body, header, nil
+		}
+		lastErr = err
+
+		var retryable *retryableError
+		if !errors.As(err, &retryable) || ctx.Err() != nil || attempt == attempts {
+			break
+		}
+		f.logger().Warn("HTTP fetch failed, retrying",
+			"url", logx.RedactSource(urlStr), "attempt", attempt, "wait", backoff, "error", logx.ErrSource(err))
+		select {
+		case <-ctx.Done():
+			return nil, nil, fmt.Errorf("http request canceled: %w", ctx.Err())
+		case <-time.After(backoff):
+		}
+		backoff *= 2
+	}
+	return nil, nil, lastErr
+}
+
+func (f *HTTPFetcher) fetchOnce(ctx context.Context, urlStr string) ([]byte, http.Header, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", urlStr, nil)
 	if err != nil {
-		return nil, fmt.Errorf("create request failed: %w", err)
+		return nil, nil, fmt.Errorf("create request failed: %w", err)
 	}
 
 	// 设置更真实的User-Agent来避免被阻止
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
 	req.Header.Set("Accept", "text/plain,text/html,application/json,*/*")
 	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
-	req.Header.Set("Accept-Encoding", "identity") // 避免压缩以简化处理
+	// 不手动设置 Accept-Encoding：由 net/http 自动协商 gzip 并透明解压
 	req.Header.Set("Cache-Control", "no-cache")
 
 	resp, err := f.Client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("http request failed: %w", err)
+		err = fmt.Errorf("http request failed: %w", err)
+		if ctx.Err() != nil {
+			return nil, nil, err
+		}
+		return nil, nil, &retryableError{err}
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("http status %d", resp.StatusCode)
+		err := fmt.Errorf("http status %d", resp.StatusCode)
+		if resp.StatusCode >= 500 || resp.StatusCode == http.StatusTooManyRequests {
+			return nil, nil, &retryableError{err}
+		}
+		return nil, nil, err
 	}
 
-	// 限制响应大小防止内存耗尽
-	const maxResponseSize = 10 * 1024 * 1024 // 10MB
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseSize))
 	if err != nil {
-		return nil, fmt.Errorf("read response body failed: %w", err)
+		return nil, nil, &retryableError{fmt.Errorf("read response body failed: %w", err)}
 	}
-
-	f.logger().Info("HTTP fetch successful", "url", logx.RedactSource(urlStr), "size", len(body))
-
-	return body, nil
+	return body, resp.Header, nil
 }
 
 // validateURL 验证URL的安全性

@@ -171,6 +171,16 @@ func WithTSLanIPCIDR(ipCIDR string) Option {
 	}
 }
 
+// WithCacheDir enables the subscription cache in dir: the last successfully
+// fetched copy of each URL subscription is kept there and used when a later
+// fetch fails. Use DefaultCacheDir() for the per-user default location.
+func WithCacheDir(dir string) Option {
+	return func(o *GenerateOptions) {
+		o.markSet(optCacheDir)
+		o.CacheDir = dir
+	}
+}
+
 // optionField identifies a GenerateOptions field that was explicitly set
 // through an Option, as opposed to holding a library default.
 type optionField uint32
@@ -188,6 +198,7 @@ const (
 	optExternalController
 	optTSAuthKey
 	optTSLanIPCIDR
+	optCacheDir
 )
 
 func (o *GenerateOptions) markSet(f optionField) { o.explicit |= f }

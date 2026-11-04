@@ -3,8 +3,12 @@ package singgen
 import (
 	"context"
 	"fmt"
-	"github.com/sixban6/singgen/internal/logx"
+	"net/http"
 	"net/url"
+	"sync"
+	"time"
+
+	"github.com/sixban6/singgen/internal/logx"
 
 	"github.com/sixban6/singgen/internal/fetcher"
 	"github.com/sixban6/singgen/internal/parser"
@@ -19,9 +23,12 @@ type ContextFetcher interface {
 
 // contextFetcher wraps the internal fetchers with context support
 type contextFetcher struct {
-	httpFetcher fetcher.Fetcher
-	fileFetcher fetcher.Fetcher
+	httpFetcher *fetcher.HTTPFetcher
+	fileFetcher *fetcher.FileFetcher
 	options     GenerateOptions
+
+	mu       sync.Mutex
+	lastInfo *SubscriptionInfo
 }
 
 // NewContextFetcher creates a new context-aware fetcher
@@ -38,30 +45,17 @@ func NewContextFetcher(options GenerateOptions) ContextFetcher {
 	}
 }
 
-// Fetch retrieves data from the source with context support and automatic type detection
+// Fetch retrieves data from the source with context support and automatic type detection.
+// For URL sources it retries transient failures, records subscription usage info and,
+// when a cache directory is configured, falls back to the last successful copy.
 func (f *contextFetcher) Fetch(ctx context.Context, source string) ([]byte, error) {
-	// Check context cancellation before starting
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	default:
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 
-	// Determine source type and select appropriate fetcher
-	var fetcher fetcher.Fetcher
-	if f.isURL(source) {
-		fetcher = f.httpFetcher
-		f.logf("Fetching from URL: %s", logx.RedactSource(source))
-	} else {
-		fetcher = f.fileFetcher
+	if !f.isURL(source) {
 		f.logf("Reading from file: %s", source)
-	}
-
-	// Prefer native context support so that cancellation actually aborts the request
-	if cf, ok := fetcher.(interface {
-		FetchContext(context.Context, string) ([]byte, error)
-	}); ok {
-		data, err := cf.FetchContext(ctx, source)
+		data, err := f.fileFetcher.Fetch(source)
 		if err != nil {
 			return nil, fmt.Errorf("fetch failed: %w", err)
 		}
@@ -69,12 +63,71 @@ func (f *contextFetcher) Fetch(ctx context.Context, source string) ([]byte, erro
 		return data, nil
 	}
 
-	data, err := fetcher.Fetch(source)
-	if err != nil {
-		return nil, fmt.Errorf("fetch failed: %w", err)
+	f.logf("Fetching from URL: %s", logx.RedactSource(source))
+	data, header, err := f.httpFetcher.FetchWithHeader(ctx, source)
+	if err == nil {
+		f.logf("Successfully fetched %d bytes", len(data))
+		f.recordUserInfo(header, source)
+		f.saveCache(source, data)
+		return data, nil
 	}
-	f.logf("Successfully fetched %d bytes", len(data))
-	return data, nil
+
+	// 拉取失败：尝试使用上一次成功拉取的缓存，避免生成节点为空的配置
+	if cached, ok := f.loadCache(ctx, source, err); ok {
+		return cached, nil
+	}
+	return nil, fmt.Errorf("fetch failed: %w", err)
+}
+
+// SubscriptionInfo returns usage information reported by the last fetched
+// subscription (nil if the provider did not send a subscription-userinfo header).
+func (f *contextFetcher) SubscriptionInfo() *SubscriptionInfo {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.lastInfo
+}
+
+func (f *contextFetcher) recordUserInfo(header http.Header, source string) {
+	info, ok := ParseSubscriptionUserInfo(header.Get("subscription-userinfo"))
+	f.mu.Lock()
+	if ok {
+		f.lastInfo = info
+	} else {
+		f.lastInfo = nil
+	}
+	f.mu.Unlock()
+	if ok {
+		info.report(logx.Or(f.options.Logger), logx.RedactSource(source), time.Now())
+	}
+}
+
+func (f *contextFetcher) saveCache(source string, data []byte) {
+	if f.options.CacheDir == "" {
+		return
+	}
+	// 只缓存包含有效节点的内容，避免错误页面覆盖可用的缓存
+	if parser.DetectFormat(data) == parser.FormatUnknown {
+		return
+	}
+	if err := writeSubscriptionCache(f.options.CacheDir, source, data); err != nil {
+		logx.Or(f.options.Logger).Warn("Failed to write subscription cache", "error", err)
+	}
+}
+
+func (f *contextFetcher) loadCache(ctx context.Context, source string, fetchErr error) ([]byte, bool) {
+	if f.options.CacheDir == "" || ctx.Err() != nil {
+		return nil, false
+	}
+	data, modTime, err := readSubscriptionCache(f.options.CacheDir, source)
+	if err != nil {
+		return nil, false
+	}
+	logx.Or(f.options.Logger).Warn("Subscription fetch failed, using cached copy",
+		"url", logx.RedactSource(source),
+		"cached_at", modTime.Format(time.RFC3339),
+		"age", time.Since(modTime).Round(time.Minute).String(),
+		"error", logx.ErrSource(fetchErr))
+	return data, true
 }
 
 // isURL determines if the source is a URL or file path

@@ -42,6 +42,7 @@ func main() {
 		downMbps           = flag.Int("down-mbps", 300, "download bandwidth limit for Hysteria2 nodes (Mbps)")
 		dnsLocalServer     = flag.String("dns", "114.114.114.114", "DNS local server address")
 		platform           = flag.String("platform", "linux", "target platform (linux, darwin, ios, windows)")
+		cacheDir           = flag.String("cache-dir", singgen.DefaultCacheDir(), "directory for caching the last successful copy of each subscription (used when a fetch fails); empty disables")
 
 		// Utility options
 		listTemplate    = flag.Bool("list-templates", false, "list available template versions")
@@ -116,6 +117,7 @@ func main() {
 			removeEmoji:        *removeEmoji,
 			upMbps:             *upMbps,
 			downMbps:           *downMbps,
+			cacheDir:           *cacheDir,
 		}
 		if err := runMultiSubscriptionMode(logger, *configFile, *outFile, overrides); err != nil {
 			logger.Error("Multi-subscription mode failed", "error", logx.ErrSource(err))
@@ -123,7 +125,7 @@ func main() {
 		}
 	} else if *subURL != "" {
 		// Single subscription mode (legacy)
-		if err := runSingleSubscriptionMode(logger, *subURL, *outFile, *templateVer, *platform, *mirrorURL, *dnsLocalServer, *externalController, *clientSubnet, *format, *removeEmoji, *upMbps, *downMbps); err != nil {
+		if err := runSingleSubscriptionMode(logger, *subURL, *outFile, *templateVer, *platform, *mirrorURL, *dnsLocalServer, *externalController, *clientSubnet, *format, *removeEmoji, *upMbps, *downMbps, *cacheDir); err != nil {
 			logger.Error("Single subscription mode failed", "error", logx.ErrSource(err))
 			os.Exit(1)
 		}
@@ -153,12 +155,14 @@ type cliOverrides struct {
 	removeEmoji        bool
 	upMbps             int
 	downMbps           int
+	cacheDir           string
 }
 
 // options converts explicitly set flags into library options; flags left at
 // their defaults are not included so they never override the config file.
 func (c cliOverrides) options(mc *singgen.MultiConfig, logger *slog.Logger) ([]singgen.Option, error) {
-	opts := []singgen.Option{singgen.WithLogger(logger)}
+	// cache-dir 不属于配置文件字段，始终生效
+	opts := []singgen.Option{singgen.WithLogger(logger), singgen.WithCacheDir(c.cacheDir)}
 	set := c.explicit
 
 	if set["template"] {
@@ -234,7 +238,7 @@ func runMultiSubscriptionMode(logger *slog.Logger, configFile string, outFile st
 }
 
 // runSingleSubscriptionMode handles single subscription configuration generation (legacy)
-func runSingleSubscriptionMode(logger *slog.Logger, subURL, outFile, templateVer, platform, mirrorURL, dnsLocalServer, externalController, clientSubnet, format string, removeEmoji bool, upMbps, downMbps int) error {
+func runSingleSubscriptionMode(logger *slog.Logger, subURL, outFile, templateVer, platform, mirrorURL, dnsLocalServer, externalController, clientSubnet, format string, removeEmoji bool, upMbps, downMbps int, cacheDir string) error {
 	logger.Info("Running in single subscription mode", "url", logx.RedactSource(subURL))
 
 	// Validate inputs
@@ -253,6 +257,7 @@ func runSingleSubscriptionMode(logger *slog.Logger, subURL, outFile, templateVer
 		singgen.WithBandwidthParams(upMbps, downMbps),
 		singgen.WithExternalController(externalController),
 		singgen.WithLogger(logger),
+		singgen.WithCacheDir(cacheDir),
 	}
 
 	if clientSubnet != "" {

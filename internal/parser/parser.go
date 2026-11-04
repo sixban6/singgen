@@ -1,8 +1,12 @@
 package parser
 
 import (
+	"fmt"
+	"log/slog"
 	"strings"
+	"sync"
 
+	"github.com/sixban6/singgen/internal/constant"
 	"github.com/sixban6/singgen/internal/util"
 	"github.com/sixban6/singgen/pkg/model"
 )
@@ -12,114 +16,140 @@ type Parser interface {
 	Parse(raw []byte) ([]model.Node, error)
 }
 
+// Registry 协议名 -> 解析器工厂。仅在 init 阶段写入，之后只读。
 var Registry = make(map[string]func() Parser)
 
+var registryMu sync.Mutex
+
 func Register(name string, factory func() Parser) {
+	registryMu.Lock()
+	defer registryMu.Unlock()
 	Registry[name] = factory
 }
 
-// DetectFormat 智能检测数据格式，支持mediaTypeHint优化
-func DetectFormat(raw []byte) string {
-	return DetectFormatWithHint(raw, "")
+// FormatUnknown / FormatMixed 为 DetectFormat 的特殊返回值
+const (
+	FormatUnknown = "unknown"
+	FormatMixed   = "mixed"
+)
+
+// schemeProtocols 链接前缀 -> 协议名（新增协议时在此登记一次即可）
+var schemeProtocols = map[string]string{
+	"vmess":     constant.ProtocolVMess,
+	"vless":     constant.ProtocolVLESS,
+	"trojan":    constant.ProtocolTrojan,
+	"hysteria2": constant.ProtocolHysteria2,
+	"hy2":       constant.ProtocolHysteria2,
+	"anytls":    constant.ProtocolAnyTLS,
+	"tuic":      constant.ProtocolTuic,
+	"ss":        constant.ProtocolSS,
 }
 
-// DetectFormatWithHint 使用提示信息检测格式以优化性能
-func DetectFormatWithHint(raw []byte, mediaTypeHint string) string {
-	// 验证输入
+// protocolOf 返回一行节点链接对应的协议名
+func protocolOf(line string) (string, bool) {
+	scheme, _, ok := strings.Cut(line, "://")
+	if !ok {
+		return "", false
+	}
+	proto, ok := schemeProtocols[strings.ToLower(scheme)]
+	return proto, ok
+}
+
+// SplitLines 规范化订阅内容：清理控制字符、按需 base64 解码（标准 / URL-safe），返回非空行。
+// 整个订阅只解码一次。
+func SplitLines(raw []byte) []string {
 	validator := NewInputValidator()
-	if err := validator.ValidateInput(raw); err != nil {
-		return "unknown"
-	}
-
 	data := validator.SanitizeString(string(raw))
-
-	// 根据mediaTypeHint进行快速检测
-	if mediaTypeHint != "" {
-		if quickFormat := detectWithHint(data, mediaTypeHint); quickFormat != "" {
-			return quickFormat
-		}
-	}
-
-	// Try to decode base64 if it looks like base64 data
 	if isLikelyBase64(data) {
-		if decoded, err := util.DecodeBase64(data); err == nil {
+		compact := strings.Join(strings.Fields(data), "")
+		if decoded, err := util.DecodeBase64(compact); err == nil {
+			data = validator.SanitizeString(string(decoded))
+		} else if decoded, err := util.DecodeBase64URLSafe(compact); err == nil {
 			data = validator.SanitizeString(string(decoded))
 		}
 	}
-
-	// 提取协议提示进行优化
-	protocolHints := validator.ExtractProtocolHints(data)
-	if len(protocolHints) == 1 {
-		// 如果只检测到一种协议，直接返回
-		return protocolHints[0]
+	if data == "" {
+		return nil
 	}
-
-	lines := strings.Split(data, "\n")
-	var protocols []string
-
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-
-		if strings.HasPrefix(line, "vmess://") {
-			protocols = append(protocols, "vmess")
-		} else if strings.HasPrefix(line, "vless://") {
-			protocols = append(protocols, "vless")
-		} else if strings.HasPrefix(line, "trojan://") {
-			protocols = append(protocols, "trojan")
-		} else if strings.HasPrefix(line, "hysteria2://") || strings.HasPrefix(line, "hy2://") {
-			protocols = append(protocols, "hysteria2")
-		} else if strings.HasPrefix(line, "anytls://") {
-			protocols = append(protocols, "anytls")
-		} else if strings.HasPrefix(line, "tuic://") {
-			protocols = append(protocols, "tuic")
-		} else if strings.HasPrefix(line, "ss://") {
-			protocols = append(protocols, "shadowsocks")
-		}
-	}
-
-	if len(protocols) == 0 {
-		return "unknown"
-	}
-
-	if len(protocols) == 1 {
-		return protocols[0]
-	}
-
-	firstProtocol := protocols[0]
-	for _, protocol := range protocols[1:] {
-		if protocol != firstProtocol {
-			return "mixed"
-		}
-	}
-
-	return firstProtocol
+	return strings.Split(data, "\n")
 }
 
-// detectWithHint 基于提示快速检测格式
-func detectWithHint(data, hint string) string {
-	switch strings.ToLower(hint) {
-	case "vmess":
-		if strings.Contains(data, `"v":`) && strings.Contains(data, `"ps":`) {
-			return "vmess"
+// detectLines 根据各行协议得出整体格式
+func detectLines(lines []string) string {
+	format := ""
+	for _, line := range lines {
+		proto, ok := protocolOf(line)
+		if !ok {
+			continue
 		}
-	case "tuic":
-		if strings.Contains(data, "tuic://") {
-			return "tuic"
-		}
-	case "base64":
-		if isLikelyBase64(data) {
-			return DetectFormat([]byte(data))
-		}
-	case "json":
-		// 检查是否是VMess JSON格式
-		if strings.Contains(data, `"v":`) && strings.Contains(data, `"add":`) {
-			return "vmess"
+		if format == "" {
+			format = proto
+		} else if format != proto {
+			return FormatMixed
 		}
 	}
-	return ""
+	if format == "" {
+		return FormatUnknown
+	}
+	return format
+}
+
+// DetectFormat 检测订阅格式：单一协议名、"mixed" 或 "unknown"
+func DetectFormat(raw []byte) string {
+	return detectLines(SplitLines(raw))
+}
+
+// DetectFormatWithHint 保留以兼容旧调用；提示信息已不再需要。
+//
+// Deprecated: use DetectFormat.
+func DetectFormatWithHint(raw []byte, _ string) string {
+	return DetectFormat(raw)
+}
+
+// ParseSubscription 解析订阅中的全部节点链接（保持原始顺序）。
+// onlyProtocol 非空时只解析该协议的链接（"mixed" 表示全部）。
+// 返回解析出的节点与检测到的格式；无任何有效节点时返回 constant.ErrParseFailed。
+func ParseSubscription(raw []byte, onlyProtocol string, log *slog.Logger) ([]model.Node, string, error) {
+	if onlyProtocol == FormatMixed {
+		onlyProtocol = ""
+	}
+	if onlyProtocol != "" {
+		if _, ok := Registry[onlyProtocol]; !ok {
+			return nil, FormatUnknown, fmt.Errorf("no parser available for format: %s", onlyProtocol)
+		}
+	}
+
+	lines := SplitLines(raw)
+	format := detectLines(lines)
+
+	parsers := make(map[string]Parser)
+	var nodes []model.Node
+	for _, line := range lines {
+		proto, ok := protocolOf(line)
+		if !ok || (onlyProtocol != "" && proto != onlyProtocol) {
+			continue
+		}
+		p, ok := parsers[proto]
+		if !ok {
+			factory, exists := Registry[proto]
+			if !exists {
+				continue
+			}
+			p = WithLogger(factory(), log)
+			parsers[proto] = p
+		}
+		// 单行解析失败时由各协议解析器记录（已脱敏的）警告
+		parsed, err := p.Parse([]byte(line))
+		if err != nil {
+			continue
+		}
+		nodes = append(nodes, parsed...)
+	}
+
+	if len(nodes) == 0 {
+		return nil, format, constant.ErrParseFailed
+	}
+	return nodes, format, nil
 }
 
 // isLikelyBase64 checks if the data looks like base64 encoded content
@@ -131,14 +161,14 @@ func isLikelyBase64(data string) bool {
 
 	// Base64 data should not contain spaces or newlines (except at the end)
 	trimmed := strings.TrimSpace(data)
-	if strings.Contains(trimmed, " ") {
+	if trimmed == "" || strings.Contains(trimmed, " ") {
 		return false
 	}
 
-	// Should be mostly base64 characters (A-Z, a-z, 0-9, +, /, =)
+	// Should be mostly base64 characters (A-Z, a-z, 0-9, +, /, =, and URL-safe - _)
 	base64Chars := 0
 	for _, r := range trimmed {
-		if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '+' || r == '/' || r == '=' {
+		if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '+' || r == '/' || r == '=' || r == '-' || r == '_' {
 			base64Chars++
 		}
 	}

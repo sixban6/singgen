@@ -205,74 +205,19 @@ func (g *Generator) ParseNodes(ctx context.Context, source string) ([]Node, erro
 	return g.parseData(ctx, data)
 }
 
-// parseData handles the parsing logic with automatic format detection
+// parseData decodes the subscription once and dispatches each link to its protocol parser
 func (g *Generator) parseData(ctx context.Context, data []byte) ([]Node, error) {
-	format := parser.DetectFormat(data)
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+
+	nodes, format, err := parser.ParseSubscription(data, "", g.options.Logger)
 	g.logf("Detected format: %s", format)
-
-	if format == "unknown" {
-		g.logf("Unknown format, trying all parsers")
-		return g.tryAllParsers(ctx, data)
+	if err != nil || len(nodes) == 0 {
+		return nil, ErrNoValidNodes
 	}
-
-	if factory, exists := parser.Registry[format]; exists {
-		p := parser.WithLogger(factory(), g.options.Logger)
-		if p.Accept("", data) {
-			nodes, err := p.Parse(data)
-			if err != nil {
-				g.logf("Parser %s failed: %v, trying all parsers", format, err)
-				return g.tryAllParsers(ctx, data)
-			}
-			return nodes, nil
-		}
-	}
-
-	if format == "mixed" {
-		p := parser.WithLogger(parser.Registry["mixed"](), g.options.Logger)
-		nodes, err := p.Parse(data)
-		if err != nil {
-			g.logf("Mixed parser failed: %v", err)
-			return nil, err
-		}
-		return nodes, nil
-	}
-
-	return g.tryAllParsers(ctx, data)
-}
-
-// tryAllParsers attempts to parse with all available parsers
-func (g *Generator) tryAllParsers(ctx context.Context, data []byte) ([]Node, error) {
-	for name, factory := range parser.Registry {
-		if name == "mixed" {
-			continue
-		}
-
-		// Check context cancellation
-		select {
-		case <-ctx.Done():
-			return nil, ctx.Err()
-		default:
-		}
-
-		p := parser.WithLogger(factory(), g.options.Logger)
-		if p.Accept("", data) {
-			nodes, err := p.Parse(data)
-			if err == nil && len(nodes) > 0 {
-				g.logf("Successfully parsed with parser: %s (%d nodes)", name, len(nodes))
-				return nodes, nil
-			}
-		}
-	}
-
-	// Try mixed parser as last resort
-	p := parser.WithLogger(parser.Registry["mixed"](), g.options.Logger)
-	nodes, err := p.Parse(data)
-	if err == nil && len(nodes) > 0 {
-		g.logf("Successfully parsed with mixed parser: %d nodes", len(nodes))
-		return nodes, nil
-	}
-
-	return nil, ErrNoValidNodes
+	g.logf("Parsed %d nodes", len(nodes))
+	return nodes, nil
 }
 
 // logf logs a message if logger is configured

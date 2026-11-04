@@ -4,20 +4,11 @@ import (
 	"context"
 	"log/slog"
 	"strings"
-	"sync"
 
 	"github.com/sixban6/singgen/internal/filter"
 	"github.com/sixban6/singgen/internal/logx"
 	"github.com/sixban6/singgen/internal/transformer"
 	"github.com/sixban6/singgen/internal/util"
-)
-
-var (
-	indexSlicePool = sync.Pool{
-		New: func() interface{} {
-			return make([]int, 0, 10)
-		},
-	}
 )
 
 // TemplateProcessor 处理模板中的特殊占位符和过滤逻辑
@@ -286,8 +277,7 @@ func (p *TemplateProcessor) walkAndRemoveEmpty(obj any, existingTags map[string]
 
 // removeEmptyOutboundsFromArray 从outbounds数组中删除空的outbound块
 func (p *TemplateProcessor) removeEmptyOutboundsFromArray(outbounds []any, existingTags map[string]bool, removedCount *int) []any {
-	toRemoveIndexes := p.getIndexSlice()
-	defer p.putIndexSlice(toRemoveIndexes)
+	var toRemoveIndexes []int
 
 	// 逆序收集待删除索引
 	for i := len(outbounds) - 1; i >= 0; i-- {
@@ -352,16 +342,6 @@ func (p *TemplateProcessor) batchRemove(slice []any, indexes []int) []any {
 	}
 
 	return slice
-}
-
-// getIndexSlice 从对象池获取索引slice
-func (p *TemplateProcessor) getIndexSlice() []int {
-	return indexSlicePool.Get().([]int)[:0]
-}
-
-// putIndexSlice 归还索引slice到对象池
-func (p *TemplateProcessor) putIndexSlice(s []int) {
-	indexSlicePool.Put(s)
 }
 
 // buildCurrentOutboundTags 构建当前配置中所有outbound的tag索引

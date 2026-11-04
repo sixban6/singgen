@@ -68,26 +68,12 @@ func (f *contextFetcher) Fetch(ctx context.Context, source string) ([]byte, erro
 		return data, nil
 	}
 
-	// Create a channel to handle the result
-	resultCh := make(chan fetchResult, 1)
-
-	// Start fetching in a goroutine
-	go func() {
-		data, err := fetcher.Fetch(source)
-		resultCh <- fetchResult{data: data, err: err}
-	}()
-
-	// Wait for either completion or context cancellation
-	select {
-	case <-ctx.Done():
-		return nil, fmt.Errorf("fetch operation canceled: %w", ctx.Err())
-	case result := <-resultCh:
-		if result.err != nil {
-			return nil, fmt.Errorf("fetch failed: %w", result.err)
-		}
-		f.logf("Successfully fetched %d bytes", len(result.data))
-		return result.data, nil
+	data, err := fetcher.Fetch(source)
+	if err != nil {
+		return nil, fmt.Errorf("fetch failed: %w", err)
 	}
+	f.logf("Successfully fetched %d bytes", len(data))
+	return data, nil
 }
 
 // isURL determines if the source is a URL or file path
@@ -101,12 +87,6 @@ func (f *contextFetcher) logf(format string, args ...any) {
 	if f.options.Logger != nil {
 		f.options.Logger.Info(fmt.Sprintf(format, args...))
 	}
-}
-
-// fetchResult holds the result of a fetch operation
-type fetchResult struct {
-	data []byte
-	err  error
 }
 
 // ContextTransformer provides context-aware node transformation
@@ -143,47 +123,44 @@ func (t *contextTransformer) Transform(ctx context.Context, nodes []model.Node) 
 
 	t.logf("Transforming %d nodes to outbounds", len(nodes))
 
-	// Create a channel for the result
-	resultCh := make(chan transformResult, 1)
-
-	// Start transformation in a goroutine
-	go func() {
-		// Inject bandwidth parameters into Hysteria2 nodes from config
-		if t.options.UpMbps > 0 || t.options.DownMbps > 0 {
-			upStr := fmt.Sprintf("%d", t.options.UpMbps)
-			downStr := fmt.Sprintf("%d", t.options.DownMbps)
-			for i, node := range nodes {
-				if node.Type == "hysteria2" {
-					if nodes[i].Extra == nil {
-						nodes[i].Extra = make(map[string]any)
-					}
-					// Only override if using default values (25/300) or not set
-					if node.Extra["up_mbps"] == "25" || node.Extra["up_mbps"] == nil {
-						nodes[i].Extra["up_mbps"] = upStr
-					}
-					if node.Extra["down_mbps"] == "300" || node.Extra["down_mbps"] == nil {
-						nodes[i].Extra["down_mbps"] = downStr
-					}
-				}
-			}
-		}
-
-		// Perform the actual transformation
-		outbounds, err := t.transformer.Transform(nodes)
-		resultCh <- transformResult{outbounds: outbounds, err: err}
-	}()
-
-	// Wait for either completion or context cancellation
-	select {
-	case <-ctx.Done():
-		return nil, fmt.Errorf("transform operation canceled: %w", ctx.Err())
-	case result := <-resultCh:
-		if result.err != nil {
-			return nil, fmt.Errorf("transformation failed: %w", result.err)
-		}
-		t.logf("Successfully transformed to %d outbounds", len(result.outbounds))
-		return result.outbounds, nil
+	outbounds, err := t.transformer.Transform(t.withBandwidth(nodes))
+	if err != nil {
+		return nil, fmt.Errorf("transformation failed: %w", err)
 	}
+	t.logf("Successfully transformed to %d outbounds", len(outbounds))
+	return outbounds, nil
+}
+
+// withBandwidth injects configured Hysteria2 bandwidth into nodes that use the
+// default (25/300) or no bandwidth. It works on copies so the caller's nodes
+// (and their Extra maps) are never mutated.
+func (t *contextTransformer) withBandwidth(nodes []model.Node) []model.Node {
+	if t.options.UpMbps <= 0 && t.options.DownMbps <= 0 {
+		return nodes
+	}
+	upStr := fmt.Sprintf("%d", t.options.UpMbps)
+	downStr := fmt.Sprintf("%d", t.options.DownMbps)
+
+	result := make([]model.Node, len(nodes))
+	copy(result, nodes)
+	for i, node := range result {
+		if node.Type != "hysteria2" {
+			continue
+		}
+		extra := make(map[string]any, len(node.Extra)+2)
+		for k, v := range node.Extra {
+			extra[k] = v
+		}
+		// Only override if using default values (25/300) or not set
+		if extra["up_mbps"] == "25" || extra["up_mbps"] == nil {
+			extra["up_mbps"] = upStr
+		}
+		if extra["down_mbps"] == "300" || extra["down_mbps"] == nil {
+			extra["down_mbps"] = downStr
+		}
+		result[i].Extra = extra
+	}
+	return result
 }
 
 // logf logs a message if logger is configured
@@ -191,12 +168,6 @@ func (t *contextTransformer) logf(format string, args ...any) {
 	if t.options.Logger != nil {
 		t.options.Logger.Info(fmt.Sprintf(format, args...))
 	}
-}
-
-// transformResult holds the result of a transform operation
-type transformResult struct {
-	outbounds []transformer.Outbound
-	err       error
 }
 
 // ContextParser provides context-aware parsing with smart format detection
@@ -253,39 +224,12 @@ func (p *contextParser) ParseWithHint(ctx context.Context, data []byte, formatHi
 
 	p.logf("Parsing data with format: %s", format)
 
-	// The actual parsing is typically fast and doesn't need context handling,
-	// but we wrap it for consistency and future extensibility
-	resultCh := make(chan parseResult, 1)
-
-	go func() {
-		var nodes []model.Node
-		var err error
-
-		if factory, exists := parser.Registry[format]; exists {
-			pr := parser.WithLogger(factory(), p.options.Logger)
-			if pr.Accept("", data) {
-				nodes, err = pr.Parse(data)
-			} else {
-				err = fmt.Errorf("parser %s rejected the data", format)
-			}
-		} else {
-			err = fmt.Errorf("no parser available for format: %s", format)
-		}
-
-		resultCh <- parseResult{nodes: nodes, err: err}
-	}()
-
-	// Wait for either completion or context cancellation
-	select {
-	case <-ctx.Done():
-		return nil, fmt.Errorf("parse operation canceled: %w", ctx.Err())
-	case result := <-resultCh:
-		if result.err != nil {
-			return nil, fmt.Errorf("parsing failed: %w", result.err)
-		}
-		p.logf("Successfully parsed %d nodes", len(result.nodes))
-		return result.nodes, nil
+	nodes, _, err := parser.ParseSubscription(data, formatHint, p.options.Logger)
+	if err != nil {
+		return nil, fmt.Errorf("parsing failed: %w", err)
 	}
+	p.logf("Successfully parsed %d nodes", len(nodes))
+	return nodes, nil
 }
 
 // logf logs a message if logger is configured
@@ -293,10 +237,4 @@ func (p *contextParser) logf(format string, args ...any) {
 	if p.options.Logger != nil {
 		p.options.Logger.Info(fmt.Sprintf(format, args...))
 	}
-}
-
-// parseResult holds the result of a parse operation
-type parseResult struct {
-	nodes []model.Node
-	err   error
 }

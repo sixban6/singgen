@@ -243,12 +243,18 @@ func WithPipelineOptions(opts ...Option) PipelineOption {
 	}
 }
 
-// StreamingPipeline provides streaming capabilities for processing large subscription files
+// StreamingPipeline provides streaming capabilities for processing large subscription files.
+//
+// Deprecated: the whole subscription is parsed before batches are emitted, so this
+// provides no memory or latency benefit over Pipeline.ParseOnly. It is kept only for
+// backward compatibility.
 type StreamingPipeline struct {
 	pipeline *Pipeline
 }
 
-// NewStreamingPipeline creates a new streaming pipeline
+// NewStreamingPipeline creates a new streaming pipeline.
+//
+// Deprecated: use NewPipeline and Pipeline.ParseOnly.
 func NewStreamingPipeline(opts ...PipelineOption) *StreamingPipeline {
 	return &StreamingPipeline{
 		pipeline: NewPipeline(opts...),

@@ -1,75 +1,19 @@
 package parser
 
-import (
-	"strings"
+import "github.com/sixban6/singgen/pkg/model"
 
-	"github.com/sixban6/singgen/internal/constant"
-	"github.com/sixban6/singgen/internal/logx"
-	"github.com/sixban6/singgen/internal/util"
-	"github.com/sixban6/singgen/pkg/model"
-)
-
+// MixedParser 解析包含多种协议链接的订阅
 type MixedParser struct{ base }
 
 func (p *MixedParser) Accept(mediaTypeHint string, raw []byte) bool {
-	format := DetectFormat(raw)
-	return format == "mixed"
+	return DetectFormat(raw) == FormatMixed
 }
 
 func (p *MixedParser) Parse(raw []byte) ([]model.Node, error) {
-	var allNodes []model.Node
-	data := strings.TrimSpace(string(raw))
-
-	// Try to decode base64 if it looks like base64 data
-	if isLikelyBase64(data) {
-		if decoded, err := util.DecodeBase64(data); err == nil {
-			data = string(decoded)
-		}
-	}
-
-	lines := strings.Split(data, "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-
-		var parser Parser
-
-		if strings.HasPrefix(line, "vmess://") {
-			parser = &VmessParser{}
-		} else if strings.HasPrefix(line, "vless://") {
-			parser = &VlessParser{}
-		} else if strings.HasPrefix(line, "trojan://") {
-			parser = &TrojanParser{}
-		} else if strings.HasPrefix(line, "hysteria2://") || strings.HasPrefix(line, "hy2://") {
-			parser = &Hysteria2Parser{}
-		} else if strings.HasPrefix(line, "anytls://") {
-			parser = &AnyTLSParser{}
-		} else if strings.HasPrefix(line, "tuic://") {
-			parser = &TuicParser{}
-		} else if strings.HasPrefix(line, "ss://") {
-			parser = &ShadowsocksParser{}
-		} else {
-			continue
-		}
-
-		nodes, err := WithLogger(parser, p.log).Parse([]byte(line))
-		if err != nil {
-			p.logger().Warn("Failed to parse line", "node", logx.RedactURL(line), "error", logx.Err(err))
-			continue
-		}
-
-		allNodes = append(allNodes, nodes...)
-	}
-
-	if len(allNodes) == 0 {
-		return nil, constant.ErrParseFailed
-	}
-
-	return allNodes, nil
+	nodes, _, err := ParseSubscription(raw, "", p.log)
+	return nodes, err
 }
 
 func init() {
-	Register("mixed", func() Parser { return &MixedParser{} })
+	Register(FormatMixed, func() Parser { return &MixedParser{} })
 }

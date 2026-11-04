@@ -66,3 +66,30 @@ func TestErrRedactsCredentials(t *testing.T) {
 		t.Errorf("logx.Err leaked credential: %s", got)
 	}
 }
+
+// TestTransformDoesNotMutateCallerNodes 带宽注入不得修改调用方传入的节点
+func TestTransformDoesNotMutateCallerNodes(t *testing.T) {
+	nodes, err := singgen.ParseNodes(context.Background(), singboxCheckFixture)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var hy2 *singgen.Node
+	for i := range nodes {
+		if nodes[i].Type == "hysteria2" {
+			hy2 = &nodes[i]
+		}
+	}
+	if hy2 == nil {
+		t.Fatal("fixture has no hysteria2 node")
+	}
+	before := len(hy2.Extra)
+	_, beforeUp := hy2.Extra["up_mbps"]
+
+	tr := singgen.NewContextTransformer(singgen.GenerateOptions{UpMbps: 50, DownMbps: 500})
+	if _, err := tr.Transform(context.Background(), nodes); err != nil {
+		t.Fatal(err)
+	}
+	if _, afterUp := hy2.Extra["up_mbps"]; len(hy2.Extra) != before || afterUp != beforeUp {
+		t.Errorf("caller node Extra was mutated: %v", hy2.Extra)
+	}
+}

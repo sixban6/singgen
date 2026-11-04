@@ -40,7 +40,7 @@ func main() {
     // Get configuration as bytes
     data, err := singgen.GenerateConfigBytes(ctx, 
         "https://example.com/subscription",
-        singgen.WithTemplate("v1.12"),
+        singgen.WithTemplate("v1.14"),
         singgen.WithPlatform("linux"),
         singgen.WithOutputFormat("json"))
     if err != nil {
@@ -86,7 +86,7 @@ func main() {
     // Method 3: Programmatically construct multi-config
     multiConfig := &singgen.MultiConfig{
         Global: singgen.GlobalConfig{
-            Template:       "v1.12",
+            Template:       "v1.14",
             Platform:       "linux", 
             MirrorURL:      "https://ghfast.top",
             DNSLocalServer: "114.114.114.114",
@@ -190,7 +190,7 @@ func main() {
     
     // Create generator with custom options
     generator := singgen.NewGenerator(
-        singgen.WithTemplate("v1.12"),
+        singgen.WithTemplate("v1.14"),
         singgen.WithPlatform("darwin"),
         singgen.WithHTTPTimeout(30*time.Second),
         singgen.WithLogger(logger),
@@ -236,7 +236,7 @@ func main() {
     // Create pipeline with custom components
     pipeline := singgen.NewPipeline(
         singgen.WithPipelineOptions(
-            singgen.WithTemplate("v1.12"),
+            singgen.WithTemplate("v1.14"),
             singgen.WithDNSServer("1.1.1.1"),
         ),
     )
@@ -279,7 +279,7 @@ func main() {
 
 ```yaml
 global:
-  template: v1.12
+  template: v1.14
   platform: linux
   mirror_url: https://ghfast.top
   dns_server: 114.114.114.114
@@ -312,7 +312,7 @@ subscriptions:
 ```json
 {
   "global": {
-    "template": "v1.12",
+    "template": "v1.14",
     "platform": "linux",
     "mirror_url": "https://ghfast.top",
     "dns_server": "114.114.114.114",

@@ -10,8 +10,8 @@ global:
   format: json
   up_mbps: 25
   down_mbps: 300
-  ts_auth_key: "ddddd"
-  ts_lan_ipcidr: "192.168.31.1/24"
+  ts_auth_key: "tskey-auth-REPLACE_ME"
+  ts_lan_ipcidr: "192.168.1.0/24"
 
 subscriptions:
   - url: ./test-nodes.txt

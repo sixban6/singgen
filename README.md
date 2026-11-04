@@ -23,7 +23,7 @@ SingGen 是一个用于生成 sing-box 配置文件的工具，支持从各种�
 ./singgen -url https://example.com/subscription -out config.json
 
 # 从订阅链接生成配置，使用特定模板版本。配置本地dns，配置subnet、配置镜像地址，配置文件针对的平台linux
-./singgen -url https://example.com/subscription -mirror https://ghfast.top -platform linux -out config.json -template v1.13 -dns 119.119.119.119 -subnet  119.119.119.119/24
+./singgen -url https://example.com/subscription -mirror https://ghfast.top -platform linux -out config.json -template v1.14 -dns 119.119.119.119 -subnet  119.119.119.119/24
 
 # 从本地文件生成配置
 ./singgen -url subscription.txt -out config.json
@@ -43,18 +43,19 @@ SingGen 是一个用于生成 sing-box 配置文件的工具，支持从各种�
 
 ```
 ### 进阶用法
-可以自己编辑internal/template/configs/template-v1.12.yaml定制自己的模版
+可以自己编辑 internal/template/configs/template.yaml 定制自己的模版（单一基准模板，v1.12 由程序自动降级适配）
 
 ### 命令行参数
 - `-url`: 订阅URL或文件路径（必需）
 - `-out`: 输出文件路径（默认: config.json）
 - `-format`: 输出格式 json/yaml（默认: json）
-- `-template`: 模板版本 v1.12/v1.14（默认: v1.12）
+- `-template`: 模板版本 v1.14/v1.12（默认: v1.14）
 - `-mirror`: 规则集下载镜像URL
 - `-log`: 日志级别 debug/info/warn/error（默认: warn）
 - `--list-templates`: 列出可用的模板版本
 - `-dns`: 配置默认的本地dns地址。
 - `-subnet`: 配置本地子网地址，用于CDN加速
+- `-emoji`: 是否移除节点名中的 emoji（默认: true，使用 `-emoji=false` 保留）
 
 ## 支持的协议格式
 
@@ -118,6 +119,8 @@ singgen/
 ```bash
 go test ./test/... -v
 ```
+
+如果 `PATH` 中有 `sing-box`，测试会对各平台 / 模板版本生成的配置执行 `sing-box check` 端到端校验（CI 中强制执行）。
 
 ### 添加新协议支持
 

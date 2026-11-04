@@ -8,7 +8,6 @@ import (
 	"log"
 	"log/slog"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -42,6 +41,7 @@ func main() {
 		downMbps           = flag.Int("down-mbps", 300, "download bandwidth limit for Hysteria2 nodes (Mbps)")
 		dnsLocalServer     = flag.String("dns", "114.114.114.114", "DNS local server address")
 		platform           = flag.String("platform", "linux", "target platform (linux, darwin, ios, windows)")
+		checkConfig        = flag.Bool("check", true, "validate the generated config with \"sing-box check\" when sing-box is installed; the output file is only replaced if the check passes")
 		cacheDir           = flag.String("cache-dir", singgen.DefaultCacheDir(), "directory for caching the last successful copy of each subscription (used when a fetch fails); empty disables")
 
 		// Utility options
@@ -99,6 +99,8 @@ func main() {
 		return
 	}
 
+	out := outputWriter{logger: logger, check: *checkConfig}
+
 	// Determine operation mode
 	if *configFile != "" {
 		// Multi-subscription mode - config file driven
@@ -119,13 +121,13 @@ func main() {
 			downMbps:           *downMbps,
 			cacheDir:           *cacheDir,
 		}
-		if err := runMultiSubscriptionMode(logger, *configFile, *outFile, overrides); err != nil {
+		if err := runMultiSubscriptionMode(logger, out, *configFile, *outFile, overrides); err != nil {
 			logger.Error("Multi-subscription mode failed", "error", logx.ErrSource(err))
 			os.Exit(1)
 		}
 	} else if *subURL != "" {
 		// Single subscription mode (legacy)
-		if err := runSingleSubscriptionMode(logger, *subURL, *outFile, *templateVer, *platform, *mirrorURL, *dnsLocalServer, *externalController, *clientSubnet, *format, *removeEmoji, *upMbps, *downMbps, *cacheDir); err != nil {
+		if err := runSingleSubscriptionMode(logger, out, *subURL, *outFile, *templateVer, *platform, *mirrorURL, *dnsLocalServer, *externalController, *clientSubnet, *format, *removeEmoji, *upMbps, *downMbps, *cacheDir); err != nil {
 			logger.Error("Single subscription mode failed", "error", logx.ErrSource(err))
 			os.Exit(1)
 		}
@@ -210,7 +212,7 @@ func (c cliOverrides) options(mc *singgen.MultiConfig, logger *slog.Logger) ([]s
 }
 
 // runMultiSubscriptionMode handles multi-subscription configuration generation
-func runMultiSubscriptionMode(logger *slog.Logger, configFile string, outFile string, overrides cliOverrides) error {
+func runMultiSubscriptionMode(logger *slog.Logger, out outputWriter, configFile string, outFile string, overrides cliOverrides) error {
 	logger.Info("Running in multi-subscription mode", "config_file", configFile)
 
 	mc, err := singgen.LoadConfigFile(configFile)
@@ -230,7 +232,7 @@ func runMultiSubscriptionMode(logger *slog.Logger, configFile string, outFile st
 	}
 
 	// Write output
-	if err := writeOutput(outFile, data); err != nil {
+	if err := out.write(outFile, data); err != nil {
 		return fmt.Errorf("failed to write output: %w", err)
 	}
 
@@ -238,7 +240,7 @@ func runMultiSubscriptionMode(logger *slog.Logger, configFile string, outFile st
 }
 
 // runSingleSubscriptionMode handles single subscription configuration generation (legacy)
-func runSingleSubscriptionMode(logger *slog.Logger, subURL, outFile, templateVer, platform, mirrorURL, dnsLocalServer, externalController, clientSubnet, format string, removeEmoji bool, upMbps, downMbps int, cacheDir string) error {
+func runSingleSubscriptionMode(logger *slog.Logger, out outputWriter, subURL, outFile, templateVer, platform, mirrorURL, dnsLocalServer, externalController, clientSubnet, format string, removeEmoji bool, upMbps, downMbps int, cacheDir string) error {
 	logger.Info("Running in single subscription mode", "url", logx.RedactSource(subURL))
 
 	// Validate inputs
@@ -272,7 +274,7 @@ func runSingleSubscriptionMode(logger *slog.Logger, subURL, outFile, templateVer
 	}
 
 	// Write output
-	if err := writeOutput(outFile, data); err != nil {
+	if err := out.write(outFile, data); err != nil {
 		return fmt.Errorf("failed to write output: %w", err)
 	}
 
@@ -290,26 +292,6 @@ func validateInputs(dnsLocalServer, platform string, logger *slog.Logger) error 
 	if !platformpkg.IsValidPlatform(platform) {
 		validPlatforms := platformpkg.GetSupportedPlatforms()
 		return fmt.Errorf("invalid platform: %s, valid platforms: %v", platform, validPlatforms)
-	}
-
-	return nil
-}
-
-func writeOutput(outFile string, data []byte) error {
-	if outFile == "-" {
-		_, err := os.Stdout.Write(data)
-		return err
-	}
-
-	dir := filepath.Dir(outFile)
-	if dir != "." {
-		if err := os.MkdirAll(dir, 0755); err != nil {
-			return fmt.Errorf("create directory failed: %w", err)
-		}
-	}
-
-	if err := util.WriteFile(outFile, data); err != nil {
-		return fmt.Errorf("write file failed: %w", err)
 	}
 
 	return nil

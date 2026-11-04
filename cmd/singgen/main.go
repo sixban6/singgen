@@ -27,7 +27,7 @@ func main() {
 		generateExample = flag.Bool("generate-example", false, "generate example configuration file")
 
 		// Output options
-		outFile = flag.String("out", "config.json", "output file path")
+		outFile = flag.String("out", "config.json", "output file path (\"-\" writes to stdout)")
 		format  = flag.String("format", "json", "output format (json, yaml)")
 
 		// Global options (can override config file)
@@ -66,7 +66,7 @@ func main() {
 	startTime := time.Now()
 	defer func() {
 		duration := time.Since(startTime)
-		fmt.Printf("Total execution time: %v\n", duration)
+		fmt.Fprintf(os.Stderr, "Total execution time: %v\n", duration)
 		logger.Info("Configuration generation completed", "duration", duration)
 	}()
 
@@ -93,7 +93,7 @@ func main() {
 		if err := singgen.SaveConfigFile(example, *outFile, format); err != nil {
 			log.Fatal("Failed to generate example config:", err)
 		}
-		fmt.Printf("Example configuration generated: %s\n", *outFile)
+		fmt.Fprintf(os.Stderr, "Example configuration generated: %s\n", *outFile)
 		return
 	}
 
@@ -111,14 +111,16 @@ func main() {
 			os.Exit(1)
 		}
 	} else {
-		fmt.Println("Error: Either -url (single subscription) or -config (multi subscription) must be specified")
-		fmt.Println()
+		fmt.Fprintln(os.Stderr, "Error: Either -url (single subscription) or -config (multi subscription) must be specified")
+		fmt.Fprintln(os.Stderr)
 		flag.Usage()
 		os.Exit(1)
 	}
 
 	logger.Info("Configuration generation completed successfully", "output", *outFile)
-	fmt.Printf("Configuration generated: %s\n", *outFile)
+	if *outFile != "-" {
+		fmt.Fprintf(os.Stderr, "Configuration generated: %s\n", *outFile)
+	}
 }
 
 // runMultiSubscriptionMode handles multi-subscription configuration generation
@@ -198,6 +200,11 @@ func validateInputs(dnsLocalServer, platform string, logger *slog.Logger) error 
 }
 
 func writeOutput(outFile string, data []byte) error {
+	if outFile == "-" {
+		_, err := os.Stdout.Write(data)
+		return err
+	}
+
 	dir := filepath.Dir(outFile)
 	if dir != "." {
 		if err := os.MkdirAll(dir, 0755); err != nil {

@@ -47,7 +47,7 @@ SingGen 是一个用于生成 sing-box 配置文件的工具，支持从各种�
 
 ### 命令行参数
 - `-url`: 订阅URL或文件路径（必需）
-- `-out`: 输出文件路径（默认: config.json）
+- `-out`: 输出文件路径（默认: config.json；`-` 表示输出到 stdout，日志始终输出到 stderr）
 - `-format`: 输出格式 json/yaml（默认: json）
 - `-template`: 模板版本 v1.14/v1.12（默认: v1.14）
 - `-mirror`: 规则集下载镜像URL

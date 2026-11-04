@@ -40,7 +40,7 @@ func main() {
 		upMbps             = flag.Int("up-mbps", 25, "upload bandwidth limit for Hysteria2 nodes (Mbps)")
 		downMbps           = flag.Int("down-mbps", 300, "download bandwidth limit for Hysteria2 nodes (Mbps)")
 		dnsLocalServer     = flag.String("dns", "114.114.114.114", "DNS local server address")
-		platform           = flag.String("platform", "linux", "target platform (linux, darwin, ios)")
+		platform           = flag.String("platform", "linux", "target platform (linux, darwin, ios, windows)")
 
 		// Utility options
 		listTemplate    = flag.Bool("list-templates", false, "list available template versions")

@@ -93,3 +93,39 @@ func TestTransformDoesNotMutateCallerNodes(t *testing.T) {
 		t.Errorf("caller node Extra was mutated: %v", hy2.Extra)
 	}
 }
+
+// TestExternalControllerRespectedOnAllPlatforms 修复前 darwin/ios/windows 会无视用户参数写死地址
+func TestExternalControllerRespectedOnAllPlatforms(t *testing.T) {
+	controllerOf := func(platform, addr string) (string, string) {
+		var buf bytes.Buffer
+		cfg, err := singgen.GenerateConfig(context.Background(), singboxCheckFixture,
+			singgen.WithPlatform(platform), singgen.WithExternalController(addr),
+			singgen.WithLogger(slog.New(slog.NewTextHandler(&buf, nil))))
+		if err != nil {
+			t.Fatal(err)
+		}
+		clash, _ := cfg.Experimental["clash_api"].(map[string]any)
+		got, _ := clash["external_controller"].(string)
+		return got, buf.String()
+	}
+
+	for _, platform := range []string{"linux", "darwin", "ios", "windows"} {
+		if got, _ := controllerOf(platform, "127.0.0.1:7777"); got != "127.0.0.1:7777" {
+			t.Errorf("%s: external_controller = %s, want 127.0.0.1:7777", platform, got)
+		}
+	}
+
+	// 路由器的局域网地址：linux 原样使用；客户端平台改写为 127.0.0.1 并告警
+	if got, _ := controllerOf("linux", "192.168.31.1:9095"); got != "192.168.31.1:9095" {
+		t.Errorf("linux: external_controller = %s", got)
+	}
+	for _, platform := range []string{"darwin", "ios", "windows"} {
+		got, logs := controllerOf(platform, "192.168.31.1:9095")
+		if got != "127.0.0.1:9095" {
+			t.Errorf("%s: external_controller = %s, want 127.0.0.1:9095", platform, got)
+		}
+		if !strings.Contains(logs, "not a loopback address") {
+			t.Errorf("%s: expected warning about non-loopback controller, logs: %s", platform, logs)
+		}
+	}
+}

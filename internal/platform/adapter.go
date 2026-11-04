@@ -2,8 +2,10 @@ package platform
 
 import (
 	"fmt"
+	"net"
 
 	"github.com/sixban6/singgen/internal/config"
+	"github.com/sixban6/singgen/internal/logx"
 )
 
 // PlatformAdapter 平台适配器接口
@@ -37,18 +39,16 @@ type Profile struct {
 	// InboundFile 替换模板 inbounds 的配置文件（configs/platform/ 下）
 	InboundFile string
 	// Router 为 true 表示部署在路由器/服务器上（linux tproxy）：
-	// 保留 default_mark、api service、http_clients 与 cache 文件路径，并使用用户传入的 external controller。
+	// 保留 default_mark、api service、http_clients 与 cache 文件路径。
 	// 为 false 表示终端客户端（macOS/iOS/Windows）。
 	Router bool
-	// ClientController 客户端平台写入 clash_api.external_controller 的地址
-	ClientController string
 }
 
 var profiles = map[PlatformType]Profile{
 	Linux:   {Name: Linux, InboundFile: "linux-tproxy.json", Router: true},
-	Darwin:  {Name: Darwin, InboundFile: "mac-tun.json", ClientController: "127.0.0.1:9090"},
-	IOS:     {Name: IOS, InboundFile: "ios-tun.json", ClientController: "127.0.0.1:9095"},
-	Windows: {Name: Windows, InboundFile: "win-tun.json", ClientController: "127.0.0.1:9095"},
+	Darwin:  {Name: Darwin, InboundFile: "mac-tun.json"},
+	IOS:     {Name: IOS, InboundFile: "ios-tun.json"},
+	Windows: {Name: Windows, InboundFile: "win-tun.json"},
 }
 
 // routerCachePath linux 部署机上 cache 文件的位置
@@ -133,12 +133,38 @@ func (a *Adapter) AdaptConfig(cfg *config.Config, options config.TemplateOptions
 	stripDesktopAPIServices(cfg)
 	// 规则集下载切换为 legacy download_detour(详见 useLegacyRuleSetDownload)
 	useLegacyRuleSetDownload(cfg)
-	ensureClashAPI(cfg)["external_controller"] = a.profile.ClientController
+	clashAPI := ensureClashAPI(cfg)
+	if options.ExternalController != "" {
+		// 终端设备只能绑定本机地址：为路由器准备的局域网地址（如 192.168.31.1:9095）
+		// 在客户端上会绑定失败导致 sing-box 无法启动，因此改写为 127.0.0.1 并保留端口
+		controller, rewritten := clientController(options.ExternalController)
+		if rewritten {
+			logx.Or(options.Logger).Warn("external controller host is not a loopback address; using 127.0.0.1 on client platform",
+				"platform", a.profile.Name, "requested", options.ExternalController, "used", controller)
+		}
+		clashAPI["external_controller"] = controller
+	}
 	// 客户端(沙盒)使用默认 cache 位置
 	if cacheFile, ok := cfg.Experimental["cache_file"].(map[string]any); ok {
 		delete(cacheFile, "path")
 	}
 	return nil
+}
+
+// clientController 将 external controller 地址限制为本机回环地址，返回结果与是否发生改写
+func clientController(addr string) (string, bool) {
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		// 无端口等格式问题：保持原样，由 sing-box 校验
+		return addr, false
+	}
+	if host == "localhost" {
+		return addr, false
+	}
+	if ip := net.ParseIP(host); ip != nil && ip.IsLoopback() {
+		return addr, false
+	}
+	return net.JoinHostPort("127.0.0.1", port), true
 }
 
 // ensureClashAPI 获取或创建 experimental.clash_api，并补齐 default_mode / secret 默认值

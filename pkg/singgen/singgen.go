@@ -140,8 +140,11 @@ type Generator struct {
 
 // NewGenerator creates a new Generator with the specified options
 func NewGenerator(opts ...Option) *Generator {
-	options := buildOptions(opts...)
+	return newGenerator(buildOptions(opts...))
+}
 
+// newGenerator creates a Generator from fully resolved options
+func newGenerator(options GenerateOptions) *Generator {
 	return &Generator{
 		options:         options,
 		fetcher:         NewContextFetcher(options),
@@ -184,19 +187,7 @@ func (g *Generator) Generate(ctx context.Context, source string) (*Config, error
 		return nil, fmt.Errorf("template creation failed: %w", err)
 	}
 
-	templateOptions := config.TemplateOptions{
-		MirrorURL:          g.options.MirrorURL,
-		ExternalController: g.options.ExternalController,
-		ClientSubnet:       g.options.ClientSubnet,
-		RemoveEmoji:        g.options.RemoveEmoji,
-		DNSLocalServer:     g.options.DNSLocalServer,
-		Platform:           g.options.Platform,
-		TSAuthKey:          g.options.TSAuthKey,
-		TSLanIPCIDR:        g.options.TSLanIPCIDR,
-		Logger:             g.options.Logger,
-	}
-
-	cfg := tmpl.InjectWithOptions(outbounds, templateOptions)
+	cfg := tmpl.InjectWithOptions(outbounds, g.options.templateOptions())
 	return cfg, nil
 }
 
@@ -314,4 +305,20 @@ func buildOptions(opts ...Option) GenerateOptions {
 	}
 
 	return options
+}
+
+// templateOptions maps generation options to template injection options.
+// This is the single place where GenerateOptions -> TemplateOptions is defined.
+func (o GenerateOptions) templateOptions() config.TemplateOptions {
+	return config.TemplateOptions{
+		MirrorURL:          o.MirrorURL,
+		ExternalController: o.ExternalController,
+		ClientSubnet:       o.ClientSubnet,
+		RemoveEmoji:        o.RemoveEmoji,
+		DNSLocalServer:     o.DNSLocalServer,
+		Platform:           o.Platform,
+		TSAuthKey:          o.TSAuthKey,
+		TSLanIPCIDR:        o.TSLanIPCIDR,
+		Logger:             o.Logger,
+	}
 }

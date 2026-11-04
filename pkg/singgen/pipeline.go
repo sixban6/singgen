@@ -128,19 +128,7 @@ func (p *Pipeline) Execute(ctx context.Context, source string) (*PipelineResult,
 		}
 	}
 
-	templateOptions := config.TemplateOptions{
-		MirrorURL:          p.options.MirrorURL,
-		ExternalController: p.options.ExternalController,
-		ClientSubnet:       p.options.ClientSubnet,
-		RemoveEmoji:        p.options.RemoveEmoji,
-		DNSLocalServer:     p.options.DNSLocalServer,
-		Platform:           p.options.Platform,
-		TSAuthKey:          p.options.TSAuthKey,
-		TSLanIPCIDR:        p.options.TSLanIPCIDR,
-		Logger:             p.options.Logger,
-	}
-
-	cfg := p.template.InjectWithOptions(outbounds, templateOptions)
+	cfg := p.template.InjectWithOptions(outbounds, p.options.templateOptions())
 	result.Config = cfg
 
 	p.logf("Pipeline execution completed successfully")

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/sixban6/singgen/internal/config"
 	"github.com/sixban6/singgen/internal/registry"
 	"github.com/sixban6/singgen/internal/renderer"
+	"github.com/sixban6/singgen/internal/template"
 	"github.com/sixban6/singgen/internal/transformer"
 	"github.com/sixban6/singgen/internal/util"
 	"github.com/sixban6/singgen/pkg/model"
@@ -61,34 +61,7 @@ func GenerateConfigFromMulti(ctx context.Context, multiConfig *MultiConfig, opts
 		mergeBaseOptions(&subOptions, baseOptions)
 
 		// Create generator for this subscription
-		generator := NewGenerator(
-			WithTemplate(subOptions.TemplateVersion),
-			WithPlatform(subOptions.Platform),
-			WithHTTPTimeout(subOptions.HTTPTimeout),
-			WithMirrorURL(subOptions.MirrorURL),
-			WithDNSServer(subOptions.DNSLocalServer),
-			WithOutputFormat(subOptions.Format),
-			WithEmojiRemoval(subOptions.RemoveEmoji),
-			WithBandwidthParams(subOptions.UpMbps, subOptions.DownMbps),
-			WithExternalController(subOptions.ExternalController),
-			WithLogger(logger),
-		)
-
-		if subOptions.ClientSubnet != "" {
-			generator = NewGenerator(
-				WithTemplate(subOptions.TemplateVersion),
-				WithPlatform(subOptions.Platform),
-				WithHTTPTimeout(subOptions.HTTPTimeout),
-				WithMirrorURL(subOptions.MirrorURL),
-				WithDNSServer(subOptions.DNSLocalServer),
-				WithOutputFormat(subOptions.Format),
-				WithEmojiRemoval(subOptions.RemoveEmoji),
-				WithBandwidthParams(subOptions.UpMbps, subOptions.DownMbps),
-				WithExternalController(subOptions.ExternalController),
-				WithClientSubnet(subOptions.ClientSubnet),
-				WithLogger(logger),
-			)
-		}
+		generator := newGenerator(subOptions)
 
 		// Parse nodes from this subscription
 		nodes, err := generator.ParseNodes(ctx, subConfig.URL)
@@ -151,46 +124,13 @@ func GenerateConfigFromMulti(ctx context.Context, multiConfig *MultiConfig, opts
 	templateOptions := multiConfig.MergeSubscriptionOptions(firstSubConfig)
 	mergeBaseOptions(&templateOptions, baseOptions)
 
-	templateGenerator := NewGenerator(
-		WithTemplate(templateOptions.TemplateVersion),
-		WithPlatform(templateOptions.Platform),
-		WithMirrorURL(templateOptions.MirrorURL),
-		WithDNSServer(templateOptions.DNSLocalServer),
-		WithExternalController(templateOptions.ExternalController),
-		WithLogger(logger),
-	)
-
-	if templateOptions.ClientSubnet != "" {
-		templateGenerator = NewGenerator(
-			WithTemplate(templateOptions.TemplateVersion),
-			WithPlatform(templateOptions.Platform),
-			WithMirrorURL(templateOptions.MirrorURL),
-			WithDNSServer(templateOptions.DNSLocalServer),
-			WithExternalController(templateOptions.ExternalController),
-			WithClientSubnet(templateOptions.ClientSubnet),
-			WithLogger(logger),
-		)
-	}
-
 	// Generate final configuration
-	tmpl, err := templateGenerator.templateFactory.CreateTemplate(templateOptions.TemplateVersion)
+	tmpl, err := template.NewTemplateFactory().CreateTemplate(templateOptions.TemplateVersion)
 	if err != nil {
 		return nil, fmt.Errorf("template creation failed: %w", err)
 	}
 
-	tmplOptions := config.TemplateOptions{
-		MirrorURL:          templateOptions.MirrorURL,
-		ExternalController: templateOptions.ExternalController,
-		ClientSubnet:       templateOptions.ClientSubnet,
-		RemoveEmoji:        templateOptions.RemoveEmoji,
-		DNSLocalServer:     templateOptions.DNSLocalServer,
-		Platform:           templateOptions.Platform,
-		TSAuthKey:          templateOptions.TSAuthKey,
-		TSLanIPCIDR:        templateOptions.TSLanIPCIDR,
-		Logger:             logger,
-	}
-
-	cfg := tmpl.InjectWithOptions(allOutbounds, tmplOptions)
+	cfg := tmpl.InjectWithOptions(allOutbounds, templateOptions.templateOptions())
 
 	if logger != nil {
 		logger.Info("Multi-subscription configuration generated successfully")

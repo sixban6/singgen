@@ -77,6 +77,11 @@ type GenerateOptions struct {
 
 	// Logging
 	Logger *slog.Logger
+
+	// explicit records which fields were set through Option functions; used by
+	// multi-subscription generation so that only explicitly passed options
+	// override the configuration file.
+	explicit optionField
 }
 
 // Config represents a generated sing-box configuration

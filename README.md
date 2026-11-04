@@ -37,8 +37,11 @@ SingGen 是一个用于生成 sing-box 配置文件的工具，支持从各种�
 # 列出所有可用模板版本
 ./singgen --list-templates
 
-# 多订阅模式：完全由配置文件驱动
+# 多订阅模式：由配置文件驱动
 ./singgen -config test-config.yaml -out output.json
+
+# 多订阅模式 + 命令行覆盖：只有显式写出的参数会覆盖配置文件
+./singgen -config test-config.yaml -platform ios -out ios.json
 
 
 ```

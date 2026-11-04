@@ -100,7 +100,23 @@ func main() {
 	// Determine operation mode
 	if *configFile != "" {
 		// Multi-subscription mode - config file driven
-		if err := runMultiSubscriptionMode(logger, *configFile, *outFile); err != nil {
+		// 只有命令行上显式指定的参数才覆盖配置文件，未指定的参数（默认值）不影响配置文件
+		explicit := map[string]bool{}
+		flag.Visit(func(f *flag.Flag) { explicit[f.Name] = true })
+		overrides := cliOverrides{
+			explicit:           explicit,
+			templateVer:        *templateVer,
+			platform:           *platform,
+			mirrorURL:          *mirrorURL,
+			dnsLocalServer:     *dnsLocalServer,
+			clientSubnet:       *clientSubnet,
+			externalController: *externalController,
+			format:             *format,
+			removeEmoji:        *removeEmoji,
+			upMbps:             *upMbps,
+			downMbps:           *downMbps,
+		}
+		if err := runMultiSubscriptionMode(logger, *configFile, *outFile, overrides); err != nil {
 			logger.Error("Multi-subscription mode failed", "error", err)
 			os.Exit(1)
 		}
@@ -123,13 +139,87 @@ func main() {
 	}
 }
 
+// cliOverrides holds command-line values together with which flags were explicitly set
+type cliOverrides struct {
+	explicit           map[string]bool
+	templateVer        string
+	platform           string
+	mirrorURL          string
+	dnsLocalServer     string
+	clientSubnet       string
+	externalController string
+	format             string
+	removeEmoji        bool
+	upMbps             int
+	downMbps           int
+}
+
+// options converts explicitly set flags into library options; flags left at
+// their defaults are not included so they never override the config file.
+func (c cliOverrides) options(mc *singgen.MultiConfig, logger *slog.Logger) ([]singgen.Option, error) {
+	opts := []singgen.Option{singgen.WithLogger(logger)}
+	set := c.explicit
+
+	if set["template"] {
+		opts = append(opts, singgen.WithTemplate(c.templateVer))
+	}
+	if set["platform"] {
+		if !platformpkg.IsValidPlatform(c.platform) {
+			return nil, fmt.Errorf("invalid platform: %s, valid platforms: %v", c.platform, platformpkg.GetSupportedPlatforms())
+		}
+		opts = append(opts, singgen.WithPlatform(c.platform))
+	}
+	if set["mirror"] {
+		opts = append(opts, singgen.WithMirrorURL(c.mirrorURL))
+	}
+	if set["dns"] {
+		if c.dnsLocalServer != "" && !util.ValidateDNSServer(c.dnsLocalServer) {
+			return nil, fmt.Errorf("invalid DNS server address: %s", c.dnsLocalServer)
+		}
+		opts = append(opts, singgen.WithDNSServer(c.dnsLocalServer))
+	}
+	if set["subnet"] {
+		opts = append(opts, singgen.WithClientSubnet(c.clientSubnet))
+	}
+	if set["external-controller"] {
+		opts = append(opts, singgen.WithExternalController(c.externalController))
+	}
+	if set["format"] {
+		opts = append(opts, singgen.WithOutputFormat(c.format))
+	}
+	if set["emoji"] {
+		opts = append(opts, singgen.WithEmojiRemoval(c.removeEmoji))
+	}
+	if set["up-mbps"] || set["down-mbps"] {
+		// 只指定其中一个时，另一个沿用配置文件中的值
+		up, down := mc.Global.UpMbps, mc.Global.DownMbps
+		if set["up-mbps"] {
+			up = c.upMbps
+		}
+		if set["down-mbps"] {
+			down = c.downMbps
+		}
+		opts = append(opts, singgen.WithBandwidthParams(up, down))
+	}
+	return opts, nil
+}
+
 // runMultiSubscriptionMode handles multi-subscription configuration generation
-func runMultiSubscriptionMode(logger *slog.Logger, configFile string, outFile string) error {
+func runMultiSubscriptionMode(logger *slog.Logger, configFile string, outFile string, overrides cliOverrides) error {
 	logger.Info("Running in multi-subscription mode", "config_file", configFile)
 
-	// Load and generate - everything comes from config file
+	mc, err := singgen.LoadConfigFile(configFile)
+	if err != nil {
+		return fmt.Errorf("failed to load config file: %w", err)
+	}
+
+	opts, err := overrides.options(mc, logger)
+	if err != nil {
+		return err
+	}
+
 	ctx := context.Background()
-	data, err := singgen.GenerateConfigBytesFromFile(ctx, configFile, singgen.WithLogger(logger))
+	data, err := singgen.GenerateConfigBytesFromMulti(ctx, mc, opts...)
 	if err != nil {
 		return fmt.Errorf("failed to generate configuration: %w", err)
 	}

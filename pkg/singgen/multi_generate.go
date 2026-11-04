@@ -158,9 +158,9 @@ func GenerateConfigBytesFromMulti(ctx context.Context, multiConfig *MultiConfig,
 
 	options := buildOptions(opts...)
 
-	// Use format from multiConfig.Global if not overridden by opts
+	// Use format from multiConfig.Global unless explicitly overridden by opts
 	format := multiConfig.Global.Format
-	if options.Format != "json" { // "json" is the default, so check if it was explicitly set
+	if options.isSet(optFormat) {
 		format = options.Format
 	}
 
@@ -240,18 +240,49 @@ func removeEmojiFromString(text string) string {
 	return util.RemoveEmoji(text)
 }
 
-// mergeBaseOptions merges command line options into subscription options
-// Command line options have the highest priority
+// mergeBaseOptions applies options that were explicitly passed by the caller
+// (CLI flags or Option functions) on top of the configuration file.
+// Priority: explicit options > subscription-specific settings > global settings.
+// Options left at their library defaults never override the configuration file.
 func mergeBaseOptions(subOptions *GenerateOptions, baseOptions GenerateOptions) {
-	// Only override if base options were explicitly set (not defaults)
-	// This is a simple approach - in practice you might want more sophisticated
-	// detection of which options were explicitly set vs defaults
-
-	// For template, platform etc., we assume global config takes precedence
-	// unless there's a specific command line override mechanism
-
-	// Logger always comes from base options
 	if baseOptions.Logger != nil {
 		subOptions.Logger = baseOptions.Logger
+	}
+	if baseOptions.isSet(optTemplate) {
+		subOptions.TemplateVersion = baseOptions.TemplateVersion
+	}
+	if baseOptions.isSet(optPlatform) {
+		subOptions.Platform = baseOptions.Platform
+	}
+	if baseOptions.isSet(optHTTPTimeout) {
+		subOptions.HTTPTimeout = baseOptions.HTTPTimeout
+	}
+	if baseOptions.isSet(optMirrorURL) {
+		subOptions.MirrorURL = baseOptions.MirrorURL
+	}
+	if baseOptions.isSet(optDNSServer) {
+		subOptions.DNSLocalServer = baseOptions.DNSLocalServer
+	}
+	if baseOptions.isSet(optClientSubnet) {
+		subOptions.ClientSubnet = baseOptions.ClientSubnet
+	}
+	if baseOptions.isSet(optFormat) {
+		subOptions.Format = baseOptions.Format
+	}
+	if baseOptions.isSet(optRemoveEmoji) {
+		subOptions.RemoveEmoji = baseOptions.RemoveEmoji
+	}
+	if baseOptions.isSet(optBandwidth) {
+		subOptions.UpMbps = baseOptions.UpMbps
+		subOptions.DownMbps = baseOptions.DownMbps
+	}
+	if baseOptions.isSet(optExternalController) {
+		subOptions.ExternalController = baseOptions.ExternalController
+	}
+	if baseOptions.isSet(optTSAuthKey) {
+		subOptions.TSAuthKey = baseOptions.TSAuthKey
+	}
+	if baseOptions.isSet(optTSLanIPCIDR) {
+		subOptions.TSLanIPCIDR = baseOptions.TSLanIPCIDR
 	}
 }

@@ -129,3 +129,49 @@ func TestExternalControllerRespectedOnAllPlatforms(t *testing.T) {
 		}
 	}
 }
+
+// TestMultiExplicitOptionsOverrideConfig 多订阅模式：显式传入的选项覆盖配置文件，未传入的保持配置文件的值
+func TestMultiExplicitOptionsOverrideConfig(t *testing.T) {
+	newMC := func() *singgen.MultiConfig {
+		mc := singgen.GetDefaultMultiConfig()
+		mc.Global.Platform = "linux"
+		mc.Global.Template = "v1.12"
+		mc.Global.DNSLocalServer = "114.114.114.114"
+		mc.Subscriptions = []singgen.SubscriptionConfig{{Name: "p", URL: singboxCheckFixture}}
+		return mc
+	}
+	inboundType := func(cfg *singgen.Config) string {
+		typ, _ := cfg.Inbounds[0]["type"].(string)
+		return typ
+	}
+	dnsLocal := func(cfg *singgen.Config) string {
+		for _, s := range cfg.DNS["servers"].([]any) {
+			if m := s.(map[string]any); m["tag"] == "dns_local" {
+				return m["server"].(string)
+			}
+		}
+		return ""
+	}
+
+	// 未传选项：完全以配置文件为准
+	cfg, err := singgen.GenerateConfigFromMulti(context.Background(), newMC())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if inboundType(cfg) != "tproxy" || dnsLocal(cfg) != "114.114.114.114" {
+		t.Errorf("without options: inbound=%s dns=%s", inboundType(cfg), dnsLocal(cfg))
+	}
+
+	// 显式传入：覆盖配置文件
+	cfg, err = singgen.GenerateConfigFromMulti(context.Background(), newMC(),
+		singgen.WithPlatform("ios"), singgen.WithDNSServer("223.5.5.5"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if inboundType(cfg) != "tun" || dnsLocal(cfg) != "223.5.5.5" {
+		t.Errorf("with options: inbound=%s dns=%s", inboundType(cfg), dnsLocal(cfg))
+	}
+	if _, isV114 := cfg.DNS["optimistic"]; isV114 {
+		t.Error("template version from config (v1.12) must be kept when not overridden")
+	}
+}

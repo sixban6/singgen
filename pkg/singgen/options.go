@@ -11,6 +11,7 @@ type Option func(*GenerateOptions)
 // WithTemplate sets the template version to use (e.g., "v1.14", "v1.12"); defaults to "v1.14"
 func WithTemplate(version string) Option {
 	return func(o *GenerateOptions) {
+		o.markSet(optTemplate)
 		o.TemplateVersion = version
 	}
 }
@@ -18,6 +19,7 @@ func WithTemplate(version string) Option {
 // WithPlatform sets the target platform ("linux", "darwin", "ios")
 func WithPlatform(platform string) Option {
 	return func(o *GenerateOptions) {
+		o.markSet(optPlatform)
 		o.Platform = platform
 	}
 }
@@ -25,6 +27,7 @@ func WithPlatform(platform string) Option {
 // WithHTTPTimeout sets the timeout for HTTP requests
 func WithHTTPTimeout(timeout time.Duration) Option {
 	return func(o *GenerateOptions) {
+		o.markSet(optHTTPTimeout)
 		o.HTTPTimeout = timeout
 	}
 }
@@ -32,6 +35,7 @@ func WithHTTPTimeout(timeout time.Duration) Option {
 // WithMirrorURL sets the mirror URL for downloading rule sets
 func WithMirrorURL(url string) Option {
 	return func(o *GenerateOptions) {
+		o.markSet(optMirrorURL)
 		o.MirrorURL = url
 	}
 }
@@ -39,6 +43,7 @@ func WithMirrorURL(url string) Option {
 // WithDNSServer sets the DNS server address
 func WithDNSServer(server string) Option {
 	return func(o *GenerateOptions) {
+		o.markSet(optDNSServer)
 		o.DNSLocalServer = server
 	}
 }
@@ -46,6 +51,7 @@ func WithDNSServer(server string) Option {
 // WithClientSubnet sets the client subnet for DNS queries
 func WithClientSubnet(subnet string) Option {
 	return func(o *GenerateOptions) {
+		o.markSet(optClientSubnet)
 		o.ClientSubnet = subnet
 	}
 }
@@ -53,6 +59,7 @@ func WithClientSubnet(subnet string) Option {
 // WithOutputFormat sets the output format ("json" or "yaml")
 func WithOutputFormat(format string) Option {
 	return func(o *GenerateOptions) {
+		o.markSet(optFormat)
 		o.Format = format
 	}
 }
@@ -60,6 +67,7 @@ func WithOutputFormat(format string) Option {
 // WithEmojiRemoval enables or disables emoji removal from node tags
 func WithEmojiRemoval(remove bool) Option {
 	return func(o *GenerateOptions) {
+		o.markSet(optRemoveEmoji)
 		o.RemoveEmoji = remove
 	}
 }
@@ -68,6 +76,7 @@ func WithEmojiRemoval(remove bool) Option {
 // Default values are up=25, down=300 if not specified
 func WithBandwidthParams(upMbps, downMbps int) Option {
 	return func(o *GenerateOptions) {
+		o.markSet(optBandwidth)
 		o.UpMbps = upMbps
 		o.DownMbps = downMbps
 	}
@@ -76,6 +85,7 @@ func WithBandwidthParams(upMbps, downMbps int) Option {
 // WithExternalController sets the external controller address for Clash API
 func WithExternalController(addr string) Option {
 	return func(o *GenerateOptions) {
+		o.markSet(optExternalController)
 		o.ExternalController = addr
 	}
 }
@@ -98,6 +108,8 @@ func WithDefaults() Option {
 // WithLinuxDefaults applies defaults optimized for Linux platform
 func WithLinuxDefaults() Option {
 	return func(o *GenerateOptions) {
+		o.markSet(optPlatform)
+		o.markSet(optExternalController)
 		o.Platform = "linux"
 		o.ExternalController = "127.0.0.1:9095"
 	}
@@ -106,6 +118,8 @@ func WithLinuxDefaults() Option {
 // WithDarwinDefaults applies defaults optimized for macOS platform
 func WithDarwinDefaults() Option {
 	return func(o *GenerateOptions) {
+		o.markSet(optPlatform)
+		o.markSet(optExternalController)
 		o.Platform = "darwin"
 		o.ExternalController = "127.0.0.1:9095"
 	}
@@ -114,6 +128,8 @@ func WithDarwinDefaults() Option {
 // WithIOSDefaults applies defaults optimized for iOS platform
 func WithIOSDefaults() Option {
 	return func(o *GenerateOptions) {
+		o.markSet(optPlatform)
+		o.markSet(optExternalController)
 		o.Platform = "ios"
 		// iOS typically uses different controller settings
 		o.ExternalController = ""
@@ -123,6 +139,8 @@ func WithIOSDefaults() Option {
 // WithPerformanceOptimized applies settings optimized for performance
 func WithPerformanceOptimized() Option {
 	return func(o *GenerateOptions) {
+		o.markSet(optHTTPTimeout)
+		o.markSet(optRemoveEmoji)
 		o.HTTPTimeout = 15 * time.Second // Faster timeout
 		o.RemoveEmoji = false            // Skip emoji processing
 	}
@@ -131,6 +149,7 @@ func WithPerformanceOptimized() Option {
 // WithStrictSecurity applies security-focused settings
 func WithStrictSecurity() Option {
 	return func(o *GenerateOptions) {
+		o.markSet(optHTTPTimeout)
 		o.HTTPTimeout = 10 * time.Second // Short timeout to reduce attack surface
 		// Additional security settings could be added here
 	}
@@ -139,6 +158,7 @@ func WithStrictSecurity() Option {
 // WithTSAuthKey sets the Tailscale authentication key
 func WithTSAuthKey(authKey string) Option {
 	return func(o *GenerateOptions) {
+		o.markSet(optTSAuthKey)
 		o.TSAuthKey = authKey
 	}
 }
@@ -146,6 +166,30 @@ func WithTSAuthKey(authKey string) Option {
 // WithTSLanIPCIDR sets the Tailscale LAN IP CIDR
 func WithTSLanIPCIDR(ipCIDR string) Option {
 	return func(o *GenerateOptions) {
+		o.markSet(optTSLanIPCIDR)
 		o.TSLanIPCIDR = ipCIDR
 	}
 }
+
+// optionField identifies a GenerateOptions field that was explicitly set
+// through an Option, as opposed to holding a library default.
+type optionField uint32
+
+const (
+	optTemplate optionField = 1 << iota
+	optPlatform
+	optHTTPTimeout
+	optMirrorURL
+	optDNSServer
+	optClientSubnet
+	optFormat
+	optRemoveEmoji
+	optBandwidth
+	optExternalController
+	optTSAuthKey
+	optTSLanIPCIDR
+)
+
+func (o *GenerateOptions) markSet(f optionField) { o.explicit |= f }
+
+func (o GenerateOptions) isSet(f optionField) bool { return o.explicit&f != 0 }

@@ -342,9 +342,12 @@ subscriptions:
 ### Configuration Priority
 
 Settings are applied with the following priority (highest to lowest):
-1. Subscription-specific settings (only `remove_emoji`, `skip_tls_verify`, `http_timeout`)
-2. Global configuration settings
-3. Library default settings
+1. Options explicitly passed to `GenerateConfigFromMulti` / `GenerateConfigBytesFromMulti` /
+   `GenerateConfigFromFile` (e.g. `singgen.WithPlatform("ios")`), or flags explicitly given on the
+   command line together with `-config`. Options you do not pass never override the file.
+2. Subscription-specific settings (only `remove_emoji`, `skip_tls_verify`, `http_timeout`)
+3. Global configuration settings
+4. Library default settings
 
 ### Configuration File Search Paths
 

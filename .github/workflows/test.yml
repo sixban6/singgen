@@ -27,6 +27,13 @@ jobs:
           sudo install -m 0755 "/tmp/sing-box-${SING_BOX_VERSION}-linux-amd64/sing-box" /usr/local/bin/sing-box
           sing-box version
 
+      - name: Check formatting
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "Files need gofmt:"; echo "$unformatted"; exit 1
+          fi
+
       - name: Vet
         run: go vet ./...
 

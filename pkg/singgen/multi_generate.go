@@ -187,6 +187,7 @@ func GenerateConfigFromMulti(ctx context.Context, multiConfig *MultiConfig, opts
 		Platform:           templateOptions.Platform,
 		TSAuthKey:          templateOptions.TSAuthKey,
 		TSLanIPCIDR:        templateOptions.TSLanIPCIDR,
+		Logger:             logger,
 	}
 
 	cfg := tmpl.InjectWithOptions(allOutbounds, tmplOptions)

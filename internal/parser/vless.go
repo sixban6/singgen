@@ -7,12 +7,12 @@ import (
 	"strings"
 
 	"github.com/sixban6/singgen/internal/constant"
+	"github.com/sixban6/singgen/internal/logx"
 	"github.com/sixban6/singgen/internal/util"
 	"github.com/sixban6/singgen/pkg/model"
-	"go.uber.org/zap"
 )
 
-type VlessParser struct{}
+type VlessParser struct{ base }
 
 func (p *VlessParser) Accept(mediaTypeHint string, raw []byte) bool {
 	data := string(raw)
@@ -32,9 +32,7 @@ func (p *VlessParser) Parse(raw []byte) ([]model.Node, error) {
 
 		node, err := p.parseVlessURL(line)
 		if err != nil {
-			if util.L != nil {
-				util.L.Warn("Failed to parse vless URL", zap.String("url", line), zap.Error(err))
-			}
+			p.logger().Warn("Failed to parse vless URL", "node", logx.RedactURL(line), "error", logx.Err(err))
 			continue
 		}
 

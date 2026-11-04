@@ -59,27 +59,8 @@ func main() {
 		return
 	}
 
-	// Initialize logger for legacy compatibility
-	if err := util.InitLogger(*logLevel); err != nil {
-		log.Fatal("Failed to init logger:", err)
-	}
-	defer util.Sync()
-
-	// Create structured logger for the library
-	var logHandler slog.Handler
-	switch *logLevel {
-	case "debug":
-		logHandler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug})
-	case "info":
-		logHandler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo})
-	case "warn":
-		logHandler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn})
-	case "error":
-		logHandler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelError})
-	default:
-		logHandler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelWarn})
-	}
-	logger := slog.New(logHandler)
+	// 日志统一输出到 stderr，stdout 只用于结果输出
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: parseLogLevel(*logLevel)}))
 
 	// Start timing
 	startTime := time.Now()
@@ -229,4 +210,18 @@ func writeOutput(outFile string, data []byte) error {
 	}
 
 	return nil
+}
+
+// parseLogLevel 将命令行日志级别转换为 slog.Level，未知值回退为 warn
+func parseLogLevel(level string) slog.Level {
+	switch strings.ToLower(level) {
+	case "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	case "error":
+		return slog.LevelError
+	default:
+		return slog.LevelWarn
+	}
 }

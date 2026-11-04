@@ -1,13 +1,15 @@
 package template
 
 import (
+	"context"
+	"log/slog"
 	"strings"
 	"sync"
 
 	"github.com/sixban6/singgen/internal/filter"
+	"github.com/sixban6/singgen/internal/logx"
 	"github.com/sixban6/singgen/internal/transformer"
 	"github.com/sixban6/singgen/internal/util"
-	"go.uber.org/zap"
 )
 
 var (
@@ -21,7 +23,11 @@ var (
 // TemplateProcessor 处理模板中的特殊占位符和过滤逻辑
 type TemplateProcessor struct {
 	filter filter.NodeFilter
+	// Logger 可选；为 nil 时不输出日志
+	Logger *slog.Logger
 }
+
+func (p *TemplateProcessor) logger() *slog.Logger { return logx.Or(p.Logger) }
 
 // NewTemplateProcessor 创建新的模板处理器
 func NewTemplateProcessor() *TemplateProcessor {
@@ -154,9 +160,7 @@ func (p *TemplateProcessor) parseFilterRule(ruleMap map[string]any) *filter.Filt
 		// 尝试旧格式 {"action": "...", "keywords": [...]}
 		actionStr, ok := ruleMap["action"].(string)
 		if !ok {
-			if util.L != nil {
-				util.L.Warn("Invalid filter rule: missing action or include/exclude field")
-			}
+			p.logger().Warn("Invalid filter rule: missing action or include/exclude field")
 			return nil
 		}
 
@@ -166,9 +170,7 @@ func (p *TemplateProcessor) parseFilterRule(ruleMap map[string]any) *filter.Filt
 		case "exclude":
 			action = filter.ActionExclude
 		default:
-			if util.L != nil {
-				util.L.Warn("Unknown filter action", zap.String("action", actionStr))
-			}
+			p.logger().Warn("Unknown filter action", "action", actionStr)
 			return nil
 		}
 
@@ -178,9 +180,7 @@ func (p *TemplateProcessor) parseFilterRule(ruleMap map[string]any) *filter.Filt
 	}
 
 	if len(keywords) == 0 {
-		if util.L != nil {
-			util.L.Warn("Filter rule has no keywords")
-		}
+		p.logger().Warn("Filter rule has no keywords")
 		return nil
 	}
 
@@ -210,12 +210,12 @@ func (p *TemplateProcessor) parseKeywords(keywordsData any) []string {
 
 // logFilterResult 记录过滤结果（用于调试）
 func (p *TemplateProcessor) logFilterResult(rules []filter.FilterRule, originalCount int, filteredCount int) {
-	if util.L != nil && len(rules) > 0 {
+	if len(rules) > 0 && p.logger().Enabled(context.Background(), slog.LevelDebug) {
 		rulesJson, _ := util.Marshal(rules)
-		util.L.Debug("Node filter applied",
-			zap.String("rules", string(rulesJson)),
-			zap.Int("original_count", originalCount),
-			zap.Int("filtered_count", filteredCount),
+		p.logger().Debug("Node filter applied",
+			"rules", string(rulesJson),
+			"original_count", originalCount,
+			"filtered_count", filteredCount,
 		)
 	}
 }
@@ -247,12 +247,10 @@ func (p *TemplateProcessor) removeEmptyOutboundsWithCascade(config map[string]an
 			break
 		}
 
-		if util.L != nil {
-			util.L.Debug("Removed empty outbounds in iteration",
-				zap.Int("iteration", iteration+1),
-				zap.Int("removed_count", removedCount),
-			)
-		}
+		p.logger().Debug("Removed empty outbounds in iteration",
+			"iteration", iteration+1,
+			"removed_count", removedCount,
+		)
 	}
 
 	// 最终清理：确保所有无效引用都被清理
@@ -383,15 +381,14 @@ func (p *TemplateProcessor) buildCurrentOutboundTags(config map[string]any, orig
 
 // cleanInvalidReferences 清理无效的outbound引用
 func (p *TemplateProcessor) cleanInvalidReferences(config map[string]any, existingTags map[string]bool) {
-	if util.L != nil {
-		tagCount := len(existingTags)
-		tagList := make([]string, 0, tagCount)
+	if p.logger().Enabled(context.Background(), slog.LevelDebug) {
+		tagList := make([]string, 0, len(existingTags))
 		for tag := range existingTags {
 			tagList = append(tagList, tag)
 		}
-		util.L.Debug("Starting reference cleanup",
-			zap.Int("existing_tags_count", tagCount),
-			zap.Strings("existing_tags", tagList),
+		p.logger().Debug("Starting reference cleanup",
+			"existing_tags_count", len(existingTags),
+			"existing_tags", tagList,
 		)
 	}
 	p.walkAndCleanReferences(config, existingTags)
@@ -414,13 +411,11 @@ func (p *TemplateProcessor) walkAndCleanReferences(obj any, existingTags map[str
 							cleanedArray := p.removeInvalidReferences(val, existingTags)
 							if len(cleanedArray) != len(val) {
 								v[key] = cleanedArray
-								if util.L != nil {
-									util.L.Debug("Cleaned invalid references in outbound",
-										zap.String("outbound", p.getOutboundTag(v)),
-										zap.Int("before", len(val)),
-										zap.Int("after", len(cleanedArray)),
-									)
-								}
+								p.logger().Debug("Cleaned invalid references in outbound",
+									"outbound", p.getOutboundTag(v),
+									"before", len(val),
+									"after", len(cleanedArray),
+								)
 							}
 						} else {
 							// 这是outbound对象数组，递归处理每个对象
@@ -450,9 +445,7 @@ func (p *TemplateProcessor) removeInvalidReferences(outbounds []any, existingTag
 			if existingTags[tag] {
 				cleanedArray = append(cleanedArray, item)
 			} else {
-				if util.L != nil {
-					util.L.Debug("Removing invalid reference", zap.String("reference", tag))
-				}
+				p.logger().Debug("Removing invalid reference", "reference", tag)
 			}
 		} else {
 			// 非字符串项保留

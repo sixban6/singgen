@@ -7,12 +7,12 @@ import (
 	"strings"
 
 	"github.com/sixban6/singgen/internal/constant"
+	"github.com/sixban6/singgen/internal/logx"
 	"github.com/sixban6/singgen/internal/util"
 	"github.com/sixban6/singgen/pkg/model"
-	"go.uber.org/zap"
 )
 
-type TrojanParser struct{}
+type TrojanParser struct{ base }
 
 func (p *TrojanParser) Accept(mediaTypeHint string, raw []byte) bool {
 	data := string(raw)
@@ -32,9 +32,7 @@ func (p *TrojanParser) Parse(raw []byte) ([]model.Node, error) {
 
 		node, err := p.parseTrojanURL(line)
 		if err != nil {
-			if util.L != nil {
-				util.L.Warn("Failed to parse trojan URL", zap.String("url", line), zap.Error(err))
-			}
+			p.logger().Warn("Failed to parse trojan URL", "node", logx.RedactURL(line), "error", logx.Err(err))
 			continue
 		}
 

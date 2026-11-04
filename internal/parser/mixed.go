@@ -4,12 +4,12 @@ import (
 	"strings"
 
 	"github.com/sixban6/singgen/internal/constant"
+	"github.com/sixban6/singgen/internal/logx"
 	"github.com/sixban6/singgen/internal/util"
 	"github.com/sixban6/singgen/pkg/model"
-	"go.uber.org/zap"
 )
 
-type MixedParser struct{}
+type MixedParser struct{ base }
 
 func (p *MixedParser) Accept(mediaTypeHint string, raw []byte) bool {
 	format := DetectFormat(raw)
@@ -54,11 +54,9 @@ func (p *MixedParser) Parse(raw []byte) ([]model.Node, error) {
 			continue
 		}
 
-		nodes, err := parser.Parse([]byte(line))
+		nodes, err := WithLogger(parser, p.log).Parse([]byte(line))
 		if err != nil {
-			if util.L != nil {
-				util.L.Warn("Failed to parse line", zap.String("line", line), zap.Error(err))
-			}
+			p.logger().Warn("Failed to parse line", "node", logx.RedactURL(line), "error", logx.Err(err))
 			continue
 		}
 

@@ -12,10 +12,6 @@ import (
 )
 
 func TestIntegrationWorkflow(t *testing.T) {
-	if err := util.InitLogger("error"); err != nil {
-		t.Fatalf("Failed to init logger: %v", err)
-	}
-	defer util.Sync()
 
 	testData := `vmess://eyJ2IjoiMiIsInBzIjoidm1lc3MgdGVzdCIsImFkZCI6ImV4YW1wbGUuY29tIiwicG9ydCI6NDQzLCJpZCI6IjEyMzQ1Njc4LWFiY2QtMTIzNC01Njc4LTEyMzQ1Njc4OWFiYyIsImFpZCI6MCwibmV0Ijoid3MiLCJob3N0IjoiZXhhbXBsZS5jb20iLCJwYXRoIjoiL3dzIiwidGxzIjoidGxzIn0=
 vless://12345678-abcd-1234-5678-123456789abc@example.com:443?type=ws&host=example.com&path=/ws&security=tls#vless%20test
@@ -82,10 +78,6 @@ trojan://password123@example.com:443?type=ws&host=example.com&path=/ws#trojan%20
 }
 
 func TestFileOperations(t *testing.T) {
-	if err := util.InitLogger("error"); err != nil {
-		t.Fatalf("Failed to init logger: %v", err)
-	}
-	defer util.Sync()
 
 	tempDir := t.TempDir()
 	testFile := filepath.Join(tempDir, "test_subscription.txt")

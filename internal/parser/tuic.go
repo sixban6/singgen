@@ -7,12 +7,12 @@ import (
 	"strings"
 
 	"github.com/sixban6/singgen/internal/constant"
+	"github.com/sixban6/singgen/internal/logx"
 	"github.com/sixban6/singgen/internal/util"
 	"github.com/sixban6/singgen/pkg/model"
-	"go.uber.org/zap"
 )
 
-type TuicParser struct{}
+type TuicParser struct{ base }
 
 func (p *TuicParser) Accept(mediaTypeHint string, raw []byte) bool {
 	if strings.EqualFold(mediaTypeHint, "tuic") {
@@ -42,9 +42,7 @@ func (p *TuicParser) Parse(raw []byte) ([]model.Node, error) {
 
 		node, err := p.parseTuicURL(line)
 		if err != nil {
-			if util.L != nil {
-				util.L.Warn("Failed to parse tuic URL", zap.String("url", line), zap.Error(err))
-			}
+			p.logger().Warn("Failed to parse tuic URL", "node", logx.RedactURL(line), "error", logx.Err(err))
 			continue
 		}
 

@@ -2,14 +2,14 @@ package transformer
 
 import (
 	"fmt"
+	"log/slog"
 	"runtime"
 	"strconv"
 	"sync"
 
 	"github.com/sixban6/singgen/internal/constant"
-	"github.com/sixban6/singgen/internal/util"
+	"github.com/sixban6/singgen/internal/logx"
 	"github.com/sixban6/singgen/pkg/model"
-	"go.uber.org/zap"
 )
 
 type Outbound struct {
@@ -60,7 +60,12 @@ type Transformer interface {
 	Transform(nodes []model.Node) ([]Outbound, error)
 }
 
-type SingBoxTransformer struct{}
+type SingBoxTransformer struct {
+	// Logger 可选；为 nil 时不输出日志
+	Logger *slog.Logger
+}
+
+func (t *SingBoxTransformer) logger() *slog.Logger { return logx.Or(t.Logger) }
 
 func NewSingBoxTransformer() *SingBoxTransformer {
 	return &SingBoxTransformer{}
@@ -87,9 +92,7 @@ func (t *SingBoxTransformer) transformSequential(nodes []model.Node) ([]Outbound
 	for _, node := range nodes {
 		outbound, err := t.transformNode(node)
 		if err != nil {
-			if util.L != nil {
-				util.L.Warn("Failed to transform node", zap.String("tag", node.Tag), zap.Error(err))
-			}
+			t.logger().Warn("Failed to transform node", "tag", node.Tag, "error", err)
 			continue
 		}
 		outbounds = append(outbounds, *outbound)
@@ -110,11 +113,9 @@ func (t *SingBoxTransformer) transformConcurrent(nodes []model.Node) ([]Outbound
 		numWorkers = 8
 	}
 
-	if util.L != nil {
-		util.L.Debug("Starting concurrent transformation",
-			zap.Int("nodes", len(nodes)),
-			zap.Int("workers", numWorkers))
-	}
+	t.logger().Debug("Starting concurrent transformation",
+		"nodes", len(nodes),
+		"workers", numWorkers)
 
 	// 创建任务通道
 	jobs := make(chan transformJob, len(nodes))
@@ -160,9 +161,7 @@ func (t *SingBoxTransformer) transformConcurrent(nodes []model.Node) ([]Outbound
 
 	for result := range results {
 		if result.err != nil {
-			if util.L != nil {
-				util.L.Warn("Failed to transform node", zap.String("tag", result.originalTag), zap.Error(result.err))
-			}
+			t.logger().Warn("Failed to transform node", "tag", result.originalTag, "error", result.err)
 			continue
 		}
 		validResults = append(validResults, resultWithIndex{index: result.index, val: result.outbound})

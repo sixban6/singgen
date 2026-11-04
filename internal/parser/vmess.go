@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/sixban6/singgen/internal/constant"
+	"github.com/sixban6/singgen/internal/logx"
 	"github.com/sixban6/singgen/internal/util"
 	"github.com/sixban6/singgen/pkg/model"
-	"go.uber.org/zap"
 )
 
 type vmessDTO struct {
@@ -30,7 +30,7 @@ type vmessDTO struct {
 	AllowInsecure any `json:"allowInsecure"`
 }
 
-type VmessParser struct{}
+type VmessParser struct{ base }
 
 func (p *VmessParser) Accept(mediaTypeHint string, raw []byte) bool {
 	data := string(raw)
@@ -50,9 +50,7 @@ func (p *VmessParser) Parse(raw []byte) ([]model.Node, error) {
 
 		node, err := p.parseVmessURL(line)
 		if err != nil {
-			if util.L != nil {
-				util.L.Warn("Failed to parse vmess URL", zap.String("url", line), zap.Error(err))
-			}
+			p.logger().Warn("Failed to parse vmess URL", "node", logx.RedactURL(line), "error", logx.Err(err))
 			continue
 		}
 

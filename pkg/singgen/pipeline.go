@@ -137,6 +137,7 @@ func (p *Pipeline) Execute(ctx context.Context, source string) (*PipelineResult,
 		Platform:           p.options.Platform,
 		TSAuthKey:          p.options.TSAuthKey,
 		TSLanIPCIDR:        p.options.TSLanIPCIDR,
+		Logger:             p.options.Logger,
 	}
 
 	cfg := p.template.InjectWithOptions(outbounds, templateOptions)

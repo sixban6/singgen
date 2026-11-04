@@ -7,10 +7,10 @@ import (
 
 	"github.com/sixban6/singgen/internal/config"
 	"github.com/sixban6/singgen/internal/constant"
+	"github.com/sixban6/singgen/internal/logx"
 	"github.com/sixban6/singgen/internal/platform"
 	"github.com/sixban6/singgen/internal/transformer"
 	"github.com/sixban6/singgen/internal/util"
-	"go.uber.org/zap"
 )
 
 type EmbedTemplate struct {
@@ -75,7 +75,9 @@ func (t *EmbedTemplate) InjectWithOptions(outbounds []transformer.Outbound, opti
 	}
 
 	// 处理 {all} 占位符和过滤规则
-	t.processor.ProcessAllPlaceholders(configData, processedOutbounds)
+	processor := *t.processor // 按次复制，避免并发调用时共享 logger
+	processor.Logger = options.Logger
+	processor.ProcessAllPlaceholders(configData, processedOutbounds)
 
 	// 注入代理节点
 	t.injectProxyOutbounds(configData, processedOutbounds)
@@ -97,9 +99,7 @@ func (t *EmbedTemplate) InjectWithOptions(outbounds []transformer.Outbound, opti
 
 	// 应用平台适配（使用嵌入的平台配置）
 	if err := t.applyEmbedPlatformAdaptation(result, options); err != nil {
-		if util.L != nil {
-			util.L.Warn("Failed to apply platform adaptation", zap.Error(err))
-		}
+		logx.Or(options.Logger).Warn("Failed to apply platform adaptation", "error", err)
 	}
 
 	return result

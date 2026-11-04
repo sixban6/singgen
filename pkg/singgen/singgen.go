@@ -193,6 +193,7 @@ func (g *Generator) Generate(ctx context.Context, source string) (*Config, error
 		Platform:           g.options.Platform,
 		TSAuthKey:          g.options.TSAuthKey,
 		TSLanIPCIDR:        g.options.TSLanIPCIDR,
+		Logger:             g.options.Logger,
 	}
 
 	cfg := tmpl.InjectWithOptions(outbounds, templateOptions)
@@ -224,7 +225,7 @@ func (g *Generator) parseData(ctx context.Context, data []byte) ([]Node, error) 
 	}
 
 	if factory, exists := parser.Registry[format]; exists {
-		p := factory()
+		p := parser.WithLogger(factory(), g.options.Logger)
 		if p.Accept("", data) {
 			nodes, err := p.Parse(data)
 			if err != nil {
@@ -236,7 +237,7 @@ func (g *Generator) parseData(ctx context.Context, data []byte) ([]Node, error) 
 	}
 
 	if format == "mixed" {
-		p := parser.Registry["mixed"]()
+		p := parser.WithLogger(parser.Registry["mixed"](), g.options.Logger)
 		nodes, err := p.Parse(data)
 		if err != nil {
 			g.logf("Mixed parser failed: %v", err)
@@ -262,7 +263,7 @@ func (g *Generator) tryAllParsers(ctx context.Context, data []byte) ([]Node, err
 		default:
 		}
 
-		p := factory()
+		p := parser.WithLogger(factory(), g.options.Logger)
 		if p.Accept("", data) {
 			nodes, err := p.Parse(data)
 			if err == nil && len(nodes) > 0 {
@@ -273,7 +274,7 @@ func (g *Generator) tryAllParsers(ctx context.Context, data []byte) ([]Node, err
 	}
 
 	// Try mixed parser as last resort
-	p := parser.Registry["mixed"]()
+	p := parser.WithLogger(parser.Registry["mixed"](), g.options.Logger)
 	nodes, err := p.Parse(data)
 	if err == nil && len(nodes) > 0 {
 		g.logf("Successfully parsed with mixed parser: %d nodes", len(nodes))

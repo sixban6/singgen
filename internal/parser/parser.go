@@ -5,7 +5,6 @@ import (
 
 	"github.com/sixban6/singgen/internal/util"
 	"github.com/sixban6/singgen/pkg/model"
-	"go.uber.org/zap"
 )
 
 type Parser interface {
@@ -29,9 +28,6 @@ func DetectFormatWithHint(raw []byte, mediaTypeHint string) string {
 	// 验证输入
 	validator := NewInputValidator()
 	if err := validator.ValidateInput(raw); err != nil {
-		if util.L != nil {
-			util.L.Warn("Input validation failed", zap.Error(err))
-		}
 		return "unknown"
 	}
 

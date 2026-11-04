@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/url"
@@ -11,8 +12,8 @@ import (
 	"strings"
 
 	"github.com/sixban6/singgen/internal/constant"
+	"github.com/sixban6/singgen/internal/logx"
 	"github.com/sixban6/singgen/internal/util"
-	"go.uber.org/zap"
 )
 
 type Fetcher interface {
@@ -21,7 +22,11 @@ type Fetcher interface {
 
 type HTTPFetcher struct {
 	Client *http.Client
+	// Logger 可选；为 nil 时不输出日志
+	Logger *slog.Logger
 }
+
+func (f *HTTPFetcher) logger() *slog.Logger { return logx.Or(f.Logger) }
 
 func NewHTTPFetcher() *HTTPFetcher {
 	return &HTTPFetcher{
@@ -72,9 +77,7 @@ func (f *HTTPFetcher) FetchContext(ctx context.Context, urlStr string) ([]byte, 
 		return nil, fmt.Errorf("read response body failed: %w", err)
 	}
 
-	if util.L != nil {
-		util.L.Info("HTTP fetch successful", zap.String("url", urlStr), zap.Int("size", len(body)))
-	}
+	f.logger().Info("HTTP fetch successful", "url", urlStr, "size", len(body))
 
 	return body, nil
 }
@@ -99,9 +102,7 @@ func (f *HTTPFetcher) validateURL(urlStr string) error {
 
 	// 访问本地 / 内网地址时给出警告（可选的安全措施）
 	if isLocalHost(parsedURL.Hostname()) {
-		if util.L != nil {
-			util.L.Warn("Accessing local/private network address", zap.String("url", urlStr))
-		}
+		f.logger().Warn("Accessing local/private network address", "url", urlStr)
 	}
 
 	return nil
@@ -120,7 +121,12 @@ func isLocalHost(hostname string) bool {
 	return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsUnspecified()
 }
 
-type FileFetcher struct{}
+type FileFetcher struct {
+	// Logger 可选；为 nil 时不输出日志
+	Logger *slog.Logger
+}
+
+func (f *FileFetcher) logger() *slog.Logger { return logx.Or(f.Logger) }
 
 func NewFileFetcher() *FileFetcher {
 	return &FileFetcher{}
@@ -136,9 +142,7 @@ func (f *FileFetcher) Fetch(path string) ([]byte, error) {
 		return nil, fmt.Errorf("read file failed: %w", err)
 	}
 
-	if util.L != nil {
-		util.L.Info("File fetch successful", zap.String("path", path), zap.Int("size", len(data)))
-	}
+	f.logger().Info("File fetch successful", "path", path, "size", len(data))
 
 	return data, nil
 }

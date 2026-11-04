@@ -26,12 +26,13 @@ type contextFetcher struct {
 // NewContextFetcher creates a new context-aware fetcher
 func NewContextFetcher(options GenerateOptions) ContextFetcher {
 	httpFetcher := fetcher.NewHTTPFetcher()
+	httpFetcher.Logger = options.Logger
 	if options.HTTPTimeout > 0 {
 		httpFetcher.Client.Timeout = options.HTTPTimeout
 	}
 	return &contextFetcher{
 		httpFetcher: httpFetcher,
-		fileFetcher: fetcher.NewFileFetcher(),
+		fileFetcher: &fetcher.FileFetcher{Logger: options.Logger},
 		options:     options,
 	}
 }
@@ -122,7 +123,7 @@ type contextTransformer struct {
 // NewContextTransformer creates a new context-aware transformer
 func NewContextTransformer(options GenerateOptions) ContextTransformer {
 	return &contextTransformer{
-		transformer: transformer.NewSingBoxTransformer(),
+		transformer: &transformer.SingBoxTransformer{Logger: options.Logger},
 		options:     options,
 	}
 }
@@ -261,9 +262,9 @@ func (p *contextParser) ParseWithHint(ctx context.Context, data []byte, formatHi
 		var err error
 
 		if factory, exists := parser.Registry[format]; exists {
-			p := factory()
-			if p.Accept("", data) {
-				nodes, err = p.Parse(data)
+			pr := parser.WithLogger(factory(), p.options.Logger)
+			if pr.Accept("", data) {
+				nodes, err = pr.Parse(data)
 			} else {
 				err = fmt.Errorf("parser %s rejected the data", format)
 			}

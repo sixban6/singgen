@@ -1,5 +1,7 @@
 package config
 
+import "log/slog"
+
 // Config sing-box配置结构
 type Config struct {
 	Log          map[string]any   `json:"log"`
@@ -25,4 +27,6 @@ type TemplateOptions struct {
 	Platform           string
 	TSAuthKey          string
 	TSLanIPCIDR        string
+	// Logger 可选；为 nil 时不输出日志
+	Logger *slog.Logger `json:"-" yaml:"-"`
 }

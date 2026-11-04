@@ -1,0 +1,15 @@
+vmess://eyJ2IjoiMiIsInBzIjoiVk0tV1MiLCJhZGQiOiIxLjEuMS4xIiwicG9ydCI6IjQ0MyIsImlkIjoiYjgzMTM4MWQtNjMyNC00ZDUzLWFkNGYtOGNkYTQ4YjMwODExIiwiYWlkIjoiMCIsInNjeSI6ImF1dG8iLCJuZXQiOiJ3cyIsImhvc3QiOiJoLmV4YW1wbGUuY29tIiwicGF0aCI6Ii9wP2VkPTIwNDgiLCJ0bHMiOiJ0bHMiLCJmcCI6ImNocm9tZSJ9
+vmess://eyJ2IjoiMiIsInBzIjoiVk0tR1JQQyIsImFkZCI6IjEuMS4xLjIiLCJwb3J0Ijo0NDMsImlkIjoiYjgzMTM4MWQtNjMyNC00ZDUzLWFkNGYtOGNkYTQ4YjMwODExIiwiYWlkIjowLCJzY3kiOiJhZXMtMTI4LWdjbSIsIm5ldCI6ImdycGMiLCJwYXRoIjoiZ3JwY3N2YyIsInRscyI6InRscyIsInNuaSI6ImcuZXhhbXBsZS5jb20ifQ==
+vless://b831381d-6324-4d53-ad4f-8cda48b30811@2.2.2.1:443?type=ws&host=v.example.com&path=%2Fws&security=tls&sni=v.example.com&fp=firefox#VL-WS
+vless://b831381d-6324-4d53-ad4f-8cda48b30811@2.2.2.2:443?type=grpc&serviceName=vlgrpc&security=tls&sni=v.example.com#VL-GRPC
+vless://b831381d-6324-4d53-ad4f-8cda48b30811@2.2.2.3:443?type=tcp&security=reality&sni=www.apple.com&pbk=jNXHt1yRo0vDuchQlIP6Z0ZvjT3KtzVI-T4E7RoLJS0&sid=6ba85179e30d4fc2&fp=chrome&flow=xtls-rprx-vision#VL-REALITY
+vless://b831381d-6324-4d53-ad4f-8cda48b30811@2.2.2.4:443?type=httpupgrade&host=u.example.com&path=%2Fup&security=tls#VL-HU
+vless://b831381d-6324-4d53-ad4f-8cda48b30811@2.2.2.5:443?type=xhttp&security=tls&sni=x.example.com#VL-XHTTP-UNSUPPORTED
+trojan://pw@3.3.3.1:443?type=ws&host=t.example.com&path=%2Fx&sni=t.example.com#HK
+trojan://pw@3.3.3.2:443?type=grpc&serviceName=svc&sni=t.example.com#HK
+trojan://pw@3.3.3.3:443?sni=t.example.com#HK
+trojan://pw@3.3.3.4:443?sni=t.example.com#Proxy
+ss://YWVzLTI1Ni1nY206cGFzc3dvcmQ=@4.4.4.1:8388#SS-1
+hysteria2://pw@5.5.5.1:443?sni=hy.example.com&obfs=salamander&obfs-password=ob#HY2-1
+tuic://b831381d-6324-4d53-ad4f-8cda48b30811:pw@6.6.6.1:443?sni=tu.example.com&congestion_control=bbr#TUIC-1
+anytls://pw@7.7.7.1:443/?sni=any.example.com#ANYTLS-1

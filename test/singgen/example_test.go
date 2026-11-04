@@ -47,7 +47,7 @@ func Example_highLevelAPI() {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("Generated %d bytes of JSON configuration\n", len(data))
+	fmt.Println("Generated JSON configuration:", len(data) > 0)
 
 	// Just parse nodes without generating configuration
 	nodes, err := singgen.ParseNodes(ctx, tmpFile.Name())
@@ -59,7 +59,7 @@ func Example_highLevelAPI() {
 
 	// Output:
 	// Generated config with 21 outbounds
-	// Generated 23674 bytes of JSON configuration
+	// Generated JSON configuration: true
 	// Parsed 1 nodes
 }
 

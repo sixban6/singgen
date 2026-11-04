@@ -56,28 +56,8 @@ func adaptTemplateForVersion(config map[string]any, version string) map[string]a
 			}
 		}
 
-		// 6. Adapt tailscale endpoint: state_directory -> directory
-		if endpoints, ok := config["endpoints"].([]any); ok {
-			for _, ep := range endpoints {
-				if epMap, ok := ep.(map[string]any); ok {
-					if t, _ := epMap["type"].(string); t == "tailscale" {
-						if dir, exists := epMap["state_directory"]; exists {
-							epMap["directory"] = dir
-							delete(epMap, "state_directory")
-						}
-					}
-				}
-			}
-		} else if endpointsMap, ok := config["endpoints"].([]map[string]any); ok {
-			for _, epMap := range endpointsMap {
-				if t, _ := epMap["type"].(string); t == "tailscale" {
-					if dir, exists := epMap["state_directory"]; exists {
-						epMap["directory"] = dir
-						delete(epMap, "state_directory")
-					}
-				}
-			}
-		}
+		// 6. Tailscale endpoint: sing-box 自 1.12 引入 tailscale endpoint 起字段名即为 state_directory，
+		//    无需改名（此前改为 directory 会导致 "unknown field" 加载失败）。
 	} else {
 		// v1.14+: ensure modern fields
 		if route, ok := config["route"].(map[string]any); ok {

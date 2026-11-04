@@ -44,7 +44,7 @@ type MultiConfig struct {
 func GetDefaultMultiConfig() *MultiConfig {
 	return &MultiConfig{
 		Global: GlobalConfig{
-			Template:       "v1.12",
+			Template:       "v1.14",
 			Platform:       "linux",
 			MirrorURL:      "https://ghfast.top",
 			DNSLocalServer: "114.114.114.114",

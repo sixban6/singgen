@@ -25,8 +25,12 @@ type contextFetcher struct {
 
 // NewContextFetcher creates a new context-aware fetcher
 func NewContextFetcher(options GenerateOptions) ContextFetcher {
+	httpFetcher := fetcher.NewHTTPFetcher()
+	if options.HTTPTimeout > 0 {
+		httpFetcher.Client.Timeout = options.HTTPTimeout
+	}
 	return &contextFetcher{
-		httpFetcher: fetcher.NewHTTPFetcher(),
+		httpFetcher: httpFetcher,
 		fileFetcher: fetcher.NewFileFetcher(),
 		options:     options,
 	}
@@ -49,6 +53,18 @@ func (f *contextFetcher) Fetch(ctx context.Context, source string) ([]byte, erro
 	} else {
 		fetcher = f.fileFetcher
 		f.logf("Reading from file: %s", source)
+	}
+
+	// Prefer native context support so that cancellation actually aborts the request
+	if cf, ok := fetcher.(interface {
+		FetchContext(context.Context, string) ([]byte, error)
+	}); ok {
+		data, err := cf.FetchContext(ctx, source)
+		if err != nil {
+			return nil, fmt.Errorf("fetch failed: %w", err)
+		}
+		f.logf("Successfully fetched %d bytes", len(data))
+		return data, nil
 	}
 
 	// Create a channel to handle the result

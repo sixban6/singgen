@@ -6,7 +6,7 @@
 // High-level API (recommended for most users):
 //
 //	config, err := singgen.GenerateConfig(ctx, "https://example.com/sub",
-//	  singgen.WithTemplate("v1.12"),
+//	  singgen.WithTemplate("v1.14"),
 //	  singgen.WithPlatform("linux"))
 //
 // Multi-subscription API:
@@ -298,7 +298,7 @@ func (g *Generator) GetAvailableTemplates() ([]string, error) {
 // buildOptions creates GenerateOptions from Option functions with defaults
 func buildOptions(opts ...Option) GenerateOptions {
 	options := GenerateOptions{
-		TemplateVersion:    "v1.12",
+		TemplateVersion:    "v1.14",
 		Platform:           "linux",
 		HTTPTimeout:        30 * time.Second,
 		MirrorURL:          "https://ghfast.top",

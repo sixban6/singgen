@@ -76,7 +76,7 @@ func (p *VlessParser) parseVlessURL(vlessURL string) (*model.Node, error) {
 		UUID: u.User.Username(),
 		Security: model.Security{
 			TLS:        security == "tls" || security == "reality",
-			SkipVerify: query.Get("allowInsecure") == "1",
+			SkipVerify: parseBoolQuery(query, "allowInsecure", "insecure", "skip-cert-verify"),
 			ServerName: query.Get("sni"),
 		},
 		Transport: model.Transport{
@@ -99,6 +99,16 @@ func (p *VlessParser) parseVlessURL(vlessURL string) (*model.Node, error) {
 		node.Extra["flow"] = flow
 	}
 
+	// uTLS 指纹：TLS 与 Reality 均适用
+	if fp := query.Get("fp"); fp != "" {
+		node.Extra["fingerprint"] = fp
+	}
+
+	// gRPC serviceName
+	if serviceName := query.Get("serviceName"); serviceName != "" {
+		node.Extra["service_name"] = serviceName
+	}
+
 	// Reality protocol specific parameters
 	if security == "reality" {
 		node.Extra["security"] = "reality"
@@ -107,9 +117,6 @@ func (p *VlessParser) parseVlessURL(vlessURL string) (*model.Node, error) {
 		}
 		if sid := query.Get("sid"); sid != "" {
 			node.Extra["short_id"] = sid
-		}
-		if fp := query.Get("fp"); fp != "" {
-			node.Extra["fingerprint"] = fp
 		}
 		if spx := query.Get("spx"); spx != "" {
 			node.Extra["spider_x"] = spx

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -31,13 +32,16 @@ func NewHTTPFetcher() *HTTPFetcher {
 }
 
 func (f *HTTPFetcher) Fetch(urlStr string) ([]byte, error) {
+	return f.FetchContext(context.Background(), urlStr)
+}
+
+// FetchContext 与 Fetch 相同，但遵循调用方传入的 ctx（取消 / 超时）。
+// 实际超时由 ctx 与 Client.Timeout 中较早者决定。
+func (f *HTTPFetcher) FetchContext(ctx context.Context, urlStr string) ([]byte, error) {
 	// 验证URL安全性
 	if err := f.validateURL(urlStr); err != nil {
 		return nil, err
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), constant.DefaultHTTPTimeout)
-	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, "GET", urlStr, nil)
 	if err != nil {
@@ -93,19 +97,27 @@ func (f *HTTPFetcher) validateURL(urlStr string) error {
 		return fmt.Errorf("missing host in URL")
 	}
 
-	// 防止访问本地地址（可选的安全措施）
-	hostname := strings.ToLower(parsedURL.Hostname())
-	if hostname == "localhost" || 
-	   hostname == "127.0.0.1" || 
-	   strings.HasPrefix(hostname, "10.") ||
-	   strings.HasPrefix(hostname, "192.168.") ||
-	   strings.HasPrefix(hostname, "172.") {
+	// 访问本地 / 内网地址时给出警告（可选的安全措施）
+	if isLocalHost(parsedURL.Hostname()) {
 		if util.L != nil {
 			util.L.Warn("Accessing local/private network address", zap.String("url", urlStr))
 		}
 	}
 
 	return nil
+}
+
+// isLocalHost 判断主机名是否为 localhost、回环、私有或链路本地地址
+func isLocalHost(hostname string) bool {
+	hostname = strings.ToLower(hostname)
+	if hostname == "localhost" || strings.HasSuffix(hostname, ".localhost") {
+		return true
+	}
+	ip := net.ParseIP(hostname)
+	if ip == nil {
+		return false
+	}
+	return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsUnspecified()
 }
 
 type FileFetcher struct{}

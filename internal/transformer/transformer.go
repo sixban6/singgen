@@ -13,13 +13,16 @@ import (
 )
 
 type Outbound struct {
-	Type                     string         `json:"type"`
-	Tag                      string         `json:"tag"`
-	Server                   string         `json:"server"`
-	ServerPort               uint16         `json:"server_port"`
-	UUID                     string         `json:"uuid,omitempty"`
-	Password                 string         `json:"password,omitempty"`
-	Method                   string         `json:"method,omitempty"`
+	Type       string `json:"type"`
+	Tag        string `json:"tag"`
+	Server     string `json:"server"`
+	ServerPort uint16 `json:"server_port"`
+	UUID       string `json:"uuid,omitempty"`
+	Password   string `json:"password,omitempty"`
+	Method     string `json:"method,omitempty"`
+	// VMess: 加密方式 (auto/aes-128-gcm/chacha20-poly1305/none/zero) 与 alter_id
+	Security                 string         `json:"security,omitempty"`
+	AlterID                  int            `json:"alter_id,omitempty"`
 	Flow                     string         `json:"flow,omitempty"`
 	UpMbps                   int            `json:"up_mbps,omitempty"`
 	DownMbps                 int            `json:"down_mbps,omitempty"`
@@ -257,39 +260,24 @@ func (t *SingBoxTransformer) transformVmess(node model.Node, outbound *Outbound)
 	outbound.Type = "vmess"
 	outbound.UUID = node.UUID
 
+	// 加密方式：缺省为 auto
+	outbound.Security = "auto"
+	if scy, ok := node.Extra["security"].(string); ok && scy != "" {
+		outbound.Security = scy
+	}
+	// alter_id > 0 表示旧版 VMess MD5 认证；与 multiplex 无关
+	if alterID, ok := node.Extra["alter_id"]; ok {
+		outbound.AlterID = toInt(alterID)
+	}
+
 	if node.Security.TLS {
-		outbound.TLS = map[string]any{
-			"enabled":     true,
-			"insecure":    node.Security.SkipVerify,
-			"server_name": node.Security.ServerName,
-		}
-		if len(node.Security.ALPN) > 0 {
-			outbound.TLS["alpn"] = node.Security.ALPN
-		}
+		outbound.TLS = buildTLS(node, nil)
 	}
-
-	if node.Transport.Net != "" && node.Transport.Net != "tcp" {
-		transport := make(map[string]any)
-		transport["type"] = node.Transport.Net
-
-		if node.Transport.Host != "" {
-			transport["host"] = node.Transport.Host
-		}
-		if node.Transport.Path != "" {
-			transport["path"] = node.Transport.Path
-		}
-		if len(node.Transport.Headers) > 0 {
-			transport["headers"] = node.Transport.Headers
-		}
-
-		outbound.Transport = transport
+	transport, err := buildTransport(node)
+	if err != nil {
+		return nil, err
 	}
-
-	if alterId, ok := node.Extra["alter_id"].(int); ok {
-		outbound.Multiplex = map[string]any{
-			"enabled": alterId > 0,
-		}
-	}
+	outbound.Transport = transport
 
 	return outbound, nil
 }
@@ -304,15 +292,7 @@ func (t *SingBoxTransformer) transformVless(node model.Node, outbound *Outbound)
 	}
 
 	if node.Security.TLS {
-		tls := map[string]any{
-			"enabled":     true,
-			"insecure":    node.Security.SkipVerify,
-			"server_name": node.Security.ServerName,
-		}
-
-		if len(node.Security.ALPN) > 0 {
-			tls["alpn"] = node.Security.ALPN
-		}
+		tls := buildTLS(node, nil)
 
 		// Handle Reality protocol
 		if security, ok := node.Extra["security"].(string); ok && security == "reality" {
@@ -328,35 +308,16 @@ func (t *SingBoxTransformer) transformVless(node model.Node, outbound *Outbound)
 			}
 
 			tls["reality"] = reality
-
-			// Set uTLS fingerprint for Reality
-			if fp, ok := node.Extra["fingerprint"].(string); ok && fp != "" {
-				tls["utls"] = map[string]any{
-					"enabled":     true,
-					"fingerprint": fp,
-				}
-			}
 		}
 
 		outbound.TLS = tls
 	}
 
-	if node.Transport.Net != "" && node.Transport.Net != "tcp" {
-		transport := make(map[string]any)
-		transport["type"] = node.Transport.Net
-
-		if node.Transport.Host != "" {
-			transport["host"] = node.Transport.Host
-		}
-		if node.Transport.Path != "" {
-			transport["path"] = node.Transport.Path
-		}
-		if len(node.Transport.Headers) > 0 {
-			transport["headers"] = node.Transport.Headers
-		}
-
-		outbound.Transport = transport
+	transport, err := buildTransport(node)
+	if err != nil {
+		return nil, err
 	}
+	outbound.Transport = transport
 
 	return outbound, nil
 }
@@ -365,31 +326,12 @@ func (t *SingBoxTransformer) transformTrojan(node model.Node, outbound *Outbound
 	outbound.Type = "trojan"
 	outbound.Password = node.Password
 
-	outbound.TLS = map[string]any{
-		"enabled":     true,
-		"insecure":    node.Security.SkipVerify,
-		"server_name": node.Security.ServerName,
+	outbound.TLS = buildTLS(node, nil)
+	transport, err := buildTransport(node)
+	if err != nil {
+		return nil, err
 	}
-	if len(node.Security.ALPN) > 0 {
-		outbound.TLS["alpn"] = node.Security.ALPN
-	}
-
-	if node.Transport.Net != "" && node.Transport.Net != "tcp" {
-		transport := make(map[string]any)
-		transport["type"] = node.Transport.Net
-
-		if node.Transport.Host != "" {
-			transport["host"] = node.Transport.Host
-		}
-		if node.Transport.Path != "" {
-			transport["path"] = node.Transport.Path
-		}
-		if len(node.Transport.Headers) > 0 {
-			transport["headers"] = node.Transport.Headers
-		}
-
-		outbound.Transport = transport
-	}
+	outbound.Transport = transport
 
 	return outbound, nil
 }
@@ -398,14 +340,7 @@ func (t *SingBoxTransformer) transformHysteria2(node model.Node, outbound *Outbo
 	outbound.Type = "hysteria2"
 	outbound.Password = node.Password
 
-	outbound.TLS = map[string]any{
-		"enabled":     true,
-		"insecure":    node.Security.SkipVerify,
-		"server_name": node.Security.ServerName,
-	}
-	if len(node.Security.ALPN) > 0 {
-		outbound.TLS["alpn"] = node.Security.ALPN
-	}
+	outbound.TLS = buildTLS(node, nil)
 
 	// 设置带宽限制参数（防止运营商检测异常流量）
 	if upMbps, ok := node.Extra["up_mbps"]; ok {
@@ -444,14 +379,7 @@ func (t *SingBoxTransformer) transformAnyTLS(node model.Node, outbound *Outbound
 	outbound.Type = "anytls"
 	outbound.Password = node.Password
 
-	outbound.TLS = map[string]any{
-		"enabled":     true,
-		"insecure":    node.Security.SkipVerify,
-		"server_name": node.Security.ServerName,
-	}
-	if len(node.Security.ALPN) > 0 {
-		outbound.TLS["alpn"] = node.Security.ALPN
-	}
+	outbound.TLS = buildTLS(node, nil)
 
 	if interval, ok := node.Extra["idle_session_check_interval"].(string); ok && interval != "" {
 		outbound.IdleSessionCheckInterval = interval
@@ -471,16 +399,7 @@ func (t *SingBoxTransformer) transformTuic(node model.Node, outbound *Outbound) 
 	outbound.UUID = node.UUID
 	outbound.Password = node.Password
 
-	tls := map[string]any{
-		"enabled":     true,
-		"insecure":    node.Security.SkipVerify,
-		"server_name": node.Security.ServerName,
-	}
-	if len(node.Security.ALPN) > 0 {
-		tls["alpn"] = node.Security.ALPN
-	} else {
-		tls["alpn"] = []string{"h3"}
-	}
+	tls := buildTLS(node, []string{"h3"})
 	if disableSNI, ok := node.Extra["disable_sni"].(bool); ok && disableSNI {
 		tls["disable_sni"] = true
 	}

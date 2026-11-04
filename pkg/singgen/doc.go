@@ -21,7 +21,7 @@
 // that handle the complete generation process:
 //
 //	config, err := singgen.GenerateConfig(ctx, "https://example.com/sub",
-//		singgen.WithTemplate("v1.12"),
+//		singgen.WithTemplate("v1.14"),
 //		singgen.WithPlatform("linux"))
 //
 //	// Get configuration as bytes
@@ -37,7 +37,7 @@
 // the Generator type:
 //
 //	generator := singgen.NewGenerator(
-//		singgen.WithTemplate("v1.12"),
+//		singgen.WithTemplate("v1.14"),
 //		singgen.WithPlatform("darwin"),
 //		singgen.WithHTTPTimeout(30*time.Second),
 //		singgen.WithLogger(logger))
@@ -69,7 +69,7 @@
 // The library supports extensive configuration through functional options:
 //
 //	// Template and platform
-//	singgen.WithTemplate("v1.12")
+//	singgen.WithTemplate("v1.14")
 //	singgen.WithPlatform("linux")
 //
 //	// Network settings

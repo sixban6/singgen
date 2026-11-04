@@ -25,6 +25,9 @@ type vmessDTO struct {
 	Scy  string `json:"scy"`
 	Sni  string `json:"sni"`
 	Alpn string `json:"alpn"`
+	Fp   string `json:"fp"`
+	// 部分客户端导出的扩展字段
+	AllowInsecure any `json:"allowInsecure"`
 }
 
 type VmessParser struct{}
@@ -37,14 +40,14 @@ func (p *VmessParser) Accept(mediaTypeHint string, raw []byte) bool {
 func (p *VmessParser) Parse(raw []byte) ([]model.Node, error) {
 	var nodes []model.Node
 	data := strings.TrimSpace(string(raw))
-	
+
 	lines := strings.Split(data, "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if !strings.HasPrefix(line, "vmess://") {
 			continue
 		}
-		
+
 		node, err := p.parseVmessURL(line)
 		if err != nil {
 			if util.L != nil {
@@ -52,14 +55,14 @@ func (p *VmessParser) Parse(raw []byte) ([]model.Node, error) {
 			}
 			continue
 		}
-		
+
 		nodes = append(nodes, *node)
 	}
-	
+
 	if len(nodes) == 0 {
 		return nil, constant.ErrParseFailed
 	}
-	
+
 	return nodes, nil
 }
 
@@ -67,33 +70,34 @@ func (p *VmessParser) parseVmessURL(vmessURL string) (*model.Node, error) {
 	if !strings.HasPrefix(vmessURL, "vmess://") {
 		return nil, fmt.Errorf("invalid vmess URL")
 	}
-	
+
 	encoded := strings.TrimPrefix(vmessURL, "vmess://")
 	decoded, err := util.DecodeBase64(encoded)
 	if err != nil {
 		return nil, fmt.Errorf("base64 decode failed: %w", err)
 	}
-	
+
 	var dto vmessDTO
 	if err := util.Unmarshal(decoded, &dto); err != nil {
 		return nil, fmt.Errorf("json unmarshal failed: %w", err)
 	}
-	
+
 	port, err := parsePort(dto.Port)
 	if err != nil {
 		return nil, fmt.Errorf("parse port failed: %w", err)
 	}
-	
+
 	node := &model.Node{
-		ID:       util.MD5String(vmessURL),
-		Tag:      dto.Ps,
-		Type:     constant.ProtocolVMess,
-		Addr:     dto.Add,
-		Port:     port,
-		UUID:     dto.ID,
+		ID:   util.MD5String(vmessURL),
+		Tag:  dto.Ps,
+		Type: constant.ProtocolVMess,
+		Addr: dto.Add,
+		Port: port,
+		UUID: dto.ID,
 		Security: model.Security{
-			TLS:        dto.TLS == "tls",
-			SkipVerify: true,
+			TLS: dto.TLS == "tls",
+			// 默认校验证书，仅在链接显式要求时跳过，防止中间人攻击
+			SkipVerify: isTruthyAny(dto.AllowInsecure),
 			ServerName: dto.Sni,
 		},
 		Transport: model.Transport{
@@ -103,19 +107,23 @@ func (p *VmessParser) parseVmessURL(vmessURL string) (*model.Node, error) {
 		},
 		Extra: make(map[string]any),
 	}
-	
+
 	if dto.Alpn != "" {
 		node.Security.ALPN = strings.Split(dto.Alpn, ",")
 	}
-	
+
+	if dto.Fp != "" {
+		node.Extra["fingerprint"] = dto.Fp
+	}
+
 	if dto.Scy != "" {
 		node.Extra["security"] = dto.Scy
 	}
-	
+
 	if aid, err := parseAlterId(dto.Aid); err == nil {
 		node.Extra["alter_id"] = aid
 	}
-	
+
 	return node, nil
 }
 

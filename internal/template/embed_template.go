@@ -46,6 +46,9 @@ func (t *EmbedTemplate) InjectWithOptions(outbounds []transformer.Outbound, opti
 		processedOutbounds = t.processEmojiRemoval(outbounds)
 	}
 
+	// 节点 tag 去重（需在 emoji 移除之后进行，移除 emoji 可能产生新的重名）
+	processedOutbounds = dedupeOutboundTags(processedOutbounds, collectReservedTags(configData))
+
 	// 处理镜像URL占位符
 	if options.MirrorURL != "" {
 		t.replaceMirrorURL(configData, options.MirrorURL)
@@ -204,6 +207,13 @@ func (t *EmbedTemplate) transformerOutboundToMap(outbound transformer.Outbound) 
 	}
 	if outbound.Flow != "" {
 		result["flow"] = outbound.Flow
+	}
+	// VMess
+	if outbound.Security != "" {
+		result["security"] = outbound.Security
+	}
+	if outbound.AlterID > 0 {
+		result["alter_id"] = outbound.AlterID
 	}
 	if len(outbound.Transport) > 0 {
 		result["transport"] = outbound.Transport
@@ -539,7 +549,11 @@ func (t *EmbedTemplate) removeRouteRules(config map[string]any) {
 	newRules := []any{rule1, rule2}
 
 	// 4. 将原有的 filteredRules 追加到新规则的后面，实现“插入到最前面”
-	filteredRules = append(filteredRules[:1], append(newRules, filteredRules[1:]...)...)
+	if len(filteredRules) == 0 {
+		filteredRules = newRules
+	} else {
+		filteredRules = append(filteredRules[:1], append(newRules, filteredRules[1:]...)...)
+	}
 
 	if len(filteredRules) > 0 {
 		routeMap["rules"] = filteredRules

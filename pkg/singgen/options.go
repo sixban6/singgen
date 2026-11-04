@@ -8,7 +8,7 @@ import (
 // Option configures the generation process using the functional options pattern
 type Option func(*GenerateOptions)
 
-// WithTemplate sets the template version to use (e.g., "v1.12", "v1.13")
+// WithTemplate sets the template version to use (e.g., "v1.14", "v1.12"); defaults to "v1.14"
 func WithTemplate(version string) Option {
 	return func(o *GenerateOptions) {
 		o.TemplateVersion = version

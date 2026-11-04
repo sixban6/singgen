@@ -1,0 +1,1152 @@
+{
+  "log": {
+    "disabled": false,
+    "level": "info",
+    "timestamp": true
+  },
+  "experimental": {
+    "cache_file": {
+      "enabled": true
+    },
+    "clash_api": {
+      "default_mode": "rule",
+      "external_controller": "127.0.0.1:9090",
+      "external_ui": "/etc/sing-box/ui",
+      "external_ui_download_detour": "DirectConn",
+      "external_ui_download_url": "https://ghfast.top/https://github.com/MetaCubeX/metacubexd/archive/gh-pages.zip",
+      "secret": ""
+    }
+  },
+  "dns": {
+    "disable_cache": false,
+    "disable_expire": false,
+    "final": "dns_proxy",
+    "independent_cache": true,
+    "rules": [
+      {
+        "clash_mode": "Direct",
+        "client_subnet": "223.5.5.5/24",
+        "server": "dns_local"
+      },
+      {
+        "clash_mode": "Global",
+        "server": "dns_proxy"
+      },
+      {
+        "domain_suffix": [
+          "ts.net"
+        ],
+        "server": "dns_tailscale"
+      },
+      {
+        "rule_set": "geosite-hok",
+        "server": "dns_hok"
+      },
+      {
+        "client_subnet": "223.5.5.5/24",
+        "rule_set": "geosite-cn",
+        "server": "dns_local"
+      },
+      {
+        "rule_set": "geosite-geolocation-!cn",
+        "server": "dns_proxy"
+      }
+    ],
+    "servers": [
+      {
+        "server": "114.114.114.114",
+        "tag": "dns_local",
+        "type": "udp"
+      },
+      {
+        "detour": "DNS",
+        "server": "8.8.8.8",
+        "tag": "dns_proxy",
+        "type": "https"
+      },
+      {
+        "detour": "HoK",
+        "server": "8.8.8.8",
+        "tag": "dns_hok",
+        "type": "https"
+      },
+      {
+        "endpoint": "ts-node",
+        "tag": "dns_tailscale",
+        "type": "tailscale"
+      },
+      {
+        "inet4_range": "198.18.0.0/15",
+        "inet6_range": "fc00::/18",
+        "tag": "fakeip",
+        "type": "fakeip"
+      }
+    ],
+    "strategy": "ipv4_only"
+  },
+  "inbounds": [
+    {
+      "address": [
+        "10.8.8.8/30",
+        "fdfe:dcba:9876::0/126"
+      ],
+      "auto_route": true,
+      "mtu": 9000,
+      "stack": "system",
+      "strict_route": true,
+      "tag": "tun-in",
+      "type": "tun"
+    }
+  ],
+  "outbounds": [
+    {
+      "interrupt_exist_connections": true,
+      "outbounds": [
+        "DirectConn",
+        "Auto",
+        "Select"
+      ],
+      "tag": "Proxy",
+      "type": "selector"
+    },
+    {
+      "interrupt_exist_connections": true,
+      "outbounds": [
+        "Proxy"
+      ],
+      "tag": "DNS",
+      "type": "selector"
+    },
+    {
+      "interrupt_exist_connections": true,
+      "outbounds": [
+        "Proxy"
+      ],
+      "tag": "YouTube",
+      "type": "selector"
+    },
+    {
+      "interrupt_exist_connections": true,
+      "outbounds": [
+        "Proxy"
+      ],
+      "tag": "OpenAI",
+      "type": "selector"
+    },
+    {
+      "interrupt_exist_connections": true,
+      "outbounds": [
+        "Proxy"
+      ],
+      "tag": "Google",
+      "type": "selector"
+    },
+    {
+      "interrupt_exist_connections": true,
+      "outbounds": [
+        "Proxy",
+        "DirectConn"
+      ],
+      "tag": "Github",
+      "type": "selector"
+    },
+    {
+      "interrupt_exist_connections": true,
+      "outbounds": [
+        "Proxy"
+      ],
+      "tag": "Telegram",
+      "type": "selector"
+    },
+    {
+      "interrupt_exist_connections": true,
+      "outbounds": [
+        "DirectConn",
+        "Proxy"
+      ],
+      "tag": "Microsoft",
+      "type": "selector"
+    },
+    {
+      "interrupt_exist_connections": true,
+      "outbounds": [
+        "DirectConn",
+        "Proxy"
+      ],
+      "tag": "Apple",
+      "type": "selector"
+    },
+    {
+      "interrupt_exist_connections": true,
+      "outbounds": [
+        "Proxy"
+      ],
+      "tag": "Paypal",
+      "type": "selector"
+    },
+    {
+      "interrupt_exist_connections": true,
+      "outbounds": [
+        "Proxy"
+      ],
+      "tag": "Netflix",
+      "type": "selector"
+    },
+    {
+      "outbounds": [
+        "Proxy"
+      ],
+      "tag": "TikTok",
+      "type": "selector"
+    },
+    {
+      "outbounds": [
+        "Proxy"
+      ],
+      "tag": "Steam",
+      "type": "selector"
+    },
+    {
+      "outbounds": [
+        "Proxy",
+        "DirectConn"
+      ],
+      "tag": "X",
+      "type": "selector"
+    },
+    {
+      "outbounds": [
+        "Proxy"
+      ],
+      "tag": "Porn",
+      "type": "selector"
+    },
+    {
+      "outbounds": [
+        "Auto",
+        "Select"
+      ],
+      "tag": "BTC",
+      "type": "selector"
+    },
+    {
+      "interrupt_exist_connections": true,
+      "outbounds": [
+        "Auto",
+        "Select"
+      ],
+      "tag": "HoK",
+      "type": "selector"
+    },
+    {
+      "outbounds": [
+        "VM-WS",
+        "VM-GRPC",
+        "VL-WS",
+        "VL-GRPC",
+        "VL-REALITY",
+        "VL-HU",
+        "HK",
+        "HK 2",
+        "HK 3",
+        "Proxy 2",
+        "SS-1",
+        "HY2-1",
+        "TUIC-1",
+        "ANYTLS-1"
+      ],
+      "tag": "Select",
+      "type": "selector"
+    },
+    {
+      "interrupt_exist_connections": true,
+      "interval": "5m",
+      "outbounds": [
+        "VM-WS",
+        "VM-GRPC",
+        "VL-WS",
+        "VL-GRPC",
+        "VL-REALITY",
+        "VL-HU",
+        "HK",
+        "HK 2",
+        "HK 3",
+        "Proxy 2",
+        "SS-1",
+        "HY2-1",
+        "TUIC-1",
+        "ANYTLS-1"
+      ],
+      "tag": "Auto",
+      "tolerance": 100,
+      "type": "urltest",
+      "url": "https://captive.apple.com/hotspot-detect.html"
+    },
+    {
+      "security": "auto",
+      "server": "1.1.1.1",
+      "server_port": 443,
+      "tag": "VM-WS",
+      "tls": {
+        "enabled": true,
+        "insecure": false,
+        "server_name": "h.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      },
+      "transport": {
+        "early_data_header_name": "Sec-WebSocket-Protocol",
+        "headers": {
+          "Host": "h.example.com"
+        },
+        "max_early_data": 2048,
+        "path": "/p",
+        "type": "ws"
+      },
+      "type": "vmess",
+      "uuid": "b831381d-6324-4d53-ad4f-8cda48b30811"
+    },
+    {
+      "security": "aes-128-gcm",
+      "server": "1.1.1.2",
+      "server_port": 443,
+      "tag": "VM-GRPC",
+      "tls": {
+        "enabled": true,
+        "insecure": false,
+        "server_name": "g.example.com"
+      },
+      "transport": {
+        "service_name": "grpcsvc",
+        "type": "grpc"
+      },
+      "type": "vmess",
+      "uuid": "b831381d-6324-4d53-ad4f-8cda48b30811"
+    },
+    {
+      "server": "2.2.2.1",
+      "server_port": 443,
+      "tag": "VL-WS",
+      "tls": {
+        "enabled": true,
+        "insecure": false,
+        "server_name": "v.example.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "firefox"
+        }
+      },
+      "transport": {
+        "headers": {
+          "Host": "v.example.com"
+        },
+        "path": "/ws",
+        "type": "ws"
+      },
+      "type": "vless",
+      "uuid": "b831381d-6324-4d53-ad4f-8cda48b30811"
+    },
+    {
+      "server": "2.2.2.2",
+      "server_port": 443,
+      "tag": "VL-GRPC",
+      "tls": {
+        "enabled": true,
+        "insecure": false,
+        "server_name": "v.example.com"
+      },
+      "transport": {
+        "service_name": "vlgrpc",
+        "type": "grpc"
+      },
+      "type": "vless",
+      "uuid": "b831381d-6324-4d53-ad4f-8cda48b30811"
+    },
+    {
+      "flow": "xtls-rprx-vision",
+      "server": "2.2.2.3",
+      "server_port": 443,
+      "tag": "VL-REALITY",
+      "tls": {
+        "enabled": true,
+        "insecure": false,
+        "reality": {
+          "enabled": true,
+          "public_key": "jNXHt1yRo0vDuchQlIP6Z0ZvjT3KtzVI-T4E7RoLJS0",
+          "short_id": "6ba85179e30d4fc2"
+        },
+        "server_name": "www.apple.com",
+        "utls": {
+          "enabled": true,
+          "fingerprint": "chrome"
+        }
+      },
+      "type": "vless",
+      "uuid": "b831381d-6324-4d53-ad4f-8cda48b30811"
+    },
+    {
+      "server": "2.2.2.4",
+      "server_port": 443,
+      "tag": "VL-HU",
+      "tls": {
+        "enabled": true,
+        "insecure": false,
+        "server_name": "u.example.com"
+      },
+      "transport": {
+        "host": "u.example.com",
+        "path": "/up",
+        "type": "httpupgrade"
+      },
+      "type": "vless",
+      "uuid": "b831381d-6324-4d53-ad4f-8cda48b30811"
+    },
+    {
+      "password": "pw",
+      "server": "3.3.3.1",
+      "server_port": 443,
+      "tag": "HK",
+      "tls": {
+        "enabled": true,
+        "insecure": false,
+        "server_name": "t.example.com"
+      },
+      "transport": {
+        "headers": {
+          "Host": "t.example.com"
+        },
+        "path": "/x",
+        "type": "ws"
+      },
+      "type": "trojan"
+    },
+    {
+      "password": "pw",
+      "server": "3.3.3.2",
+      "server_port": 443,
+      "tag": "HK 2",
+      "tls": {
+        "enabled": true,
+        "insecure": false,
+        "server_name": "t.example.com"
+      },
+      "transport": {
+        "service_name": "svc",
+        "type": "grpc"
+      },
+      "type": "trojan"
+    },
+    {
+      "password": "pw",
+      "server": "3.3.3.3",
+      "server_port": 443,
+      "tag": "HK 3",
+      "tls": {
+        "enabled": true,
+        "insecure": false,
+        "server_name": "t.example.com"
+      },
+      "type": "trojan"
+    },
+    {
+      "password": "pw",
+      "server": "3.3.3.4",
+      "server_port": 443,
+      "tag": "Proxy 2",
+      "tls": {
+        "enabled": true,
+        "insecure": false,
+        "server_name": "t.example.com"
+      },
+      "type": "trojan"
+    },
+    {
+      "method": "aes-256-gcm",
+      "password": "password",
+      "server": "4.4.4.1",
+      "server_port": 8388,
+      "tag": "SS-1",
+      "type": "shadowsocks"
+    },
+    {
+      "down_mbps": 300,
+      "obfs": {
+        "password": "ob",
+        "type": "salamander"
+      },
+      "password": "pw",
+      "server": "5.5.5.1",
+      "server_port": 443,
+      "tag": "HY2-1",
+      "tls": {
+        "alpn": [
+          "h3"
+        ],
+        "enabled": true,
+        "insecure": false,
+        "server_name": "hy.example.com"
+      },
+      "type": "hysteria2",
+      "up_mbps": 25
+    },
+    {
+      "congestion_control": "bbr",
+      "password": "pw",
+      "server": "6.6.6.1",
+      "server_port": 443,
+      "tag": "TUIC-1",
+      "tls": {
+        "alpn": [
+          "h3"
+        ],
+        "enabled": true,
+        "insecure": false,
+        "server_name": "tu.example.com"
+      },
+      "type": "tuic",
+      "uuid": "b831381d-6324-4d53-ad4f-8cda48b30811"
+    },
+    {
+      "password": "pw",
+      "server": "7.7.7.1",
+      "server_port": 443,
+      "tag": "ANYTLS-1",
+      "tls": {
+        "enabled": true,
+        "insecure": false,
+        "server_name": "any.example.com"
+      },
+      "type": "anytls"
+    },
+    {
+      "tag": "DirectConn",
+      "type": "direct"
+    }
+  ],
+  "route": {
+    "auto_detect_interface": true,
+    "default_domain_resolver": "dns_local",
+    "final": "Proxy",
+    "rule_set": [
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-bank-cn",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-bank-cn.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-ad1",
+        "type": "remote",
+        "url": "https://ghfast.top/https://github.com/Toperlock/sing-box-geosite/raw/main/rule/adservers.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-ad2",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/privacy-protection-tools/anti-ad.github.io/master/docs/anti-ad-sing-box.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-ctm_cn",
+        "type": "remote",
+        "url": "https://ghfast.top/https://github.com/sixban6/rulesets/raw/refs/heads/main/rule/direct_cn.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-chat",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-ai-chat-!cn.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-steam",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/steam.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-epic",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/epicgames.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-playstation",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/sony.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-xbox",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/xbox.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-disney",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/disney.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-hbo",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/hbo.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-primevideo",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/primevideo.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-spotify",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/spotify.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-youtube",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/youtube.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-google",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/google.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-github",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/github.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-telegram",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/telegram.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-tiktok",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/tiktok.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-netflix",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/netflix.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-apple",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/apple.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-microsoft",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/microsoft.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-onedrive",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/onedrive.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-geolocation-!cn",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/geolocation-!cn.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-cn",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/cn.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-private",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/private.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geoip-google",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/google.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geoip-telegram",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/telegram.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geoip-netflix",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/netflix.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geoip-apple",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo-lite/geoip/apple.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geoip-cn",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/cn.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geoip-private",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/private.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-paypal",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/paypal.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-hok",
+        "type": "remote",
+        "url": "https://ghfast.top/https://github.com/sixban6/rulesets/raw/refs/heads/main/rule/hok.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-cryptocurrency",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-cryptocurrency.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-jd",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/jd.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-ali",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/alibaba.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-baidu",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/baidu.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-bytedance",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/bytedance.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-pdd",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/pinduoduo.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-bili",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/bilibili.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-meituan",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/meituan.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-ctrip",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/ctrip.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-tencent",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/tencent.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-porn",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-porn.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-sourcehut",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/sourcehut.srs"
+      },
+      {
+        "download_detour": "DirectConn",
+        "format": "binary",
+        "tag": "geosite-x",
+        "type": "remote",
+        "url": "https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/x.srs"
+      }
+    ],
+    "rules": [
+      {
+        "action": "reject",
+        "port": 443,
+        "protocol": "udp"
+      },
+      {
+        "action": "sniff"
+      },
+      {
+        "action": "hijack-dns",
+        "protocol": "dns"
+      },
+      {
+        "action": "hijack-dns",
+        "port": 53
+      },
+      {
+        "ip_cidr": [
+          "100.64.0.0/10",
+          "fd7a:115c:a1e0::/48"
+        ],
+        "outbound": "ts-node"
+      },
+      {
+        "ip_is_private": true,
+        "outbound": "DirectConn"
+      },
+      {
+        "action": "reject",
+        "rule_set": [
+          "geosite-ad1",
+          "geosite-ad2"
+        ]
+      },
+      {
+        "action": "route",
+        "outbound": "DirectConn",
+        "rule_set": [
+          "geosite-bank-cn"
+        ]
+      },
+      {
+        "action": "route",
+        "outbound": "Steam",
+        "rule_set": "geosite-steam"
+      },
+      {
+        "action": "route",
+        "outbound": "Proxy",
+        "rule_set": [
+          "geosite-epic",
+          "geosite-playstation",
+          "geosite-xbox"
+        ]
+      },
+      {
+        "action": "route",
+        "outbound": "Proxy",
+        "rule_set": [
+          "geosite-disney",
+          "geosite-hbo",
+          "geosite-primevideo",
+          "geosite-spotify"
+        ]
+      },
+      {
+        "action": "route",
+        "outbound": "Microsoft",
+        "rule_set": "geosite-onedrive"
+      },
+      {
+        "action": "route",
+        "outbound": "TikTok",
+        "rule_set": "geosite-tiktok"
+      },
+      {
+        "action": "route",
+        "outbound": "X",
+        "rule_set": "geosite-x"
+      },
+      {
+        "action": "route",
+        "outbound": "DirectConn",
+        "protocol": "ssh"
+      },
+      {
+        "action": "route",
+        "outbound": "DirectConn",
+        "protocol": "bittorrent"
+      },
+      {
+        "action": "route",
+        "clash_mode": "direct",
+        "outbound": "DirectConn"
+      },
+      {
+        "action": "route",
+        "clash_mode": "global",
+        "outbound": "Proxy"
+      },
+      {
+        "action": "route",
+        "outbound": "HoK",
+        "rule_set": "geosite-hok"
+      },
+      {
+        "action": "route",
+        "domain": [
+          "clash.razord.top",
+          "yacd.metacubex.one",
+          "yacd.haishan.me",
+          "d.metacubex.one"
+        ],
+        "outbound": "DirectConn"
+      },
+      {
+        "action": "route",
+        "domain_suffix": [
+          "z-lib.gs",
+          "follow.is",
+          "folo.is"
+        ],
+        "outbound": "Proxy"
+      },
+      {
+        "action": "route",
+        "outbound": "BTC",
+        "rule_set": "geosite-cryptocurrency"
+      },
+      {
+        "action": "route",
+        "outbound": "Porn",
+        "rule_set": "geosite-porn"
+      },
+      {
+        "action": "route",
+        "outbound": "DirectConn",
+        "rule_set": "geosite-private"
+      },
+      {
+        "action": "route",
+        "outbound": "DirectConn",
+        "rule_set": "geosite-jd"
+      },
+      {
+        "action": "route",
+        "outbound": "DirectConn",
+        "rule_set": "geosite-ali"
+      },
+      {
+        "action": "route",
+        "outbound": "DirectConn",
+        "rule_set": "geosite-baidu"
+      },
+      {
+        "action": "route",
+        "outbound": "DirectConn",
+        "rule_set": "geosite-bytedance"
+      },
+      {
+        "action": "route",
+        "outbound": "DirectConn",
+        "rule_set": "geosite-pdd"
+      },
+      {
+        "action": "route",
+        "outbound": "DirectConn",
+        "rule_set": "geosite-bili"
+      },
+      {
+        "action": "route",
+        "outbound": "DirectConn",
+        "rule_set": "geosite-meituan"
+      },
+      {
+        "action": "route",
+        "outbound": "DirectConn",
+        "rule_set": "geosite-ctrip"
+      },
+      {
+        "action": "route",
+        "outbound": "DirectConn",
+        "rule_set": "geosite-tencent"
+      },
+      {
+        "action": "route",
+        "outbound": "DirectConn",
+        "rule_set": "geosite-ctm_cn"
+      },
+      {
+        "action": "route",
+        "outbound": "OpenAI",
+        "rule_set": "geosite-chat"
+      },
+      {
+        "action": "route",
+        "domain_suffix": [
+          "grok.com",
+          "z.ai"
+        ],
+        "outbound": "OpenAI"
+      },
+      {
+        "action": "route",
+        "outbound": "YouTube",
+        "rule_set": "geosite-youtube"
+      },
+      {
+        "action": "route",
+        "outbound": "Github",
+        "rule_set": [
+          "geosite-github",
+          "geosite-sourcehut"
+        ]
+      },
+      {
+        "action": "route",
+        "outbound": "Google",
+        "rule_set": [
+          "geosite-google",
+          "geoip-google"
+        ]
+      },
+      {
+        "action": "route",
+        "outbound": "Telegram",
+        "rule_set": [
+          "geosite-telegram",
+          "geoip-telegram"
+        ]
+      },
+      {
+        "action": "route",
+        "outbound": "Apple",
+        "rule_set": [
+          "geosite-apple",
+          "geoip-apple"
+        ]
+      },
+      {
+        "action": "route",
+        "outbound": "Microsoft",
+        "rule_set": "geosite-microsoft"
+      },
+      {
+        "action": "route",
+        "outbound": "Paypal",
+        "rule_set": "geosite-paypal"
+      },
+      {
+        "action": "route",
+        "outbound": "Netflix",
+        "rule_set": [
+          "geosite-netflix",
+          "geoip-netflix"
+        ]
+      },
+      {
+        "action": "route",
+        "outbound": "Proxy",
+        "rule_set": "geosite-geolocation-!cn"
+      },
+      {
+        "action": "route",
+        "outbound": "DirectConn",
+        "rule_set": [
+          "geosite-cn",
+          "geoip-cn"
+        ]
+      },
+      {
+        "action": "route",
+        "outbound": "DirectConn",
+        "rule_set": "geoip-private"
+      }
+    ]
+  },
+  "certificate": {
+    "store": "mozilla"
+  },
+  "endpoints": [
+    {
+      "accept_routes": true,
+      "advertise_routes": [
+        "192.168.1.0/24"
+      ],
+      "auth_key": "tskey-auth-test",
+      "ephemeral": false,
+      "state_directory": "/var/lib/sing-box/ts",
+      "system_interface": false,
+      "system_interface_name": "",
+      "tag": "ts-node",
+      "type": "tailscale"
+    }
+  ]
+}

@@ -22,14 +22,14 @@ func (p *ShadowsocksParser) Accept(mediaTypeHint string, raw []byte) bool {
 func (p *ShadowsocksParser) Parse(raw []byte) ([]model.Node, error) {
 	var nodes []model.Node
 	data := strings.TrimSpace(string(raw))
-	
+
 	lines := strings.Split(data, "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if !strings.HasPrefix(line, "ss://") {
 			continue
 		}
-		
+
 		node, err := p.parseShadowsocksURL(line)
 		if err != nil {
 			if util.L != nil {
@@ -37,14 +37,14 @@ func (p *ShadowsocksParser) Parse(raw []byte) ([]model.Node, error) {
 			}
 			continue
 		}
-		
+
 		nodes = append(nodes, *node)
 	}
-	
+
 	if len(nodes) == 0 {
 		return nil, constant.ErrParseFailed
 	}
-	
+
 	return nodes, nil
 }
 
@@ -52,19 +52,19 @@ func (p *ShadowsocksParser) parseShadowsocksURL(ssURL string) (*model.Node, erro
 	if !strings.HasPrefix(ssURL, "ss://") {
 		return nil, fmt.Errorf("invalid shadowsocks URL")
 	}
-	
+
 	u, err := url.Parse(ssURL)
 	if err != nil {
 		return nil, fmt.Errorf("parse URL failed: %w", err)
 	}
-	
+
 	port, err := strconv.ParseUint(u.Port(), 10, 16)
 	if err != nil {
 		return nil, fmt.Errorf("parse port failed: %w", err)
 	}
-	
+
 	var method, password string
-	
+
 	if u.User != nil {
 		if u.User.Username() != "" {
 			userInfo, err := util.DecodeBase64(u.User.Username())
@@ -80,23 +80,23 @@ func (p *ShadowsocksParser) parseShadowsocksURL(ssURL string) (*model.Node, erro
 			}
 		}
 	}
-	
+
 	node := &model.Node{
-		ID:       util.MD5String(ssURL),
-		Tag:      u.Fragment,
-		Type:     constant.ProtocolSS,
-		Addr:     u.Hostname(),
-		Port:     uint16(port),
-		Password: password,
-		Security: model.Security{},
+		ID:        util.MD5String(ssURL),
+		Tag:       u.Fragment,
+		Type:      constant.ProtocolSS,
+		Addr:      u.Hostname(),
+		Port:      uint16(port),
+		Password:  password,
+		Security:  model.Security{},
 		Transport: model.Transport{},
 		Extra:     make(map[string]any),
 	}
-	
+
 	if method != "" {
 		node.Extra["method"] = method
 	}
-	
+
 	query := u.Query()
 	if plugin := query.Get("plugin"); plugin != "" {
 		node.Extra["plugin"] = plugin
@@ -104,7 +104,7 @@ func (p *ShadowsocksParser) parseShadowsocksURL(ssURL string) (*model.Node, erro
 			node.Extra["plugin_opts"] = pluginOpts
 		}
 	}
-	
+
 	return node, nil
 }
 

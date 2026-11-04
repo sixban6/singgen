@@ -34,10 +34,10 @@ func NewTemplateProcessor() *TemplateProcessor {
 func (p *TemplateProcessor) ProcessAllPlaceholders(config map[string]any, outbounds []transformer.Outbound) {
 	// 预构建节点索引
 	existingTags := p.buildTagIndex(outbounds)
-	
+
 	// 处理占位符
 	p.walkAndProcessAll(config, outbounds)
-	
+
 	// 高效级联删除空的outbound块
 	p.removeEmptyOutboundsWithCascade(config, existingTags)
 }
@@ -89,10 +89,10 @@ func (p *TemplateProcessor) processOutboundArray(arr []any, outbounds []transfor
 		// 处理完成后删除filter字段，因为它不属于sing-box配置
 		delete(parent, "filter")
 	}
-	
+
 	// 应用过滤器获取匹配的节点tags
 	filteredTags := p.filter.Filter(outbounds, filterRules)
-	
+
 	// 构建新的outbound数组
 	var result []any
 	for _, item := range arr {
@@ -106,14 +106,14 @@ func (p *TemplateProcessor) processOutboundArray(arr []any, outbounds []transfor
 			result = append(result, item)
 		}
 	}
-	
+
 	return result
 }
 
 // parseFilterRules 解析过滤规则
 func (p *TemplateProcessor) parseFilterRules(filterData any) []filter.FilterRule {
 	var rules []filter.FilterRule
-	
+
 	switch data := filterData.(type) {
 	case []any:
 		for _, item := range data {
@@ -130,19 +130,19 @@ func (p *TemplateProcessor) parseFilterRules(filterData any) []filter.FilterRule
 			rules = append(rules, *rule)
 		}
 	}
-	
+
 	return rules
 }
 
 // parseFilterRule 解析单个过滤规则
 func (p *TemplateProcessor) parseFilterRule(ruleMap map[string]any) *filter.FilterRule {
 	// 支持两种格式：
-	// 1. {"action": "exclude", "keywords": [".*"]}  
+	// 1. {"action": "exclude", "keywords": [".*"]}
 	// 2. {"exclude": [".*"]} 或 {"include": ["pattern"]}
-	
+
 	var action filter.FilterAction
 	var keywords []string
-	
+
 	// 尝试新格式 {"exclude": [...]} 或 {"include": [...]}
 	if excludeData, exists := ruleMap["exclude"]; exists {
 		action = filter.ActionExclude
@@ -159,7 +159,7 @@ func (p *TemplateProcessor) parseFilterRule(ruleMap map[string]any) *filter.Filt
 			}
 			return nil
 		}
-		
+
 		switch strings.ToLower(actionStr) {
 		case "include":
 			action = filter.ActionInclude
@@ -171,19 +171,19 @@ func (p *TemplateProcessor) parseFilterRule(ruleMap map[string]any) *filter.Filt
 			}
 			return nil
 		}
-		
+
 		if keywordsData, exists := ruleMap["keywords"]; exists {
 			keywords = p.parseKeywords(keywordsData)
 		}
 	}
-	
+
 	if len(keywords) == 0 {
 		if util.L != nil {
 			util.L.Warn("Filter rule has no keywords")
 		}
 		return nil
 	}
-	
+
 	return &filter.FilterRule{
 		Action:   action,
 		Keywords: keywords,
@@ -232,21 +232,21 @@ func (p *TemplateProcessor) buildTagIndex(outbounds []transformer.Outbound) map[
 // removeEmptyOutboundsWithCascade 级联删除空的outbound块
 func (p *TemplateProcessor) removeEmptyOutboundsWithCascade(config map[string]any, existingTags map[string]bool) {
 	maxIterations := 10
-	
+
 	for iteration := 0; iteration < maxIterations; iteration++ {
 		removedCount := 0
 		// 更新existingTags包含当前还存在的outbound tags
 		currentTags := p.buildCurrentOutboundTags(config, existingTags)
-		
+
 		// 先清理无效引用
 		p.cleanInvalidReferences(config, currentTags)
-		
+
 		// 再删除空的outbound
 		p.walkAndRemoveEmpty(config, currentTags, &removedCount)
 		if removedCount == 0 {
 			break
 		}
-		
+
 		if util.L != nil {
 			util.L.Debug("Removed empty outbounds in iteration",
 				zap.Int("iteration", iteration+1),
@@ -254,7 +254,7 @@ func (p *TemplateProcessor) removeEmptyOutboundsWithCascade(config map[string]an
 			)
 		}
 	}
-	
+
 	// 最终清理：确保所有无效引用都被清理
 	finalTags := p.buildCurrentOutboundTags(config, existingTags)
 	p.cleanInvalidReferences(config, finalTags)
@@ -290,7 +290,7 @@ func (p *TemplateProcessor) walkAndRemoveEmpty(obj any, existingTags map[string]
 func (p *TemplateProcessor) removeEmptyOutboundsFromArray(outbounds []any, existingTags map[string]bool, removedCount *int) []any {
 	toRemoveIndexes := p.getIndexSlice()
 	defer p.putIndexSlice(toRemoveIndexes)
-	
+
 	// 逆序收集待删除索引
 	for i := len(outbounds) - 1; i >= 0; i-- {
 		if outbound, ok := outbounds[i].(map[string]any); ok {
@@ -299,13 +299,13 @@ func (p *TemplateProcessor) removeEmptyOutboundsFromArray(outbounds []any, exist
 			}
 		}
 	}
-	
+
 	// 批量删除
 	if len(toRemoveIndexes) > 0 {
 		*removedCount += len(toRemoveIndexes)
 		return p.batchRemove(outbounds, toRemoveIndexes)
 	}
-	
+
 	return outbounds
 }
 
@@ -315,30 +315,30 @@ func (p *TemplateProcessor) shouldRemoveOutbound(outbound map[string]any, existi
 	if !exists {
 		return false
 	}
-	
+
 	outboundsArray, ok := outboundsData.([]any)
 	if !ok {
 		return false
 	}
-	
+
 	if len(outboundsArray) == 0 {
 		return true
 	}
-	
+
 	// 检查是否只包含默认的block节点（过滤结果为空时的默认值）
 	if len(outboundsArray) == 1 {
 		if tag, ok := outboundsArray[0].(string); ok && tag == "block" {
 			return true
 		}
 	}
-	
+
 	// 早期返回优化：找到一个有效节点就返回false
 	for _, item := range outboundsArray {
 		if tag, ok := item.(string); ok && existingTags[tag] {
 			return false
 		}
 	}
-	
+
 	return true
 }
 
@@ -347,12 +347,12 @@ func (p *TemplateProcessor) batchRemove(slice []any, indexes []int) []any {
 	if len(indexes) == 0 {
 		return slice
 	}
-	
+
 	// indexes已经是逆序的，直接删除不会影响后续索引
 	for _, idx := range indexes {
 		slice = append(slice[:idx], slice[idx+1:]...)
 	}
-	
+
 	return slice
 }
 
@@ -369,15 +369,15 @@ func (p *TemplateProcessor) putIndexSlice(s []int) {
 // buildCurrentOutboundTags 构建当前配置中所有outbound的tag索引
 func (p *TemplateProcessor) buildCurrentOutboundTags(config map[string]any, originalTags map[string]bool) map[string]bool {
 	currentTags := make(map[string]bool)
-	
+
 	// 先添加原有的节点tags
 	for tag := range originalTags {
 		currentTags[tag] = true
 	}
-	
+
 	// 再添加当前配置中的outbound tags
 	p.collectOutboundTags(config, currentTags)
-	
+
 	return currentTags
 }
 
@@ -477,7 +477,7 @@ func (p *TemplateProcessor) CleanInvalidReferencesPublic(config map[string]any, 
 	p.cleanInvalidReferences(config, existingTags)
 }
 
-// collectOutboundTags 收集配置中所有outbound的tag  
+// collectOutboundTags 收集配置中所有outbound的tag
 func (p *TemplateProcessor) collectOutboundTags(obj any, tags map[string]bool) {
 	// 只在outbounds数组级别收集，避免收集引用
 	if config, ok := obj.(map[string]any); ok {

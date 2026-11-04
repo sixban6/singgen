@@ -70,12 +70,12 @@ func TestTransformerConcurrency(t *testing.T) {
 // createTestNodes 创建测试节点
 func createTestNodes(count int) []model.Node {
 	nodes := make([]model.Node, count)
-	
+
 	protocols := []string{"vmess", "vless", "trojan", "shadowsocks", "hysteria2"}
-	
+
 	for i := 0; i < count; i++ {
 		protocol := protocols[i%len(protocols)]
-		
+
 		node := model.Node{
 			ID:   string(rune('A' + i)),
 			Tag:  protocol + "_node_" + fmt.Sprintf("%03d", i), // 确保tag唯一
@@ -89,24 +89,24 @@ func createTestNodes(count int) []model.Node {
 			},
 			Transport: model.Transport{
 				Net:  "ws",
-				Path: "/path" + string(rune('0' + (i%10))),
+				Path: "/path" + string(rune('0'+(i%10))),
 				Host: "example.com",
 			},
 			Extra: make(map[string]any),
 		}
-		
+
 		switch protocol {
 		case "vmess", "vless":
-			node.UUID = "12345678-abcd-1234-5678-" + string(rune('0' + (i%10))) + "23456789abc"
+			node.UUID = "12345678-abcd-1234-5678-" + string(rune('0'+(i%10))) + "23456789abc"
 		case "trojan", "hysteria2":
-			node.Password = "password" + string(rune('0' + (i%10)))
+			node.Password = "password" + string(rune('0'+(i%10)))
 		case "shadowsocks":
-			node.Password = "password" + string(rune('0' + (i%10)))
+			node.Password = "password" + string(rune('0'+(i%10)))
 			node.Extra["method"] = "aes-256-gcm"
 		}
-		
+
 		nodes[i] = node
 	}
-	
+
 	return nodes
 }

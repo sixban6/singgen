@@ -14,7 +14,7 @@ func TestReferenceCleanup(t *testing.T) {
 		"outbounds": []any{
 			// ChainProxy会因为过滤失败被删除
 			map[string]any{
-				"tag":       "ChainProxy", 
+				"tag":       "ChainProxy",
 				"type":      "selector",
 				"outbounds": []any{"{all}"},
 				"filter": []any{map[string]any{

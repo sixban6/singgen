@@ -145,7 +145,7 @@ func TestIOSAdapterStripsDesktopAPIService(t *testing.T) {
 func TestIOSAdapterUsesLegacyDownloadDetour(t *testing.T) {
 	adapter := platform.NewIOSAdapter("")
 	cfg := &config.Config{
-		Outbounds: []map[string]any{{"type": "direct", "tag": "DirectConn"}},
+		Outbounds:   []map[string]any{{"type": "direct", "tag": "DirectConn"}},
 		HTTPClients: []map[string]any{{"tag": "hc-direct", "detour": "DirectConn"}},
 		Route: map[string]any{
 			"default_http_client": "hc-direct",

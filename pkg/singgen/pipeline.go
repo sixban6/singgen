@@ -28,42 +28,42 @@ type PipelineOption func(*Pipeline)
 
 // PipelineResult contains the complete result of a pipeline execution
 type PipelineResult struct {
-	Config    *config.Config        `json:"config"`
-	Nodes     []model.Node          `json:"nodes"`
+	Config    *config.Config         `json:"config"`
+	Nodes     []model.Node           `json:"nodes"`
 	Outbounds []transformer.Outbound `json:"outbounds"`
-	Metadata  PipelineMetadata      `json:"metadata"`
+	Metadata  PipelineMetadata       `json:"metadata"`
 }
 
 // PipelineMetadata contains information about the pipeline execution
 type PipelineMetadata struct {
-	SourceType       string `json:"source_type"`
-	DetectedFormat   string `json:"detected_format"`
-	NodesCount       int    `json:"nodes_count"`
-	OutboundsCount   int    `json:"outbounds_count"`
-	TemplateVersion  string `json:"template_version"`
-	Platform         string `json:"platform"`
+	SourceType      string `json:"source_type"`
+	DetectedFormat  string `json:"detected_format"`
+	NodesCount      int    `json:"nodes_count"`
+	OutboundsCount  int    `json:"outbounds_count"`
+	TemplateVersion string `json:"template_version"`
+	Platform        string `json:"platform"`
 }
 
 // NewPipeline creates a new Pipeline with the specified options
 func NewPipeline(opts ...PipelineOption) *Pipeline {
 	// Start with default options
 	options := buildOptions()
-	
+
 	p := &Pipeline{
 		options: options,
 	}
-	
+
 	// Set default components
 	p.fetcher = NewContextFetcher(options)
-	p.parser = NewContextParser(options) 
+	p.parser = NewContextParser(options)
 	p.transformer = NewContextTransformer(options)
 	p.renderer = renderer.NewJSONRenderer()
-	
+
 	// Apply custom options
 	for _, opt := range opts {
 		opt(p)
 	}
-	
+
 	return p
 }
 
@@ -72,53 +72,53 @@ func (p *Pipeline) Execute(ctx context.Context, source string) (*PipelineResult,
 	if source == "" {
 		return nil, ErrEmptySource
 	}
-	
+
 	result := &PipelineResult{
 		Metadata: PipelineMetadata{
 			TemplateVersion: p.options.TemplateVersion,
 			Platform:        p.options.Platform,
 		},
 	}
-	
+
 	p.logf("Starting pipeline execution for source: %s", source)
-	
+
 	// Step 1: Fetch data
 	data, err := p.fetcher.Fetch(ctx, source)
 	if err != nil {
 		return nil, fmt.Errorf("fetch step failed: %w", err)
 	}
-	
+
 	result.Metadata.SourceType = p.getSourceType(source)
-	
+
 	// Step 2: Detect format
 	format := p.parser.DetectFormat(ctx, data)
 	result.Metadata.DetectedFormat = format
 	p.logf("Detected format: %s", format)
-	
+
 	// Step 3: Parse nodes
 	nodes, err := p.parser.Parse(ctx, data)
 	if err != nil {
 		return nil, fmt.Errorf("parse step failed: %w", err)
 	}
-	
+
 	if len(nodes) == 0 {
 		return nil, ErrNoValidNodes
 	}
-	
+
 	result.Nodes = nodes
 	result.Metadata.NodesCount = len(nodes)
 	p.logf("Parsed %d nodes", len(nodes))
-	
+
 	// Step 4: Transform to outbounds
 	outbounds, err := p.transformer.Transform(ctx, nodes)
 	if err != nil {
 		return nil, fmt.Errorf("transform step failed: %w", err)
 	}
-	
+
 	result.Outbounds = outbounds
 	result.Metadata.OutboundsCount = len(outbounds)
 	p.logf("Transformed to %d outbounds", len(outbounds))
-	
+
 	// Step 5: Generate configuration
 	if p.template == nil {
 		factory := template.NewTemplateFactory()
@@ -127,7 +127,7 @@ func (p *Pipeline) Execute(ctx context.Context, source string) (*PipelineResult,
 			return nil, fmt.Errorf("template creation failed: %w", err)
 		}
 	}
-	
+
 	templateOptions := config.TemplateOptions{
 		MirrorURL:          p.options.MirrorURL,
 		ExternalController: p.options.ExternalController,
@@ -138,10 +138,10 @@ func (p *Pipeline) Execute(ctx context.Context, source string) (*PipelineResult,
 		TSAuthKey:          p.options.TSAuthKey,
 		TSLanIPCIDR:        p.options.TSLanIPCIDR,
 	}
-	
+
 	cfg := p.template.InjectWithOptions(outbounds, templateOptions)
 	result.Config = cfg
-	
+
 	p.logf("Pipeline execution completed successfully")
 	return result, nil
 }
@@ -152,7 +152,7 @@ func (p *Pipeline) ExecuteBytes(ctx context.Context, source string) ([]byte, err
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return p.renderer.Render(result.Config)
 }
 
@@ -167,7 +167,7 @@ func (p *Pipeline) ParseOnly(ctx context.Context, source string) ([]model.Node, 
 	if err != nil {
 		return nil, fmt.Errorf("fetch failed: %w", err)
 	}
-	
+
 	return p.parser.Parse(ctx, data)
 }
 
@@ -177,7 +177,7 @@ func (p *Pipeline) TransformOnly(ctx context.Context, source string) ([]transfor
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return p.transformer.Transform(ctx, nodes)
 }
 
@@ -190,7 +190,7 @@ func (p *Pipeline) getSourceType(source string) string {
 		}
 		return "file"
 	}
-	
+
 	// Fallback: simple URL detection for non-contextFetcher implementations
 	if strings.Contains(source, "://") {
 		return "url"
@@ -246,7 +246,7 @@ func WithCustomRenderer(renderer renderer.Renderer) PipelineOption {
 func WithPipelineOptions(opts ...Option) PipelineOption {
 	return func(p *Pipeline) {
 		p.options = buildOptions(opts...)
-		
+
 		// Update components with new options
 		p.fetcher = NewContextFetcher(p.options)
 		p.parser = NewContextParser(p.options)
@@ -270,11 +270,11 @@ func NewStreamingPipeline(opts ...PipelineOption) *StreamingPipeline {
 func (sp *StreamingPipeline) StreamNodes(ctx context.Context, source string, batchSize int) (<-chan []model.Node, <-chan error) {
 	nodesCh := make(chan []model.Node, 10)
 	errCh := make(chan error, 1)
-	
+
 	go func() {
 		defer close(nodesCh)
 		defer close(errCh)
-		
+
 		// For now, this is a simple implementation
 		// In a real streaming implementation, we would parse and yield nodes incrementally
 		nodes, err := sp.pipeline.ParseOnly(ctx, source)
@@ -282,14 +282,14 @@ func (sp *StreamingPipeline) StreamNodes(ctx context.Context, source string, bat
 			errCh <- err
 			return
 		}
-		
+
 		// Split nodes into batches
 		for i := 0; i < len(nodes); i += batchSize {
 			end := i + batchSize
 			if end > len(nodes) {
 				end = len(nodes)
 			}
-			
+
 			select {
 			case <-ctx.Done():
 				errCh <- ctx.Err()
@@ -298,6 +298,6 @@ func (sp *StreamingPipeline) StreamNodes(ctx context.Context, source string, bat
 			}
 		}
 	}()
-	
+
 	return nodesCh, errCh
 }

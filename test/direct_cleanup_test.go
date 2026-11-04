@@ -11,10 +11,10 @@ func TestDirectCleanup(t *testing.T) {
 	// 从test-config.json中提取一个简化的例子
 	config := map[string]any{
 		"outbounds": []any{
-			// DNS引用了不存在的ChainProxy  
+			// DNS引用了不存在的ChainProxy
 			map[string]any{
 				"tag":       "DNS",
-				"type":      "selector", 
+				"type":      "selector",
 				"outbounds": []any{"AutoSelect-HK", "ChainProxy", "block"},
 			},
 			map[string]any{

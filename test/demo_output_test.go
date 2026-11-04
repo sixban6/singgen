@@ -52,10 +52,10 @@ func TestDemoOutput(t *testing.T) {
 	// 用户需求场景的完整配置
 	config := map[string]any{
 		"log": map[string]any{
-			"level":      "info",
-			"timestamp":  true,
-			"output":     "sing-box.log",
-			"disabled":   false,
+			"level":     "info",
+			"timestamp": true,
+			"output":    "sing-box.log",
+			"disabled":  false,
 		},
 		"dns": map[string]any{
 			"servers": []any{
@@ -65,9 +65,9 @@ func TestDemoOutput(t *testing.T) {
 					"detour":  "Proxy",
 				},
 				map[string]any{
-					"tag":      "local",
-					"address":  "223.5.5.5",
-					"detour":   "direct",
+					"tag":     "local",
+					"address": "223.5.5.5",
+					"detour":  "direct",
 				},
 			},
 			"rules": []any{
@@ -159,11 +159,11 @@ func TestDemoOutput(t *testing.T) {
 				"type": "urltest",
 				"outbounds": []any{
 					"🇺🇸 美国-SS-节点1",
-					"🚀 美国-HY2-1-🎯", 
+					"🚀 美国-HY2-1-🎯",
 					"🇯🇵 日本-SS-节点2",
 				},
-				"url":      "http://www.gstatic.com/generate_204",
-				"interval": "300s",
+				"url":       "http://www.gstatic.com/generate_204",
+				"interval":  "300s",
 				"tolerance": 50,
 			},
 			// 负载均衡
@@ -204,7 +204,7 @@ func TestDemoOutput(t *testing.T) {
 					"outbound":      "direct",
 				},
 				map[string]any{
-					"geoip": "private",
+					"geoip":    "private",
 					"outbound": "direct",
 				},
 			},
@@ -212,10 +212,10 @@ func TestDemoOutput(t *testing.T) {
 		},
 		"experimental": map[string]any{
 			"clash_api": map[string]any{
-				"external_controller": "127.0.0.1:9090",
-				"external_ui":         "ui",
-				"secret":             "",
-				"external_ui_download_url": "https://mirror.ghproxy.com/https://github.com/MetaCubeX/Yacd-meta/archive/gh-pages.zip",
+				"external_controller":         "127.0.0.1:9090",
+				"external_ui":                 "ui",
+				"secret":                      "",
+				"external_ui_download_url":    "https://mirror.ghproxy.com/https://github.com/MetaCubeX/Yacd-meta/archive/gh-pages.zip",
 				"external_ui_download_detour": "Proxy",
 			},
 		},
@@ -231,7 +231,7 @@ func TestDemoOutput(t *testing.T) {
 	t.Logf("✅ 生成处理前配置: demo_config_before.json")
 	t.Logf("   - 节点总数: %d", len(outbounds))
 	t.Logf("   - outbound配置数: %d", len(config["outbounds"].([]any)))
-	
+
 	// 处理配置
 	processor := template.NewTemplateProcessor()
 	processor.ProcessAllPlaceholders(config, outbounds)
@@ -247,10 +247,10 @@ func TestDemoOutput(t *testing.T) {
 	outboundsResult := config["outbounds"].([]any)
 	var deletedOutbounds []string
 	var keptOutbounds []string
-	
+
 	// 预期应该被删除的outbound
 	expectedDeleted := []string{"AdBlock", "ABC", "ChainToEmpty", "FR-Nodes"}
-	
+
 	// 检查哪些被删除了
 	resultTags := make(map[string]bool)
 	for _, outbound := range outboundsResult {
@@ -259,7 +259,7 @@ func TestDemoOutput(t *testing.T) {
 		resultTags[tag] = true
 		keptOutbounds = append(keptOutbounds, tag)
 	}
-	
+
 	for _, expected := range expectedDeleted {
 		if !resultTags[expected] {
 			deletedOutbounds = append(deletedOutbounds, expected)

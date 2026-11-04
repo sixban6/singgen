@@ -1,16 +1,16 @@
 package model
 
 type Node struct {
-	ID       string            `json:"id"`
-	Tag      string            `json:"tag"`
-	Type     string            `json:"type"`
-	Addr     string            `json:"addr"`
-	Port     uint16            `json:"port"`
-	UUID     string            `json:"uuid,omitempty"`
-	Password string            `json:"password,omitempty"`
-	Security Security          `json:"security"`
-	Transport                  `json:"transport"`
-	Extra    map[string]any    `json:"extra,omitempty"`
+	ID        string   `json:"id"`
+	Tag       string   `json:"tag"`
+	Type      string   `json:"type"`
+	Addr      string   `json:"addr"`
+	Port      uint16   `json:"port"`
+	UUID      string   `json:"uuid,omitempty"`
+	Password  string   `json:"password,omitempty"`
+	Security  Security `json:"security"`
+	Transport `json:"transport"`
+	Extra     map[string]any `json:"extra,omitempty"`
 }
 
 type Security struct {

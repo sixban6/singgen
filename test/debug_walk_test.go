@@ -22,7 +22,7 @@ func TestDebugWalk(t *testing.T) {
 
 	existingTags := map[string]bool{
 		"DNS":           true,
-		"AutoSelect-HK": true, 
+		"AutoSelect-HK": true,
 		"block":         true,
 		// ChainProxy 不存在
 	}

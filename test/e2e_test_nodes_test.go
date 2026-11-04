@@ -137,7 +137,7 @@ func TestE2EWithRealTestNodes(t *testing.T) {
 
 	// 验证结果
 	outboundsResult := config["outbounds"].([]any)
-	
+
 	// 打印调试信息
 	t.Logf("实际outbounds数量: %d", len(outboundsResult))
 	for i, outbound := range outboundsResult {
@@ -150,10 +150,10 @@ func TestE2EWithRealTestNodes(t *testing.T) {
 			t.Logf("  [%d] %s: 无outbounds字段", i, tag)
 		}
 	}
-	
+
 	// 计算预期的outbound数量
 	expectedOutbounds := 4 // Proxy, US-Nodes, direct, block (AdBlock被删除，NonExistent被删除，ChainToEmpty被删除)
-	
+
 	// 验证数量
 	assert.Equal(t, expectedOutbounds, len(outboundsResult), "outbounds数量不匹配")
 
@@ -164,7 +164,7 @@ func TestE2EWithRealTestNodes(t *testing.T) {
 	for _, outbound := range outboundsResult {
 		ob := outbound.(map[string]any)
 		tag := ob["tag"].(string)
-		
+
 		switch tag {
 		case "Proxy":
 			hasProxy = true
@@ -298,7 +298,7 @@ func TestE2EComplexEmojiFiltering(t *testing.T) {
 				},
 			},
 			map[string]any{
-				"tag":       "Crown-Emoji", // 👑 - 不存在，应被删除  
+				"tag":       "Crown-Emoji", // 👑 - 不存在，应被删除
 				"type":      "selector",
 				"outbounds": []any{"{all}"},
 				"filter": map[string]any{
@@ -314,13 +314,13 @@ func TestE2EComplexEmojiFiltering(t *testing.T) {
 
 	// 验证结果 - France-Flags和Crown-Emoji应该被删除
 	outboundsResult := config["outbounds"].([]any)
-	
+
 	var foundTags []string
 	for _, outbound := range outboundsResult {
 		ob := outbound.(map[string]any)
 		tag := ob["tag"].(string)
 		foundTags = append(foundTags, tag)
-		
+
 		// 确保删除的outbound不存在
 		assert.NotEqual(t, "France-Flags", tag, "France-Flags应该被删除")
 		assert.NotEqual(t, "Crown-Emoji", tag, "Crown-Emoji应该被删除")

@@ -10,23 +10,23 @@ import (
 func RemoveEmoji(text string) string {
 	// 使用正则表达式匹配emoji范围
 	emojiPattern := regexp.MustCompile(`[\x{1F600}-\x{1F64F}]|[\x{1F300}-\x{1F5FF}]|[\x{1F680}-\x{1F6FF}]|[\x{1F1E0}-\x{1F1FF}]|[\x{2600}-\x{26FF}]|[\x{2700}-\x{27BF}]|[\x{1F900}-\x{1F9FF}]|[\x{1F018}-\x{1F270}]|[\x{238C}]|[\x{2194}-\x{2199}]|[\x{21A9}-\x{21AA}]|[\x{2B05}-\x{2B07}]|[\x{2B1B}-\x{2B1C}]|[\x{2B50}]|[\x{2B55}]|[\x{3030}]|[\x{303D}]|[\x{3297}]|[\x{3299}]`)
-	
+
 	result := emojiPattern.ReplaceAllString(text, "")
-	
+
 	// 额外处理一些特殊符号
 	result = removeSpecialSymbols(result)
-	
+
 	// 清理多余的空格
 	result = strings.TrimSpace(result)
 	result = regexp.MustCompile(`\s+`).ReplaceAllString(result, " ")
-	
+
 	return result
 }
 
 // removeSpecialSymbols 移除特殊符号和emoji相关字符
 func removeSpecialSymbols(text string) string {
 	var result strings.Builder
-	
+
 	for _, r := range text {
 		// 跳过emoji相关的unicode符号
 		if isEmojiRelated(r) {
@@ -34,7 +34,7 @@ func removeSpecialSymbols(text string) string {
 		}
 		result.WriteRune(r)
 	}
-	
+
 	return result.String()
 }
 
@@ -116,34 +116,34 @@ func ValidateDNSServer(server string) bool {
 	if server == "" {
 		return false
 	}
-	
+
 	// 简单的IP地址格式验证
 	parts := strings.Split(server, ".")
 	if len(parts) != 4 {
 		return false
 	}
-	
+
 	for _, part := range parts {
 		if len(part) == 0 || len(part) > 3 {
 			return false
 		}
-		
+
 		for _, r := range part {
 			if !unicode.IsDigit(r) {
 				return false
 			}
 		}
-		
+
 		// 转换为数字验证范围
 		var num int
 		for _, r := range part {
 			num = num*10 + int(r-'0')
 		}
-		
+
 		if num < 0 || num > 255 {
 			return false
 		}
 	}
-	
+
 	return true
 }

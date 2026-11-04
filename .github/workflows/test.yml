@@ -35,3 +35,4 @@ jobs:
           # 缺少 sing-box 时让端到端用例失败而不是跳过
           SINGGEN_REQUIRE_SINGBOX: '1'
         run: go test -race ./...
+

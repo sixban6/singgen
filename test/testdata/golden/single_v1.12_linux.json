@@ -60,7 +60,7 @@
         "type": "https"
       },
       {
-        "detour": "HoK",
+        "detour": "DNS",
         "server": "8.8.8.8",
         "tag": "dns_hok",
         "type": "https"

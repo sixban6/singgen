@@ -114,7 +114,8 @@
     {
       "interrupt_exist_connections": true,
       "outbounds": [
-        "Proxy"
+        "Auto",
+        "Select"
       ],
       "tag": "DNS",
       "type": "selector"
@@ -238,6 +239,17 @@
         "Select"
       ],
       "tag": "HoK",
+      "type": "selector"
+    },
+    {
+      "interrupt_exist_connections": true,
+      "outbounds": [
+        "DirectConn",
+        "HoK",
+        "Auto",
+        "Select"
+      ],
+      "tag": "Game-UDP",
       "type": "selector"
     },
     {
@@ -1130,6 +1142,23 @@
         "action": "route",
         "outbound": "DirectConn",
         "rule_set": "geoip-private"
+      },
+      {
+        "action": "route",
+        "outbound": "Proxy",
+        "protocol": [
+          "stun",
+          "dtls",
+          "quic"
+        ]
+      },
+      {
+        "action": "route",
+        "network": "udp",
+        "outbound": "Game-UDP",
+        "port_range": [
+          "1024:65535"
+        ]
       }
     ]
   },

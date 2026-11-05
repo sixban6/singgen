@@ -58,7 +58,7 @@ func Example_highLevelAPI() {
 	fmt.Printf("Parsed %d nodes\n", len(nodes))
 
 	// Output:
-	// Generated config with 21 outbounds
+	// Generated config with 22 outbounds
 	// Generated JSON configuration: true
 	// Parsed 1 nodes
 }

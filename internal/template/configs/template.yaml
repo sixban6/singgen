@@ -70,7 +70,7 @@ inbounds:
 outbounds:
   - {tag: DIY-Node, type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["sec_"]}]}
   - {tag: Proxy, type: selector, outbounds: [DIY-Node, DirectConn, Auto, Select], interrupt_exist_connections: true}
-  - {tag: DNS, type: selector, outbounds: [DIY-Node, Proxy], interrupt_exist_connections: true}
+  - {tag: DNS, type: selector, outbounds: [Auto, DIY-Node, Select], interrupt_exist_connections: true}
   - {tag: YouTube, type: selector, outbounds: [DIY-Node, Proxy], interrupt_exist_connections: true}
   - {tag: OpenAI, type: selector, outbounds: [DIY-Node, Proxy], interrupt_exist_connections: true}
   - {tag: Google, type: selector, outbounds: [DIY-Node, Proxy], interrupt_exist_connections: true}
@@ -85,7 +85,8 @@ outbounds:
   - {tag: X, type: selector, outbounds: [DIY-Node, Proxy, DirectConn]}
   - {tag: Porn, type: selector, outbounds: [DIY-Node, Proxy]}
   - {tag: BTC, type: selector, outbounds: [DIY-Node, Auto, Select]}
-  - {tag: HoK, type: selector, outbounds: [DIY-Node, Auto, Select], interrupt_exist_connections: true}
+  - {tag: HoK, type: selector, outbounds: [Auto, DIY-Node, Select], interrupt_exist_connections: true}
+  - {tag: Game-UDP, type: selector, outbounds: [DirectConn, HoK, Auto, DIY-Node, Select], interrupt_exist_connections: true}
   - {tag: Select, type: selector, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]}]}
   - {tag: Auto, type: urltest, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]}], url: https://captive.apple.com/hotspot-detect.html, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
   - {tag: DirectConn, type: direct}
@@ -144,6 +145,8 @@ route:
     - {action: route, rule_set: geosite-geolocation-!cn, outbound: Proxy}
     - {action: route, rule_set: [geosite-cn, geoip-cn], outbound: DirectConn}
     - {action: route, rule_set: geoip-private, outbound: DirectConn}
+    - {action: route, protocol: [stun, dtls, quic], outbound: Proxy}
+    - {action: route, network: udp, port_range: ["1024:65535"], outbound: Game-UDP}
 
   rule_set:
     - {tag: geosite-bank-cn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-bank-cn.srs"}

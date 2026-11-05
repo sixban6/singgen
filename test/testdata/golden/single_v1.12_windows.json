@@ -53,13 +53,13 @@
         "type": "udp"
       },
       {
-        "detour": "DNS",
+        "detour": "Auto",
         "server": "8.8.8.8",
         "tag": "dns_proxy",
         "type": "https"
       },
       {
-        "detour": "DNS",
+        "detour": "Auto",
         "server": "8.8.8.8",
         "tag": "dns_hok",
         "type": "https"
@@ -91,9 +91,9 @@
     {
       "interrupt_exist_connections": true,
       "outbounds": [
-        "DirectConn",
         "Auto",
-        "Select"
+        "Select",
+        "DirectConn"
       ],
       "tag": "Proxy",
       "type": "selector"
@@ -101,138 +101,16 @@
     {
       "interrupt_exist_connections": true,
       "outbounds": [
-        "Auto",
-        "Select"
+        "Select",
+        "Auto"
       ],
-      "tag": "DNS",
-      "type": "selector"
-    },
-    {
-      "interrupt_exist_connections": true,
-      "outbounds": [
-        "Proxy"
-      ],
-      "tag": "YouTube",
-      "type": "selector"
-    },
-    {
-      "interrupt_exist_connections": true,
-      "outbounds": [
-        "Proxy"
-      ],
-      "tag": "OpenAI",
-      "type": "selector"
-    },
-    {
-      "interrupt_exist_connections": true,
-      "outbounds": [
-        "Proxy"
-      ],
-      "tag": "Google",
-      "type": "selector"
-    },
-    {
-      "interrupt_exist_connections": true,
-      "outbounds": [
-        "Proxy",
-        "DirectConn"
-      ],
-      "tag": "Github",
-      "type": "selector"
-    },
-    {
-      "interrupt_exist_connections": true,
-      "outbounds": [
-        "Proxy"
-      ],
-      "tag": "Telegram",
+      "tag": "AI",
       "type": "selector"
     },
     {
       "interrupt_exist_connections": true,
       "outbounds": [
         "DirectConn",
-        "Proxy"
-      ],
-      "tag": "Microsoft",
-      "type": "selector"
-    },
-    {
-      "interrupt_exist_connections": true,
-      "outbounds": [
-        "DirectConn",
-        "Proxy"
-      ],
-      "tag": "Apple",
-      "type": "selector"
-    },
-    {
-      "interrupt_exist_connections": true,
-      "outbounds": [
-        "Proxy"
-      ],
-      "tag": "Paypal",
-      "type": "selector"
-    },
-    {
-      "interrupt_exist_connections": true,
-      "outbounds": [
-        "Proxy"
-      ],
-      "tag": "Netflix",
-      "type": "selector"
-    },
-    {
-      "outbounds": [
-        "Proxy"
-      ],
-      "tag": "TikTok",
-      "type": "selector"
-    },
-    {
-      "outbounds": [
-        "Proxy"
-      ],
-      "tag": "Steam",
-      "type": "selector"
-    },
-    {
-      "outbounds": [
-        "Proxy",
-        "DirectConn"
-      ],
-      "tag": "X",
-      "type": "selector"
-    },
-    {
-      "outbounds": [
-        "Proxy"
-      ],
-      "tag": "Porn",
-      "type": "selector"
-    },
-    {
-      "outbounds": [
-        "Auto",
-        "Select"
-      ],
-      "tag": "BTC",
-      "type": "selector"
-    },
-    {
-      "interrupt_exist_connections": true,
-      "outbounds": [
-        "Auto",
-        "Select"
-      ],
-      "tag": "HoK",
-      "type": "selector"
-    },
-    {
-      "interrupt_exist_connections": true,
-      "outbounds": [
-        "DirectConn",
-        "HoK",
         "Auto",
         "Select"
       ],
@@ -898,58 +776,10 @@
       {
         "action": "route",
         "outbound": "DirectConn",
-        "rule_set": [
-          "geosite-bank-cn"
+        "protocol": [
+          "ssh",
+          "bittorrent"
         ]
-      },
-      {
-        "action": "route",
-        "outbound": "Steam",
-        "rule_set": "geosite-steam"
-      },
-      {
-        "action": "route",
-        "outbound": "Proxy",
-        "rule_set": [
-          "geosite-epic",
-          "geosite-playstation",
-          "geosite-xbox"
-        ]
-      },
-      {
-        "action": "route",
-        "outbound": "Proxy",
-        "rule_set": [
-          "geosite-disney",
-          "geosite-hbo",
-          "geosite-primevideo",
-          "geosite-spotify"
-        ]
-      },
-      {
-        "action": "route",
-        "outbound": "Microsoft",
-        "rule_set": "geosite-onedrive"
-      },
-      {
-        "action": "route",
-        "outbound": "TikTok",
-        "rule_set": "geosite-tiktok"
-      },
-      {
-        "action": "route",
-        "outbound": "X",
-        "rule_set": "geosite-x"
-      },
-      {
-        "action": "route",
-        "outbound": "DirectConn",
-        "protocol": "ssh"
-      },
-      {
-        "action": "route",
-        "outbound": "DirectConn",
-        "protocol": "bittorrent"
       },
       {
         "action": "route",
@@ -963,11 +793,6 @@
       },
       {
         "action": "route",
-        "outbound": "HoK",
-        "rule_set": "geosite-hok"
-      },
-      {
-        "action": "route",
         "domain": [
           "clash.razord.top",
           "yacd.metacubex.one",
@@ -975,6 +800,24 @@
           "d.metacubex.one"
         ],
         "outbound": "DirectConn"
+      },
+      {
+        "action": "route",
+        "outbound": "Proxy",
+        "rule_set": "geosite-hok"
+      },
+      {
+        "action": "route",
+        "outbound": "AI",
+        "rule_set": "geosite-chat"
+      },
+      {
+        "action": "route",
+        "domain_suffix": [
+          "grok.com",
+          "z.ai"
+        ],
+        "outbound": "AI"
       },
       {
         "action": "route",
@@ -987,90 +830,7 @@
       },
       {
         "action": "route",
-        "outbound": "BTC",
-        "rule_set": "geosite-cryptocurrency"
-      },
-      {
-        "action": "route",
-        "outbound": "Porn",
-        "rule_set": "geosite-porn"
-      },
-      {
-        "action": "route",
-        "outbound": "DirectConn",
-        "rule_set": "geosite-private"
-      },
-      {
-        "action": "route",
-        "outbound": "DirectConn",
-        "rule_set": "geosite-jd"
-      },
-      {
-        "action": "route",
-        "outbound": "DirectConn",
-        "rule_set": "geosite-ali"
-      },
-      {
-        "action": "route",
-        "outbound": "DirectConn",
-        "rule_set": "geosite-baidu"
-      },
-      {
-        "action": "route",
-        "outbound": "DirectConn",
-        "rule_set": "geosite-bytedance"
-      },
-      {
-        "action": "route",
-        "outbound": "DirectConn",
-        "rule_set": "geosite-pdd"
-      },
-      {
-        "action": "route",
-        "outbound": "DirectConn",
-        "rule_set": "geosite-bili"
-      },
-      {
-        "action": "route",
-        "outbound": "DirectConn",
-        "rule_set": "geosite-meituan"
-      },
-      {
-        "action": "route",
-        "outbound": "DirectConn",
-        "rule_set": "geosite-ctrip"
-      },
-      {
-        "action": "route",
-        "outbound": "DirectConn",
-        "rule_set": "geosite-tencent"
-      },
-      {
-        "action": "route",
-        "outbound": "DirectConn",
-        "rule_set": "geosite-ctm_cn"
-      },
-      {
-        "action": "route",
-        "outbound": "OpenAI",
-        "rule_set": "geosite-chat"
-      },
-      {
-        "action": "route",
-        "domain_suffix": [
-          "grok.com",
-          "z.ai"
-        ],
-        "outbound": "OpenAI"
-      },
-      {
-        "action": "route",
-        "outbound": "YouTube",
-        "rule_set": "geosite-youtube"
-      },
-      {
-        "action": "route",
-        "outbound": "Github",
+        "outbound": "Proxy",
         "rule_set": [
           "geosite-github",
           "geosite-sourcehut"
@@ -1078,71 +838,60 @@
       },
       {
         "action": "route",
-        "outbound": "Google",
+        "outbound": "DirectConn",
         "rule_set": [
-          "geosite-google",
-          "geoip-google"
-        ]
-      },
-      {
-        "action": "route",
-        "outbound": "Telegram",
-        "rule_set": [
-          "geosite-telegram",
-          "geoip-telegram"
-        ]
-      },
-      {
-        "action": "route",
-        "outbound": "Apple",
-        "rule_set": [
+          "geosite-bank-cn",
+          "geosite-private",
+          "geosite-jd",
+          "geosite-ali",
+          "geosite-baidu",
+          "geosite-bytedance",
+          "geosite-pdd",
+          "geosite-bili",
+          "geosite-meituan",
+          "geosite-ctrip",
+          "geosite-tencent",
+          "geosite-ctm_cn",
           "geosite-apple",
-          "geoip-apple"
-        ]
-      },
-      {
-        "action": "route",
-        "outbound": "Microsoft",
-        "rule_set": "geosite-microsoft"
-      },
-      {
-        "action": "route",
-        "outbound": "Paypal",
-        "rule_set": "geosite-paypal"
-      },
-      {
-        "action": "route",
-        "outbound": "Netflix",
-        "rule_set": [
-          "geosite-netflix",
-          "geoip-netflix"
+          "geoip-apple",
+          "geosite-microsoft",
+          "geosite-onedrive"
         ]
       },
       {
         "action": "route",
         "outbound": "Proxy",
-        "rule_set": "geosite-geolocation-!cn"
+        "rule_set": [
+          "geosite-steam",
+          "geosite-epic",
+          "geosite-playstation",
+          "geosite-xbox",
+          "geosite-disney",
+          "geosite-hbo",
+          "geosite-primevideo",
+          "geosite-spotify",
+          "geosite-tiktok",
+          "geosite-x",
+          "geosite-cryptocurrency",
+          "geosite-porn",
+          "geosite-youtube",
+          "geosite-google",
+          "geoip-google",
+          "geosite-telegram",
+          "geoip-telegram",
+          "geosite-paypal",
+          "geosite-netflix",
+          "geoip-netflix",
+          "geosite-geolocation-!cn"
+        ]
       },
       {
         "action": "route",
         "outbound": "DirectConn",
         "rule_set": [
           "geosite-cn",
-          "geoip-cn"
-        ]
-      },
-      {
-        "action": "route",
-        "outbound": "DirectConn",
-        "rule_set": "geoip-private"
-      },
-      {
-        "action": "route",
-        "outbound": "Proxy",
-        "protocol": [
-          "stun",
-          "dtls",
-          "quic"
+          "geoip-cn",
+          "geoip-private"
         ]
       },
       {

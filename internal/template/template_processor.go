@@ -372,6 +372,36 @@ func (p *TemplateProcessor) cleanInvalidReferences(config map[string]any, existi
 		)
 	}
 	p.walkAndCleanReferences(config, existingTags)
+	p.cleanDNSServerDetours(config, existingTags)
+}
+
+// cleanDNSServerDetours 确保 dns.servers 中的 detour 指向有效存在的出站分组。
+func (p *TemplateProcessor) cleanDNSServerDetours(config map[string]any, existingTags map[string]bool) {
+	dnsMap, ok := config["dns"].(map[string]any)
+	if !ok {
+		return
+	}
+	servers, ok := dnsMap["servers"].([]any)
+	if !ok {
+		return
+	}
+	fallbacks := []string{"Auto", "VPS", "Select", "Proxy"}
+	for _, item := range servers {
+		srv, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		detour, ok := srv["detour"].(string)
+		if !ok || detour == "" || existingTags[detour] {
+			continue
+		}
+		for _, candidate := range fallbacks {
+			if existingTags[candidate] {
+				srv["detour"] = candidate
+				break
+			}
+		}
+	}
 }
 
 // walkAndCleanReferences 遍历配置并清理无效引用

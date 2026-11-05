@@ -47,8 +47,8 @@ services:
 dns:
   servers:
     - {tag: dns_local, type: udp, server: "{dns_local}"}   # 默认 114.114.114.114
-    - {tag: dns_proxy, type: https, server: 8.8.8.8, detour: DNS}
-    - {tag: dns_hok, type: https, server: 8.8.8.8, detour: DNS}
+    - {tag: dns_proxy, type: https, server: 8.8.8.8, detour: VPS}
+    - {tag: dns_hok, type: https, server: 8.8.8.8, detour: Auto}
     - {tag: dns_tailscale, type: tailscale, endpoint: ts-node}
     - {tag: fakeip, type: fakeip, inet4_range: 198.18.0.0/15, inet6_range: fc00::/18}
   rules:
@@ -68,25 +68,10 @@ inbounds:
   - {type: tproxy, tag: tproxy-in, listen: "::", listen_port: 7895, udp_timeout: 1m}
 
 outbounds:
-  - {tag: DIY-Node, type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["sec_"]}]}
-  - {tag: Proxy, type: selector, outbounds: [DIY-Node, DirectConn, Auto, Select], interrupt_exist_connections: true}
-  - {tag: DNS, type: selector, outbounds: [Auto, DIY-Node, Select], interrupt_exist_connections: true}
-  - {tag: YouTube, type: selector, outbounds: [DIY-Node, Proxy], interrupt_exist_connections: true}
-  - {tag: OpenAI, type: selector, outbounds: [DIY-Node, Proxy], interrupt_exist_connections: true}
-  - {tag: Google, type: selector, outbounds: [DIY-Node, Proxy], interrupt_exist_connections: true}
-  - {tag: Github, type: selector, outbounds: [DIY-Node, Proxy, DirectConn], interrupt_exist_connections: true}
-  - {tag: Telegram, type: selector, outbounds: [DIY-Node, Proxy], interrupt_exist_connections: true}
-  - {tag: Microsoft, type: selector, outbounds: [DirectConn, DIY-Node, Proxy], interrupt_exist_connections: true}
-  - {tag: Apple, type: selector, outbounds: [DirectConn, DIY-Node, Proxy], interrupt_exist_connections: true}
-  - {tag: Paypal, type: selector, outbounds: [DIY-Node, Proxy], interrupt_exist_connections: true}
-  - {tag: Netflix, type: selector, outbounds: [DIY-Node, Proxy], interrupt_exist_connections: true}
-  - {tag: TikTok, type: selector, outbounds: [DIY-Node, Proxy]}
-  - {tag: Steam, type: selector, outbounds: [DIY-Node, Proxy]}
-  - {tag: X, type: selector, outbounds: [DIY-Node, Proxy, DirectConn]}
-  - {tag: Porn, type: selector, outbounds: [DIY-Node, Proxy]}
-  - {tag: BTC, type: selector, outbounds: [DIY-Node, Auto, Select]}
-  - {tag: HoK, type: selector, outbounds: [DIY-Node, Auto, Select], interrupt_exist_connections: true}
-  - {tag: Game-UDP, type: selector, outbounds: [DirectConn, HoK, Auto, DIY-Node, Select], interrupt_exist_connections: true}
+  - {tag: VPS, type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["sec_"]}]}
+  - {tag: Proxy, type: selector, outbounds: [VPS, Auto, Select, DirectConn], interrupt_exist_connections: true}
+  - {tag: AI, type: selector, outbounds: [VPS, Select, Auto], interrupt_exist_connections: true}
+  - {tag: Game-UDP, type: selector, outbounds: [DirectConn, Auto, VPS, Select], interrupt_exist_connections: true}
   - {tag: Select, type: selector, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]}]}
   - {tag: Auto, type: urltest, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期|[2-9]倍|[0-9]{2,}倍|倍率|[2-9][xX]|[xX][2-9]"]}], url: https://captive.apple.com/hotspot-detect.html, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
   - {tag: DirectConn, type: direct}
@@ -105,47 +90,18 @@ route:
     - {ip_cidr: ["100.64.0.0/10", "fd7a:115c:a1e0::/48"], outbound: ts-node}
     - {ip_is_private: true, outbound: DirectConn}
     - {action: reject, rule_set: [geosite-ad1, geosite-ad2]}
-    - {action: route, rule_set: [geosite-bank-cn], outbound: DirectConn}
-    - {action: route, rule_set: geosite-steam, outbound: Steam}
-    - {action: route, rule_set: [geosite-epic, geosite-playstation, geosite-xbox], outbound: Proxy}
-    - {action: route, rule_set: [geosite-disney, geosite-hbo, geosite-primevideo, geosite-spotify], outbound: Proxy}
-    - {action: route, rule_set: geosite-onedrive, outbound: Microsoft}
-    - {action: route, rule_set: geosite-tiktok, outbound: TikTok}
-    - {action: route, rule_set: geosite-x, outbound: X}
-    - {action: route, protocol: ssh, outbound: DirectConn}
-    - {action: route, protocol: bittorrent, outbound: DirectConn}
+    - {action: route, protocol: [ssh, bittorrent], outbound: DirectConn}
     - {action: route, clash_mode: direct, outbound: DirectConn}
     - {action: route, clash_mode: global, outbound: Proxy}
-    - {action: route, rule_set: geosite-hok, outbound: HoK}
     - {action: route, domain: [clash.razord.top, yacd.metacubex.one, yacd.haishan.me, d.metacubex.one], outbound: DirectConn}
+    - {action: route, rule_set: geosite-hok, outbound: Proxy}
+    - {action: route, rule_set: geosite-chat, outbound: AI}
+    - {action: route, domain_suffix: [grok.com, z.ai], outbound: AI}
     - {action: route, domain_suffix: [z-lib.gs, follow.is, folo.is], outbound: Proxy}
-    - {action: route, rule_set: geosite-cryptocurrency, outbound: BTC}
-    - {action: route, rule_set: geosite-porn, outbound: Porn}
-    - {action: route, rule_set: geosite-private, outbound: DirectConn}
-    - {action: route, rule_set: geosite-jd, outbound: DirectConn}
-    - {action: route, rule_set: geosite-ali, outbound: DirectConn}
-    - {action: route, rule_set: geosite-baidu, outbound: DirectConn}
-    - {action: route, rule_set: geosite-bytedance, outbound: DirectConn}
-    - {action: route, rule_set: geosite-pdd, outbound: DirectConn}
-    - {action: route, rule_set: geosite-bili, outbound: DirectConn}
-    - {action: route, rule_set: geosite-meituan, outbound: DirectConn}
-    - {action: route, rule_set: geosite-ctrip, outbound: DirectConn}
-    - {action: route, rule_set: geosite-tencent, outbound: DirectConn}
-    - {action: route, rule_set: geosite-ctm_cn, outbound: DirectConn}
-    - {action: route, rule_set: geosite-chat, outbound: OpenAI}
-    - {action: route, domain_suffix: [grok.com, z.ai], outbound: OpenAI}
-    - {action: route, rule_set: geosite-youtube, outbound: YouTube}
-    - {action: route, rule_set: [geosite-github, geosite-sourcehut], outbound: Github}
-    - {action: route, rule_set: [geosite-google, geoip-google], outbound: Google}
-    - {action: route, rule_set: [geosite-telegram, geoip-telegram], outbound: Telegram}
-    - {action: route, rule_set: [geosite-apple, geoip-apple], outbound: Apple}
-    - {action: route, rule_set: geosite-microsoft, outbound: Microsoft}
-    - {action: route, rule_set: geosite-paypal, outbound: Paypal}
-    - {action: route, rule_set: [geosite-netflix, geoip-netflix], outbound: Netflix}
-    - {action: route, rule_set: geosite-geolocation-!cn, outbound: Proxy}
-    - {action: route, rule_set: [geosite-cn, geoip-cn], outbound: DirectConn}
-    - {action: route, rule_set: geoip-private, outbound: DirectConn}
-    - {action: route, protocol: [stun, dtls, quic], outbound: Proxy}
+    - {action: route, rule_set: [geosite-github, geosite-sourcehut], outbound: Proxy}
+    - {action: route, rule_set: [geosite-bank-cn, geosite-private, geosite-jd, geosite-ali, geosite-baidu, geosite-bytedance, geosite-pdd, geosite-bili, geosite-meituan, geosite-ctrip, geosite-tencent, geosite-ctm_cn, geosite-apple, geoip-apple, geosite-microsoft, geosite-onedrive], outbound: DirectConn}
+    - {action: route, rule_set: [geosite-steam, geosite-epic, geosite-playstation, geosite-xbox, geosite-disney, geosite-hbo, geosite-primevideo, geosite-spotify, geosite-tiktok, geosite-x, geosite-cryptocurrency, geosite-porn, geosite-youtube, geosite-google, geoip-google, geosite-telegram, geoip-telegram, geosite-paypal, geosite-netflix, geoip-netflix, geosite-geolocation-!cn], outbound: Proxy}
+    - {action: route, rule_set: [geosite-cn, geoip-cn, geoip-private], outbound: DirectConn}
     - {action: route, network: udp, port_range: ["1024:65535"], outbound: Game-UDP}
 
   rule_set:

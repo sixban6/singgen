@@ -47,8 +47,8 @@ services:
 dns:
   servers:
     - {tag: dns_local, type: udp, server: "{dns_local}"}   # 默认 114.114.114.114
-    - {tag: dns_proxy, type: https, server: 8.8.8.8, detour: VPS}
-    - {tag: dns_hok, type: https, server: 8.8.8.8, detour: Auto}
+    - {tag: dns_proxy, type: https, server: 8.8.8.8, detour: "#VPS"}
+    - {tag: dns_hok, type: https, server: 8.8.8.8, detour: "#Auto"}
     - {tag: dns_tailscale, type: tailscale, endpoint: ts-node}
     - {tag: fakeip, type: fakeip, inet4_range: 198.18.0.0/15, inet6_range: fc00::/18}
   rules:
@@ -68,12 +68,15 @@ inbounds:
   - {type: tproxy, tag: tproxy-in, listen: "::", listen_port: 7895, udp_timeout: 1m}
 
 outbounds:
-  - {tag: VPS, type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["sec_"]}]}
-  - {tag: Proxy, type: selector, outbounds: [VPS, Auto, Select, DirectConn], interrupt_exist_connections: true}
-  - {tag: AI, type: selector, outbounds: [VPS, Select, Auto], interrupt_exist_connections: true}
-  - {tag: Game-UDP, type: selector, outbounds: [DirectConn, Auto, VPS, Select], interrupt_exist_connections: true}
-  - {tag: Select, type: selector, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]}]}
-  - {tag: Auto, type: urltest, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期|[2-9]倍|[0-9]{2,}倍|倍率|[2-9][xX]|[xX][2-9]"]}], url: https://captive.apple.com/hotspot-detect.html, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
+  # 第一层：业务分流控制组
+  - {tag: Proxy, type: selector, outbounds: ["#VPS", "#Auto", "#Nodes", DirectConn], interrupt_exist_connections: true}
+  - {tag: AI, type: selector, outbounds: ["#VPS", "#Nodes", "#Auto"], interrupt_exist_connections: true}
+  - {tag: Game, type: selector, outbounds: ["#Auto", "#VPS", "#Nodes"], interrupt_exist_connections: true}
+  - {tag: Game-UDP, type: selector, outbounds: [DirectConn, "#Auto", "#VPS", "#Nodes"], interrupt_exist_connections: true}
+  # 第二层：底层节点池（统一带 # 微前缀区分）
+  - {tag: "#VPS", type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["sec_"]}]}
+  - {tag: "#Auto", type: urltest, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期|[2-9]倍|[0-9]{2,}倍|倍率|[2-9][xX]|[xX][2-9]"]}], url: https://captive.apple.com/hotspot-detect.html, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
+  - {tag: "#Nodes", type: selector, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]}]}
   - {tag: DirectConn, type: direct}
 
 route:
@@ -89,12 +92,15 @@ route:
     - {action: hijack-dns, port: 53}
     - {ip_cidr: ["100.64.0.0/10", "fd7a:115c:a1e0::/48"], outbound: ts-node}
     - {ip_is_private: true, outbound: DirectConn}
+    - {action: reject, ip_cidr: ["30.0.0.0/8"]}
     - {action: reject, rule_set: [geosite-ad1, geosite-ad2]}
     - {action: route, protocol: [ssh, bittorrent], outbound: DirectConn}
     - {action: route, clash_mode: direct, outbound: DirectConn}
     - {action: route, clash_mode: global, outbound: Proxy}
     - {action: route, domain: [clash.razord.top, yacd.metacubex.one, yacd.haishan.me, d.metacubex.one], outbound: DirectConn}
-    - {action: route, rule_set: geosite-hok, outbound: Proxy}
+    - {action: route, domain_suffix: [download.sgameglobal.com, res.sgameglobal.com, v2-down-gamelet.sgameglobal.com, ovscdns.com, apdcdn.com], outbound: Proxy}
+    - {action: route, rule_set: geosite-hok, outbound: Game}
+    - {action: route, network: tcp, port: [5010, 31003], outbound: Game}
     - {action: route, rule_set: geosite-chat, outbound: AI}
     - {action: route, domain_suffix: [grok.com, z.ai], outbound: AI}
     - {action: route, domain_suffix: [z-lib.gs, follow.is, folo.is], outbound: Proxy}

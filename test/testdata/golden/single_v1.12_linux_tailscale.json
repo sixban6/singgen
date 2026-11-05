@@ -60,13 +60,13 @@
         "type": "udp"
       },
       {
-        "detour": "Auto",
+        "detour": "#Auto",
         "server": "8.8.8.8",
         "tag": "dns_proxy",
         "type": "https"
       },
       {
-        "detour": "Auto",
+        "detour": "#Auto",
         "server": "8.8.8.8",
         "tag": "dns_hok",
         "type": "https"
@@ -104,8 +104,8 @@
     {
       "interrupt_exist_connections": true,
       "outbounds": [
-        "Auto",
-        "Select",
+        "#Auto",
+        "#Nodes",
         "DirectConn"
       ],
       "tag": "Proxy",
@@ -114,8 +114,8 @@
     {
       "interrupt_exist_connections": true,
       "outbounds": [
-        "Select",
-        "Auto"
+        "#Nodes",
+        "#Auto"
       ],
       "tag": "AI",
       "type": "selector"
@@ -123,31 +123,20 @@
     {
       "interrupt_exist_connections": true,
       "outbounds": [
-        "DirectConn",
-        "Auto",
-        "Select"
+        "#Auto",
+        "#Nodes"
       ],
-      "tag": "Game-UDP",
+      "tag": "Game",
       "type": "selector"
     },
     {
+      "interrupt_exist_connections": true,
       "outbounds": [
-        "VM-WS",
-        "VM-GRPC",
-        "VL-WS",
-        "VL-GRPC",
-        "VL-REALITY",
-        "VL-HU",
-        "HK",
-        "HK 2",
-        "HK 3",
-        "Proxy 2",
-        "SS-1",
-        "HY2-1",
-        "TUIC-1",
-        "ANYTLS-1"
+        "DirectConn",
+        "#Auto",
+        "#Nodes"
       ],
-      "tag": "Select",
+      "tag": "Game-UDP",
       "type": "selector"
     },
     {
@@ -169,10 +158,30 @@
         "TUIC-1",
         "ANYTLS-1"
       ],
-      "tag": "Auto",
+      "tag": "#Auto",
       "tolerance": 100,
       "type": "urltest",
       "url": "https://captive.apple.com/hotspot-detect.html"
+    },
+    {
+      "outbounds": [
+        "VM-WS",
+        "VM-GRPC",
+        "VL-WS",
+        "VL-GRPC",
+        "VL-REALITY",
+        "VL-HU",
+        "HK",
+        "HK 2",
+        "HK 3",
+        "Proxy 2",
+        "SS-1",
+        "HY2-1",
+        "TUIC-1",
+        "ANYTLS-1"
+      ],
+      "tag": "#Nodes",
+      "type": "selector"
     },
     {
       "security": "auto",
@@ -776,6 +785,12 @@
       },
       {
         "action": "reject",
+        "ip_cidr": [
+          "30.0.0.0/8"
+        ]
+      },
+      {
+        "action": "reject",
         "rule_set": [
           "geosite-ad1",
           "geosite-ad2"
@@ -811,8 +826,28 @@
       },
       {
         "action": "route",
-        "outbound": "Proxy",
+        "domain_suffix": [
+          "download.sgameglobal.com",
+          "res.sgameglobal.com",
+          "v2-down-gamelet.sgameglobal.com",
+          "ovscdns.com",
+          "apdcdn.com"
+        ],
+        "outbound": "Proxy"
+      },
+      {
+        "action": "route",
+        "outbound": "Game",
         "rule_set": "geosite-hok"
+      },
+      {
+        "action": "route",
+        "network": "tcp",
+        "outbound": "Game",
+        "port": [
+          5010,
+          31003
+        ]
       },
       {
         "action": "route",

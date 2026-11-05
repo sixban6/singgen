@@ -385,7 +385,7 @@ func (p *TemplateProcessor) cleanDNSServerDetours(config map[string]any, existin
 	if !ok {
 		return
 	}
-	fallbacks := []string{"Auto", "VPS", "Select", "Proxy"}
+	fallbacks := []string{"#Auto", "#VPS", "#Nodes", "Proxy"}
 	for _, item := range servers {
 		srv, ok := item.(map[string]any)
 		if !ok {

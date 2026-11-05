@@ -56,13 +56,13 @@
         "type": "udp"
       },
       {
-        "detour": "Auto",
+        "detour": "#Auto",
         "server": "8.8.8.8",
         "tag": "dns_proxy",
         "type": "https"
       },
       {
-        "detour": "Auto",
+        "detour": "#Auto",
         "server": "8.8.8.8",
         "tag": "dns_hok",
         "type": "https"
@@ -95,8 +95,8 @@
     {
       "interrupt_exist_connections": true,
       "outbounds": [
-        "Auto",
-        "Select",
+        "#Auto",
+        "#Nodes",
         "DirectConn"
       ],
       "tag": "Proxy",
@@ -105,8 +105,8 @@
     {
       "interrupt_exist_connections": true,
       "outbounds": [
-        "Select",
-        "Auto"
+        "#Nodes",
+        "#Auto"
       ],
       "tag": "AI",
       "type": "selector"
@@ -114,31 +114,20 @@
     {
       "interrupt_exist_connections": true,
       "outbounds": [
-        "DirectConn",
-        "Auto",
-        "Select"
+        "#Auto",
+        "#Nodes"
       ],
-      "tag": "Game-UDP",
+      "tag": "Game",
       "type": "selector"
     },
     {
+      "interrupt_exist_connections": true,
       "outbounds": [
-        "美国-SS-节点1",
-        "日本-SS-节点2",
-        "香港-SS-节点3-",
-        "新加坡-SS-4",
-        "英国-SS-5",
-        "美国-HY2-1-",
-        "日本-HY2-2-",
-        "香港-HY2-3-",
-        "新加坡-HY2-4-",
-        "英国-HY2-5-",
-        "️ 美国-AnyTLS-1-",
-        "日本-AnyTLS-2-",
-        "美国-TUIC-1-",
-        "日本-TUIC-2-"
+        "DirectConn",
+        "#Auto",
+        "#Nodes"
       ],
-      "tag": "Select",
+      "tag": "Game-UDP",
       "type": "selector"
     },
     {
@@ -160,10 +149,30 @@
         "美国-TUIC-1-",
         "日本-TUIC-2-"
       ],
-      "tag": "Auto",
+      "tag": "#Auto",
       "tolerance": 100,
       "type": "urltest",
       "url": "https://captive.apple.com/hotspot-detect.html"
+    },
+    {
+      "outbounds": [
+        "美国-SS-节点1",
+        "日本-SS-节点2",
+        "香港-SS-节点3-",
+        "新加坡-SS-4",
+        "英国-SS-5",
+        "美国-HY2-1-",
+        "日本-HY2-2-",
+        "香港-HY2-3-",
+        "新加坡-HY2-4-",
+        "英国-HY2-5-",
+        "️ 美国-AnyTLS-1-",
+        "日本-AnyTLS-2-",
+        "美国-TUIC-1-",
+        "日本-TUIC-2-"
+      ],
+      "tag": "#Nodes",
+      "type": "selector"
     },
     {
       "method": "aes-256-gcm",
@@ -670,6 +679,12 @@
       },
       {
         "action": "reject",
+        "ip_cidr": [
+          "30.0.0.0/8"
+        ]
+      },
+      {
+        "action": "reject",
         "rule_set": [
           "geosite-ad1",
           "geosite-ad2"
@@ -705,8 +720,28 @@
       },
       {
         "action": "route",
-        "outbound": "Proxy",
+        "domain_suffix": [
+          "download.sgameglobal.com",
+          "res.sgameglobal.com",
+          "v2-down-gamelet.sgameglobal.com",
+          "ovscdns.com",
+          "apdcdn.com"
+        ],
+        "outbound": "Proxy"
+      },
+      {
+        "action": "route",
+        "outbound": "Game",
         "rule_set": "geosite-hok"
+      },
+      {
+        "action": "route",
+        "network": "tcp",
+        "outbound": "Game",
+        "port": [
+          5010,
+          31003
+        ]
       },
       {
         "action": "route",

@@ -36,11 +36,11 @@ dns:
         - server: 114.114.114.114
           tag: dns_local
           type: udp
-        - detour: Auto
+        - detour: '#Auto'
           server: 8.8.8.8
           tag: dns_proxy
           type: https
-        - detour: Auto
+        - detour: '#Auto'
           server: 8.8.8.8
           tag: dns_hok
           type: https
@@ -62,40 +62,29 @@ inbounds:
 outbounds:
     - interrupt_exist_connections: true
       outbounds:
-        - Auto
-        - Select
+        - '#Auto'
+        - '#Nodes'
         - DirectConn
       tag: Proxy
       type: selector
     - interrupt_exist_connections: true
       outbounds:
-        - Select
-        - Auto
+        - '#Nodes'
+        - '#Auto'
       tag: AI
       type: selector
     - interrupt_exist_connections: true
       outbounds:
-        - DirectConn
-        - Auto
-        - Select
-      tag: Game-UDP
+        - '#Auto'
+        - '#Nodes'
+      tag: Game
       type: selector
-    - outbounds:
-        - VM-WS
-        - VM-GRPC
-        - VL-WS
-        - VL-GRPC
-        - VL-REALITY
-        - VL-HU
-        - HK
-        - HK 2
-        - HK 3
-        - Proxy 2
-        - SS-1
-        - HY2-1
-        - TUIC-1
-        - ANYTLS-1
-      tag: Select
+    - interrupt_exist_connections: true
+      outbounds:
+        - DirectConn
+        - '#Auto'
+        - '#Nodes'
+      tag: Game-UDP
       type: selector
     - interrupt_exist_connections: true
       interval: 5m
@@ -114,10 +103,27 @@ outbounds:
         - HY2-1
         - TUIC-1
         - ANYTLS-1
-      tag: Auto
+      tag: '#Auto'
       tolerance: 100
       type: urltest
       url: https://captive.apple.com/hotspot-detect.html
+    - outbounds:
+        - VM-WS
+        - VM-GRPC
+        - VL-WS
+        - VL-GRPC
+        - VL-REALITY
+        - VL-HU
+        - HK
+        - HK 2
+        - HK 3
+        - Proxy 2
+        - SS-1
+        - HY2-1
+        - TUIC-1
+        - ANYTLS-1
+      tag: '#Nodes'
+      type: selector
     - security: auto
       server: 1.1.1.1
       server_port: 443
@@ -554,6 +560,9 @@ route:
         - ip_is_private: true
           outbound: DirectConn
         - action: reject
+          ip_cidr:
+            - 30.0.0.0/8
+        - action: reject
           rule_set:
             - geosite-ad1
             - geosite-ad2
@@ -576,8 +585,22 @@ route:
             - d.metacubex.one
           outbound: DirectConn
         - action: route
+          domain_suffix:
+            - download.sgameglobal.com
+            - res.sgameglobal.com
+            - v2-down-gamelet.sgameglobal.com
+            - ovscdns.com
+            - apdcdn.com
           outbound: Proxy
+        - action: route
+          outbound: Game
           rule_set: geosite-hok
+        - action: route
+          network: tcp
+          outbound: Game
+          port:
+            - 5010
+            - 31003
         - action: route
           outbound: AI
           rule_set: geosite-chat

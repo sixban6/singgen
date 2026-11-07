@@ -138,7 +138,7 @@
         "#Auto",
         "#Nodes"
       ],
-      "tag": "Game",
+      "tag": "Game-TCP",
       "type": "selector"
     },
     {
@@ -797,7 +797,7 @@
       },
       {
         "action": "route",
-        "outbound": "Game",
+        "outbound": "Game-TCP",
         "rule_set": "geosite-hok"
       },
       {
@@ -898,24 +898,9 @@
       {
         "action": "route",
         "network": "tcp",
-        "outbound": "Game",
-        "port": [
-          5010,
-          5692,
-          8500,
-          8600,
-          8801,
-          10004,
-          20000,
-          31003
-        ]
-      },
-      {
-        "action": "route",
-        "network": "udp",
-        "outbound": "Game",
+        "outbound": "Game-TCP",
         "port_range": [
-          "6650:6659"
+          "1024:65535"
         ]
       },
       {

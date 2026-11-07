@@ -72,7 +72,7 @@ outbounds:
   # 第一层：业务分流控制组
   - {tag: Proxy, type: selector, outbounds: ["#VPS", "#Auto", "#Nodes", DirectConn], interrupt_exist_connections: true}
   - {tag: AI, type: selector, outbounds: ["#VPS", "#Nodes", "#Auto"], interrupt_exist_connections: true}
-  - {tag: Game, type: selector, outbounds: ["#Auto", "#VPS", "#Nodes"], interrupt_exist_connections: true}
+  - {tag: Game-TCP, type: selector, outbounds: ["#Auto", "#VPS", "#Nodes"], interrupt_exist_connections: true}
   - {tag: Game-UDP, type: selector, outbounds: [DirectConn, "#Auto", "#VPS", "#Nodes"], interrupt_exist_connections: true}
   # 第二层：底层节点池（统一带 # 微前缀区分）
   - {tag: "#VPS", type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["sec_"]}]}
@@ -99,7 +99,7 @@ route:
     - {action: route, clash_mode: global, outbound: Proxy}
     - {action: route, domain: [clash.razord.top, yacd.metacubex.one, yacd.haishan.me, d.metacubex.one], outbound: DirectConn}
     - {action: route, domain_suffix: [download.sgameglobal.com, res.sgameglobal.com, v2-down-gamelet.sgameglobal.com, ovscdns.com, apdcdn.com], outbound: Proxy}
-    - {action: route, rule_set: geosite-hok, outbound: Game}
+    - {action: route, rule_set: geosite-hok, outbound: Game-TCP}
     - {action: reject, rule_set: [geosite-ad1, geosite-ad2]}
     - {action: route, rule_set: geosite-chat, outbound: AI}
     - {action: route, domain_suffix: [grok.com, z.ai], outbound: AI}
@@ -108,8 +108,7 @@ route:
     - {action: route, rule_set: [geosite-bank-cn, geosite-private, geosite-jd, geosite-ali, geosite-baidu, geosite-bytedance, geosite-pdd, geosite-bili, geosite-meituan, geosite-ctrip, geosite-tencent, geosite-ctm_cn, geosite-apple, geoip-apple, geosite-microsoft, geosite-onedrive], outbound: DirectConn}
     - {action: route, rule_set: [geosite-steam, geosite-epic, geosite-playstation, geosite-xbox, geosite-disney, geosite-hbo, geosite-primevideo, geosite-spotify, geosite-tiktok, geosite-x, geosite-cryptocurrency, geosite-porn, geosite-youtube, geosite-google, geoip-google, geosite-telegram, geoip-telegram, geosite-paypal, geosite-netflix, geoip-netflix, geosite-geolocation-!cn], outbound: Proxy}
     - {action: route, rule_set: [geosite-cn, geoip-cn, geoip-private], outbound: DirectConn}
-    - {action: route, network: tcp, port: [5010, 5692, 8500, 8600, 8801, 10004, 20000, 31003], outbound: Game}
-    - {action: route, network: udp, port_range: ["6650:6659"], outbound: Game}
+    - {action: route, network: tcp, port_range: ["1024:65535"], outbound: Game-TCP}
     - {action: route, network: udp, port_range: ["1024:65535"], outbound: Game-UDP}
 
   rule_set:

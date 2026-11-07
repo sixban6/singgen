@@ -25,7 +25,14 @@ dns:
           server: dns_local
         - clash_mode: Global
           server: dns_proxy
-        - rule_set: geosite-hok
+        - client_subnet: 203.80.96.0/24
+          domain_suffix:
+            - sgameglobal.com
+            - ovscdns.com
+            - apdcdn.com
+          server: dns_hok
+        - client_subnet: 203.80.96.0/24
+          rule_set: geosite-hok
           server: dns_hok
         - client_subnet: 223.5.5.5/24
           rule_set: geosite-cn
@@ -86,8 +93,8 @@ outbounds:
         - '#Nodes'
       tag: Game-UDP
       type: selector
-    - interrupt_exist_connections: true
-      interval: 5m
+    - interrupt_exist_connections: false
+      interval: 1m
       outbounds:
         - VM-WS
         - VM-GRPC
@@ -104,7 +111,7 @@ outbounds:
         - TUIC-1
         - ANYTLS-1
       tag: '#Auto'
-      tolerance: 100
+      tolerance: 50
       type: urltest
       url: https://captive.apple.com/hotspot-detect.html
     - outbounds:
@@ -562,10 +569,6 @@ route:
         - action: reject
           ip_cidr:
             - 30.0.0.0/8
-        - action: reject
-          rule_set:
-            - geosite-ad1
-            - geosite-ad2
         - action: route
           outbound: DirectConn
           protocol:
@@ -595,12 +598,10 @@ route:
         - action: route
           outbound: Game
           rule_set: geosite-hok
-        - action: route
-          network: tcp
-          outbound: Game
-          port:
-            - 5010
-            - 31003
+        - action: reject
+          rule_set:
+            - geosite-ad1
+            - geosite-ad2
         - action: route
           outbound: AI
           rule_set: geosite-chat
@@ -669,6 +670,23 @@ route:
             - geosite-cn
             - geoip-cn
             - geoip-private
+        - action: route
+          network: tcp
+          outbound: Game
+          port:
+            - 5010
+            - 5692
+            - 8500
+            - 8600
+            - 8801
+            - 10004
+            - 20000
+            - 31003
+        - action: route
+          network: udp
+          outbound: Game
+          port_range:
+            - 6650:6659
         - action: route
           network: udp
           outbound: Game-UDP

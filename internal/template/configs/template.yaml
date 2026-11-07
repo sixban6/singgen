@@ -48,14 +48,15 @@ dns:
   servers:
     - {tag: dns_local, type: udp, server: "{dns_local}"}   # 默认 114.114.114.114
     - {tag: dns_proxy, type: https, server: 8.8.8.8, detour: "#VPS"}
-    - {tag: dns_hok, type: https, server: 8.8.8.8, detour: "#Auto"}
+    - {tag: dns_hok, type: https, server: 8.8.8.8, detour: "#VPS"}
     - {tag: dns_tailscale, type: tailscale, endpoint: ts-node}
     - {tag: fakeip, type: fakeip, inet4_range: 198.18.0.0/15, inet6_range: fc00::/18}
   rules:
     - {clash_mode: Direct, server: dns_local, client_subnet: "{client_subnet}"}   # 默认 223.5.5.5/24
     - {clash_mode: Global, server: dns_proxy}
     - {domain_suffix: [ts.net], server: dns_tailscale}
-    - {rule_set: geosite-hok, server: dns_hok}
+    - {domain_suffix: [sgameglobal.com, ovscdns.com, apdcdn.com], server: dns_hok, client_subnet: 203.80.96.0/24}
+    - {rule_set: geosite-hok, server: dns_hok, client_subnet: 203.80.96.0/24}
     - {rule_set: geosite-cn, server: dns_local, client_subnet: "{client_subnet}"}
     - {rule_set: geosite-geolocation-!cn, server: dns_proxy}
   final: dns_proxy
@@ -75,7 +76,7 @@ outbounds:
   - {tag: Game-UDP, type: selector, outbounds: [DirectConn, "#Auto", "#VPS", "#Nodes"], interrupt_exist_connections: true}
   # 第二层：底层节点池（统一带 # 微前缀区分）
   - {tag: "#VPS", type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["sec_"]}]}
-  - {tag: "#Auto", type: urltest, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期|[2-9]倍|[0-9]{2,}倍|倍率|[2-9][xX]|[xX][2-9]"]}], url: https://captive.apple.com/hotspot-detect.html, interval: 5m, tolerance: 100, interrupt_exist_connections: true}
+  - {tag: "#Auto", type: urltest, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期|[2-9]倍|[0-9]{2,}倍|倍率|[2-9][xX]|[xX][2-9]"]}], url: https://captive.apple.com/hotspot-detect.html, interval: 1m, tolerance: 50, interrupt_exist_connections: false}
   - {tag: "#Nodes", type: selector, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]}]}
   - {tag: DirectConn, type: direct}
 
@@ -93,14 +94,13 @@ route:
     - {ip_cidr: ["100.64.0.0/10", "fd7a:115c:a1e0::/48"], outbound: ts-node}
     - {ip_is_private: true, outbound: DirectConn}
     - {action: reject, ip_cidr: ["30.0.0.0/8"]}
-    - {action: reject, rule_set: [geosite-ad1, geosite-ad2]}
     - {action: route, protocol: [ssh, bittorrent], outbound: DirectConn}
     - {action: route, clash_mode: direct, outbound: DirectConn}
     - {action: route, clash_mode: global, outbound: Proxy}
     - {action: route, domain: [clash.razord.top, yacd.metacubex.one, yacd.haishan.me, d.metacubex.one], outbound: DirectConn}
     - {action: route, domain_suffix: [download.sgameglobal.com, res.sgameglobal.com, v2-down-gamelet.sgameglobal.com, ovscdns.com, apdcdn.com], outbound: Proxy}
     - {action: route, rule_set: geosite-hok, outbound: Game}
-    - {action: route, network: tcp, port: [5010, 31003], outbound: Game}
+    - {action: reject, rule_set: [geosite-ad1, geosite-ad2]}
     - {action: route, rule_set: geosite-chat, outbound: AI}
     - {action: route, domain_suffix: [grok.com, z.ai], outbound: AI}
     - {action: route, domain_suffix: [z-lib.gs, follow.is, folo.is], outbound: Proxy}
@@ -108,6 +108,8 @@ route:
     - {action: route, rule_set: [geosite-bank-cn, geosite-private, geosite-jd, geosite-ali, geosite-baidu, geosite-bytedance, geosite-pdd, geosite-bili, geosite-meituan, geosite-ctrip, geosite-tencent, geosite-ctm_cn, geosite-apple, geoip-apple, geosite-microsoft, geosite-onedrive], outbound: DirectConn}
     - {action: route, rule_set: [geosite-steam, geosite-epic, geosite-playstation, geosite-xbox, geosite-disney, geosite-hbo, geosite-primevideo, geosite-spotify, geosite-tiktok, geosite-x, geosite-cryptocurrency, geosite-porn, geosite-youtube, geosite-google, geoip-google, geosite-telegram, geoip-telegram, geosite-paypal, geosite-netflix, geoip-netflix, geosite-geolocation-!cn], outbound: Proxy}
     - {action: route, rule_set: [geosite-cn, geoip-cn, geoip-private], outbound: DirectConn}
+    - {action: route, network: tcp, port: [5010, 5692, 8500, 8600, 8801, 10004, 20000, 31003], outbound: Game}
+    - {action: route, network: udp, port_range: ["6650:6659"], outbound: Game}
     - {action: route, network: udp, port_range: ["1024:65535"], outbound: Game-UDP}
 
   rule_set:

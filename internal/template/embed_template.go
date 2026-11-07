@@ -57,13 +57,6 @@ func (t *EmbedTemplate) InjectWithOptions(outbounds []transformer.Outbound, opti
 		syncAPIServiceListen(configData, options.ExternalController)
 	}
 
-	// 客户端子网：同时写入 dns 顶层 client_subnet
-	if options.ClientSubnet != "" {
-		if dns, ok := configData["dns"].(map[string]any); ok {
-			dns["client_subnet"] = options.ClientSubnet
-		}
-	}
-
 	// 处理 {all} 占位符和过滤规则
 	processor := *t.processor // 按次复制，避免并发调用时共享 logger
 	processor.Logger = options.Logger

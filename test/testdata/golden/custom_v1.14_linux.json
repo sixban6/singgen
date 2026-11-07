@@ -21,7 +21,6 @@
     }
   },
   "dns": {
-    "client_subnet": "1.2.3.0/24",
     "disable_cache": false,
     "disable_expire": false,
     "final": "dns_proxy",
@@ -37,6 +36,16 @@
         "server": "dns_proxy"
       },
       {
+        "client_subnet": "203.80.96.0/24",
+        "domain_suffix": [
+          "sgameglobal.com",
+          "ovscdns.com",
+          "apdcdn.com"
+        ],
+        "server": "dns_hok"
+      },
+      {
+        "client_subnet": "203.80.96.0/24",
         "rule_set": "geosite-hok",
         "server": "dns_hok"
       },
@@ -132,8 +141,8 @@
       "type": "selector"
     },
     {
-      "interrupt_exist_connections": true,
-      "interval": "5m",
+      "interrupt_exist_connections": false,
+      "interval": "1m",
       "outbounds": [
         "VM-WS",
         "VM-GRPC",
@@ -151,7 +160,7 @@
         "ANYTLS-1"
       ],
       "tag": "#Auto",
-      "tolerance": 100,
+      "tolerance": 50,
       "type": "urltest",
       "url": "https://captive.apple.com/hotspot-detect.html"
     },
@@ -743,13 +752,6 @@
         ]
       },
       {
-        "action": "reject",
-        "rule_set": [
-          "geosite-ad1",
-          "geosite-ad2"
-        ]
-      },
-      {
         "action": "route",
         "outbound": "DirectConn",
         "protocol": [
@@ -794,12 +796,10 @@
         "rule_set": "geosite-hok"
       },
       {
-        "action": "route",
-        "network": "tcp",
-        "outbound": "Game",
-        "port": [
-          5010,
-          31003
+        "action": "reject",
+        "rule_set": [
+          "geosite-ad1",
+          "geosite-ad2"
         ]
       },
       {
@@ -888,6 +888,29 @@
           "geosite-cn",
           "geoip-cn",
           "geoip-private"
+        ]
+      },
+      {
+        "action": "route",
+        "network": "tcp",
+        "outbound": "Game",
+        "port": [
+          5010,
+          5692,
+          8500,
+          8600,
+          8801,
+          10004,
+          20000,
+          31003
+        ]
+      },
+      {
+        "action": "route",
+        "network": "udp",
+        "outbound": "Game",
+        "port_range": [
+          "6650:6659"
         ]
       },
       {

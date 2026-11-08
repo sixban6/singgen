@@ -39,7 +39,10 @@
         "domain_suffix": [
           "sgameglobal.com",
           "ovscdns.com",
-          "apdcdn.com"
+          "apdcdn.com",
+          "igamecj.com",
+          "gcloud.qq.com",
+          "gvoice.qq.com"
         ],
         "server": "dns_hok"
       },
@@ -140,7 +143,7 @@
     },
     {
       "interrupt_exist_connections": false,
-      "interval": "1m",
+      "interval": "3m",
       "outbounds": [
         "VM-WS",
         "VM-GRPC",
@@ -158,7 +161,7 @@
         "ANYTLS-1"
       ],
       "tag": "#Auto",
-      "tolerance": 50,
+      "tolerance": 150,
       "type": "urltest",
       "url": "https://captive.apple.com/hotspot-detect.html"
     },
@@ -834,8 +837,42 @@
       },
       {
         "action": "route",
+        "domain_suffix": [
+          "igamecj.com",
+          "gcloud.qq.com",
+          "gvoice.qq.com"
+        ],
+        "outbound": "Game-TCP"
+      },
+      {
+        "action": "route",
         "outbound": "Game-TCP",
         "rule_set": "geosite-hok"
+      },
+      {
+        "action": "route",
+        "network": "tcp",
+        "outbound": "Game-TCP",
+        "port": [
+          5010,
+          5692,
+          8500,
+          8600,
+          8801,
+          10004,
+          20000,
+          31003
+        ]
+      },
+      {
+        "action": "route",
+        "network": "udp",
+        "outbound": "Game-TCP",
+        "port_range": [
+          "6650:6659",
+          "7000:8000",
+          "10000:10100"
+        ]
       },
       {
         "action": "reject",

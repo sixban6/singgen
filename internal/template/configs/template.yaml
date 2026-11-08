@@ -55,7 +55,7 @@ dns:
     - {clash_mode: Direct, server: dns_local, client_subnet: "{client_subnet}"}   # 默认 223.5.5.5/24
     - {clash_mode: Global, server: dns_proxy}
     - {domain_suffix: [ts.net], server: dns_tailscale}
-    - {domain_suffix: [sgameglobal.com, ovscdns.com, apdcdn.com, igamecj.com, gcloud.qq.com, gvoice.qq.com], server: dns_hok, client_subnet: 203.80.96.0/24}
+    - {domain_suffix: [sgameglobal.com, ovscdns.com, apdcdn.com], server: dns_hok, client_subnet: 203.80.96.0/24}
     - {rule_set: geosite-hok, server: dns_hok, client_subnet: 203.80.96.0/24}
     - {rule_set: geosite-cn, server: dns_local, client_subnet: "{client_subnet}"}
     - {rule_set: geosite-geolocation-!cn, server: dns_proxy}
@@ -76,7 +76,7 @@ outbounds:
   - {tag: Game-UDP, type: selector, outbounds: [DirectConn, "#Auto", "#VPS", "#Nodes"], interrupt_exist_connections: true}
   # 第二层：底层节点池（统一带 # 微前缀区分）
   - {tag: "#VPS", type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["sec_"]}]}
-  - {tag: "#Auto", type: urltest, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期|[2-9]倍|[0-9]{2,}倍|倍率|[2-9][xX]|[xX][2-9]"]}], url: https://captive.apple.com/hotspot-detect.html, interval: 3m, tolerance: 150, interrupt_exist_connections: false}
+  - {tag: "#Auto", type: urltest, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期|[2-9]倍|[0-9]{2,}倍|倍率|[2-9][xX]|[xX][2-9]"]}], url: https://captive.apple.com/hotspot-detect.html, interval: 1m, tolerance: 50, interrupt_exist_connections: false}
   - {tag: "#Nodes", type: selector, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]}]}
   - {tag: DirectConn, type: direct}
 
@@ -99,10 +99,7 @@ route:
     - {action: route, clash_mode: global, outbound: Proxy}
     - {action: route, domain: [clash.razord.top, yacd.metacubex.one, yacd.haishan.me, d.metacubex.one], outbound: DirectConn}
     - {action: route, domain_suffix: [download.sgameglobal.com, res.sgameglobal.com, v2-down-gamelet.sgameglobal.com, ovscdns.com, apdcdn.com], outbound: Proxy}
-    - {action: route, domain_suffix: [igamecj.com, gcloud.qq.com, gvoice.qq.com], outbound: Game-TCP}
     - {action: route, rule_set: geosite-hok, outbound: Game-TCP}
-    - {action: route, network: tcp, port: [5010, 5692, 8500, 8600, 8801, 10004, 20000, 31003], outbound: Game-TCP}
-    - {action: route, network: udp, port_range: ["6650:6659", "7000:8000", "10000:10100"], outbound: Game-TCP}
     - {action: reject, rule_set: [geosite-ad1, geosite-ad2]}
     - {action: route, rule_set: geosite-chat, outbound: AI}
     - {action: route, domain_suffix: [grok.com, z.ai], outbound: AI}

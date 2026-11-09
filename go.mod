@@ -1,6 +1,6 @@
 module github.com/sixban6/singgen
 
-go 1.25
+go 1.27.3
 
 require (
 	github.com/goccy/go-json v0.10.5

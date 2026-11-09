@@ -726,7 +726,7 @@
       {
         "action": "route",
         "network": "udp",
-        "outbound": "#Auto",
+        "outbound": "#DC",
         "port_range": [
           "6650:6659",
           "7000:9000",

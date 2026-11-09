@@ -98,7 +98,7 @@ route:
     - {action: route, domain_suffix: [download.sgameglobal.com, res.sgameglobal.com, v2-down-gamelet.sgameglobal.com, ovscdns.com, apdcdn.com, z-lib.gs, follow.is, folo.is], outbound: Proxy} # 适配 Hok更新，下载 走自建节点
     - {action: route, rule_set: geosite-hok, outbound: "#Auto"}
     - {action: route, port: [5010, 5692, 8500, 8600, 8801, 10004, 20000, 31003], outbound: "#Auto"}  # 适配 国际服游戏 登陆、大厅 走最近的亚洲节点
-    - {action: route, network: udp, port_range: ["6650:6659", "7000:9000", "10000:10100", "20000:20100", "30000:30100"], outbound: "#Auto"}
+    - {action: route, network: udp, port_range: ["6650:6659", "7000:9000", "10000:10100", "20000:20100", "30000:30100"], outbound: "#DC"}
     - {action: reject, rule_set: [geosite-ad1, geosite-ad2]}
     - {action: route, rule_set: geosite-chat, outbound: AI}
     - {action: route, domain_suffix: [grok.com, z.ai], outbound: AI}

@@ -189,7 +189,7 @@ func TestVersionAdaptation(t *testing.T) {
 	if client, ok := cfg114.Route["default_http_client"].(string); !ok || client != "hc-direct" {
 		t.Errorf("v1.14 route expected default_http_client=hc-direct, got %v", cfg114.Route["default_http_client"])
 	}
-	if optim, ok := cfg114.DNS["optimistic"].(bool); !ok || !optim {
-		t.Errorf("v1.14 dns expected optimistic=true")
+	if _, ok := cfg114.DNS["optimistic"].(bool); !ok {
+		t.Errorf("v1.14 dns expected optimistic bool field")
 	}
 }

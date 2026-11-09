@@ -44,8 +44,9 @@ func adaptTemplateForVersion(config map[string]any, version string) map[string]a
 
 		// 4. Adapt dns: optimistic -> independent_cache
 		if dns, ok := config["dns"].(map[string]any); ok {
+			opt, _ := dns["optimistic"].(bool)
 			delete(dns, "optimistic")
-			dns["independent_cache"] = true
+			dns["independent_cache"] = opt
 		}
 
 		// 5. Adapt experimental.cache_file: remove store_dns and store_fakeip
@@ -77,8 +78,14 @@ func adaptTemplateForVersion(config map[string]any, version string) map[string]a
 			}
 		}
 		if dns, ok := config["dns"].(map[string]any); ok {
+			if _, hasOpt := dns["optimistic"]; !hasOpt {
+				if indep, ok := dns["independent_cache"].(bool); ok {
+					dns["optimistic"] = indep
+				} else {
+					dns["optimistic"] = true
+				}
+			}
 			delete(dns, "independent_cache")
-			dns["optimistic"] = true
 		}
 		if endpoints, ok := config["endpoints"].([]any); ok {
 			for _, ep := range endpoints {

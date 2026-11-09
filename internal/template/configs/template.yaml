@@ -60,9 +60,9 @@ dns:
     - {rule_set: geosite-geolocation-!cn, server: dns_proxy}
   final: dns_proxy
   strategy: ipv4_only
-  disable_cache: false
+  disable_cache: true
   disable_expire: false
-  optimistic: true
+  optimistic: false
 
 inbounds:
   - {type: tproxy, tag: tproxy-in, listen: "::", listen_port: 7895, udp_timeout: 1m}

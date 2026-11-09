@@ -18,10 +18,10 @@
     }
   },
   "dns": {
-    "disable_cache": false,
+    "disable_cache": true,
     "disable_expire": false,
     "final": "dns_proxy",
-    "independent_cache": true,
+    "independent_cache": false,
     "rules": [
       {
         "clash_mode": "Direct",

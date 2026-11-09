@@ -15,10 +15,10 @@ experimental:
         external_ui_download_url: https://ghfast.top/https://github.com/MetaCubeX/metacubexd/archive/gh-pages.zip
         secret: ""
 dns:
-    disable_cache: false
+    disable_cache: true
     disable_expire: false
     final: dns_proxy
-    optimistic: true
+    optimistic: false
     rules:
         - clash_mode: Direct
           client_subnet: 223.5.5.5/24

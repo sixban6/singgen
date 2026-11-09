@@ -102,8 +102,9 @@ route:
     - {action: reject, rule_set: [geosite-ad1, geosite-ad2]}
     - {action: route, rule_set: geosite-chat, outbound: AI}
     - {action: route, domain_suffix: [grok.com, z.ai], outbound: AI}
+    - {action: route, rule_set: [geosite-github, geosite-sourcehut, geosite-steam, geosite-epic, geosite-playstation, geosite-xbox, geosite-disney, geosite-hbo, geosite-primevideo, geosite-spotify, geosite-tiktok, geosite-x, geosite-cryptocurrency, geosite-porn, geosite-youtube, geosite-google, geosite-telegram, geosite-paypal, geosite-netflix], outbound: Proxy}
     - {action: route, rule_set: [geosite-bank-cn, geosite-private, geosite-jd, geosite-ali, geosite-baidu, geosite-bytedance, geosite-pdd, geosite-bili, geosite-meituan, geosite-ctrip, geosite-tencent, geosite-ctm_cn, geosite-apple, geosite-microsoft, geosite-onedrive, geosite-cn], outbound: "#DC"}
-    - {action: route, rule_set: [geosite-github, geosite-sourcehut, geosite-steam, geosite-epic, geosite-playstation, geosite-xbox, geosite-disney, geosite-hbo, geosite-primevideo, geosite-spotify, geosite-tiktok, geosite-x, geosite-cryptocurrency, geosite-porn, geosite-youtube, geosite-google, geosite-telegram, geosite-paypal, geosite-netflix, geosite-geolocation-!cn], outbound: Proxy}
+    - {action: route, rule_set: geosite-geolocation-!cn, outbound: Proxy}
     - {action: route, rule_set: [geoip-google, geoip-telegram, geoip-netflix], outbound: Proxy}
     - {action: route, rule_set: [geoip-apple, geoip-cn, geoip-private], outbound: "#DC"}
     - {action: route, network: tcp, port_range: ["1024:65535"], outbound: "#Auto"} # 适配 国际服游戏 兜底

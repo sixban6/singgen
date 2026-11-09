@@ -613,25 +613,6 @@ route:
             - z.ai
           outbound: AI
         - action: route
-          outbound: '#DC'
-          rule_set:
-            - geosite-bank-cn
-            - geosite-private
-            - geosite-jd
-            - geosite-ali
-            - geosite-baidu
-            - geosite-bytedance
-            - geosite-pdd
-            - geosite-bili
-            - geosite-meituan
-            - geosite-ctrip
-            - geosite-tencent
-            - geosite-ctm_cn
-            - geosite-apple
-            - geosite-microsoft
-            - geosite-onedrive
-            - geosite-cn
-        - action: route
           outbound: Proxy
           rule_set:
             - geosite-github
@@ -653,7 +634,28 @@ route:
             - geosite-telegram
             - geosite-paypal
             - geosite-netflix
-            - geosite-geolocation-!cn
+        - action: route
+          outbound: '#DC'
+          rule_set:
+            - geosite-bank-cn
+            - geosite-private
+            - geosite-jd
+            - geosite-ali
+            - geosite-baidu
+            - geosite-bytedance
+            - geosite-pdd
+            - geosite-bili
+            - geosite-meituan
+            - geosite-ctrip
+            - geosite-tencent
+            - geosite-ctm_cn
+            - geosite-apple
+            - geosite-microsoft
+            - geosite-onedrive
+            - geosite-cn
+        - action: route
+          outbound: Proxy
+          rule_set: geosite-geolocation-!cn
         - action: route
           outbound: Proxy
           rule_set:

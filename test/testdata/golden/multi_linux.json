@@ -1028,6 +1028,31 @@
       },
       {
         "action": "route",
+        "outbound": "Proxy",
+        "rule_set": [
+          "geosite-github",
+          "geosite-sourcehut",
+          "geosite-steam",
+          "geosite-epic",
+          "geosite-playstation",
+          "geosite-xbox",
+          "geosite-disney",
+          "geosite-hbo",
+          "geosite-primevideo",
+          "geosite-spotify",
+          "geosite-tiktok",
+          "geosite-x",
+          "geosite-cryptocurrency",
+          "geosite-porn",
+          "geosite-youtube",
+          "geosite-google",
+          "geosite-telegram",
+          "geosite-paypal",
+          "geosite-netflix"
+        ]
+      },
+      {
+        "action": "route",
         "outbound": "#DC",
         "rule_set": [
           "geosite-bank-cn",
@@ -1051,28 +1076,7 @@
       {
         "action": "route",
         "outbound": "Proxy",
-        "rule_set": [
-          "geosite-github",
-          "geosite-sourcehut",
-          "geosite-steam",
-          "geosite-epic",
-          "geosite-playstation",
-          "geosite-xbox",
-          "geosite-disney",
-          "geosite-hbo",
-          "geosite-primevideo",
-          "geosite-spotify",
-          "geosite-tiktok",
-          "geosite-x",
-          "geosite-cryptocurrency",
-          "geosite-porn",
-          "geosite-youtube",
-          "geosite-google",
-          "geosite-telegram",
-          "geosite-paypal",
-          "geosite-netflix",
-          "geosite-geolocation-!cn"
-        ]
+        "rule_set": "geosite-geolocation-!cn"
       },
       {
         "action": "route",

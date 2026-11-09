@@ -120,7 +120,7 @@
     },
     {
       "interrupt_exist_connections": false,
-      "interval": "1m",
+      "interval": "3m",
       "outbounds": [
         "VM-WS",
         "VM-GRPC",
@@ -138,7 +138,7 @@
         "ANYTLS-1"
       ],
       "tag": "#Auto",
-      "tolerance": 50,
+      "tolerance": 80,
       "type": "urltest",
       "url": "https://captive.apple.com/hotspot-detect.html"
     },
@@ -814,6 +814,32 @@
         "action": "route",
         "outbound": "#Auto",
         "rule_set": "geosite-hok"
+      },
+      {
+        "action": "route",
+        "outbound": "#Auto",
+        "port": [
+          5010,
+          5692,
+          8500,
+          8600,
+          8801,
+          10004,
+          20000,
+          31003
+        ]
+      },
+      {
+        "action": "route",
+        "network": "udp",
+        "outbound": "#Auto",
+        "port_range": [
+          "6650:6659",
+          "7000:9000",
+          "10000:10100",
+          "20000:20100",
+          "30000:30100"
+        ]
       },
       {
         "action": "reject",

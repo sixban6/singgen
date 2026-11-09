@@ -73,7 +73,7 @@ outbounds:
   - {tag: AI, type: selector, outbounds: ["#VPS", "#Nodes", "#Auto"], interrupt_exist_connections: true}
   # 第二层：底层节点池（统一带 # 微前缀区分）
   - {tag: "#VPS", type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["sec_"]}]} # 过滤出自建节点
-  - {tag: "#Auto", type: urltest, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|到期|[2-9]倍|[0-9]{2,}倍|倍率|[2-9][xX]|[xX][2-9]"]}], url: https://captive.apple.com/hotspot-detect.html, interval: 1m, tolerance: 50, interrupt_exist_connections: false}
+  - {tag: "#Auto", type: urltest, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|到期|[2-9]倍|[0-9]{2,}倍|倍率|[2-9][xX]|[xX][2-9]"]}], url: https://captive.apple.com/hotspot-detect.html, interval: 3m, tolerance: 80, interrupt_exist_connections: false}
   - {tag: "#Nodes", type: selector, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|到期"]}]}
   - {tag: "#DC", type: direct}   # 直连，不走代理
 
@@ -97,6 +97,8 @@ route:
     - {action: route, domain: [clash.razord.top, yacd.metacubex.one, yacd.haishan.me, d.metacubex.one], outbound: "#DC"}
     - {action: route, domain_suffix: [download.sgameglobal.com, res.sgameglobal.com, v2-down-gamelet.sgameglobal.com, ovscdns.com, apdcdn.com, z-lib.gs, follow.is, folo.is], outbound: Proxy} # 适配 Hok更新，下载 走自建节点
     - {action: route, rule_set: geosite-hok, outbound: "#Auto"}
+    - {action: route, port: [5010, 5692, 8500, 8600, 8801, 10004, 20000, 31003], outbound: "#Auto"}  # 适配 国际服游戏 登陆、大厅 走最近的亚洲节点
+    - {action: route, network: udp, port_range: ["6650:6659", "7000:9000", "10000:10100", "20000:20100", "30000:30100"], outbound: "#Auto"}
     - {action: reject, rule_set: [geosite-ad1, geosite-ad2]}
     - {action: route, rule_set: geosite-chat, outbound: AI}
     - {action: route, domain_suffix: [grok.com, z.ai], outbound: AI}
@@ -104,8 +106,8 @@ route:
     - {action: route, rule_set: [geosite-github, geosite-sourcehut, geosite-steam, geosite-epic, geosite-playstation, geosite-xbox, geosite-disney, geosite-hbo, geosite-primevideo, geosite-spotify, geosite-tiktok, geosite-x, geosite-cryptocurrency, geosite-porn, geosite-youtube, geosite-google, geosite-telegram, geosite-paypal, geosite-netflix, geosite-geolocation-!cn], outbound: Proxy}
     - {action: route, rule_set: [geoip-google, geoip-telegram, geoip-netflix], outbound: Proxy}
     - {action: route, rule_set: [geoip-apple, geoip-cn, geoip-private], outbound: "#DC"}
-    - {action: route, network: tcp, port_range: ["1024:65535"], outbound: "#Auto"}  # 适配 国际服游戏 登陆、大厅 走最近的亚洲节点
-    - {action: route, network: udp, port_range: ["1024:65535"], outbound: "#DC"}    # 适配 国际服游戏 UDP国内直连更快
+    - {action: route, network: tcp, port_range: ["1024:65535"], outbound: "#Auto"} # 适配 国际服游戏 兜底
+    - {action: route, network: udp, port_range: ["1024:65535"], outbound: "#DC"}    
 
   rule_set:
     - {tag: geosite-bank-cn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-bank-cn.srs"}

@@ -47,7 +47,7 @@ services:
 
 dns:
   servers:
-    - {tag: dns_local, type: udp, server: "{dns_local}"}   # 默认 使用Adguard Home自建的本地DNS 127.0.0.1:3000
+    - {tag: dns_local, type: udp, server: "{dns_local}"}   # 默认 使用Adguard Home自建的本地DNS 127.0.0.1:5353
     - {tag: dns_proxy, type: https, server: 8.8.8.8, detour: "#VPS"}
     - {tag: dns_tailscale, type: tailscale, endpoint: ts-node}
   rules:

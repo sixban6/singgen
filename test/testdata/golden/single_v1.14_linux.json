@@ -9,13 +9,13 @@
       "enabled": true,
       "path": "/etc/sing-box/cache.db",
       "store_dns": true,
-      "store_fakeip": true
+      "store_fakeip": false
     },
     "clash_api": {
       "default_mode": "rule",
       "external_controller": "127.0.0.1:9095",
       "external_ui": "/etc/sing-box/ui",
-      "external_ui_download_detour": "DirectConn",
+      "external_ui_download_detour": "#DC",
       "external_ui_download_url": "https://ghfast.top/https://github.com/MetaCubeX/metacubexd/archive/gh-pages.zip",
       "secret": ""
     }
@@ -42,12 +42,12 @@
           "ovscdns.com",
           "apdcdn.com"
         ],
-        "server": "dns_hok"
+        "server": "dns_proxy"
       },
       {
         "client_subnet": "203.80.96.0/24",
         "rule_set": "geosite-hok",
-        "server": "dns_hok"
+        "server": "dns_proxy"
       },
       {
         "client_subnet": "223.5.5.5/24",
@@ -70,18 +70,6 @@
         "server": "8.8.8.8",
         "tag": "dns_proxy",
         "type": "https"
-      },
-      {
-        "detour": "#Auto",
-        "server": "8.8.8.8",
-        "tag": "dns_hok",
-        "type": "https"
-      },
-      {
-        "inet4_range": "198.18.0.0/15",
-        "inet6_range": "fc00::/18",
-        "tag": "fakeip",
-        "type": "fakeip"
       }
     ],
     "strategy": "ipv4_only"
@@ -107,7 +95,7 @@
       "outbounds": [
         "#Auto",
         "#Nodes",
-        "DirectConn"
+        "#DC"
       ],
       "tag": "Proxy",
       "type": "selector"
@@ -119,25 +107,6 @@
         "#Auto"
       ],
       "tag": "AI",
-      "type": "selector"
-    },
-    {
-      "interrupt_exist_connections": true,
-      "outbounds": [
-        "#Auto",
-        "#Nodes"
-      ],
-      "tag": "Game-TCP",
-      "type": "selector"
-    },
-    {
-      "interrupt_exist_connections": true,
-      "outbounds": [
-        "DirectConn",
-        "#Auto",
-        "#Nodes"
-      ],
-      "tag": "Game-UDP",
       "type": "selector"
     },
     {
@@ -423,7 +392,7 @@
       "type": "anytls"
     },
     {
-      "tag": "DirectConn",
+      "tag": "#DC",
       "type": "direct"
     }
   ],
@@ -722,13 +691,13 @@
           "100.64.0.0/10",
           "fd7a:115c:a1e0::/48"
         ],
-        "outbound": "DirectConn"
+        "outbound": "#DC"
       },
       {
         "domain_suffix": [
           "ts.net"
         ],
-        "outbound": "DirectConn"
+        "outbound": "#DC"
       },
       {
         "action": "sniff"
@@ -743,7 +712,7 @@
       },
       {
         "ip_is_private": true,
-        "outbound": "DirectConn"
+        "outbound": "#DC"
       },
       {
         "action": "reject",
@@ -753,7 +722,7 @@
       },
       {
         "action": "route",
-        "outbound": "DirectConn",
+        "outbound": "#DC",
         "protocol": [
           "ssh",
           "bittorrent"
@@ -762,7 +731,7 @@
       {
         "action": "route",
         "clash_mode": "direct",
-        "outbound": "DirectConn"
+        "outbound": "#DC"
       },
       {
         "action": "route",
@@ -777,7 +746,7 @@
           "yacd.haishan.me",
           "d.metacubex.one"
         ],
-        "outbound": "DirectConn"
+        "outbound": "#DC"
       },
       {
         "action": "route",
@@ -786,13 +755,16 @@
           "res.sgameglobal.com",
           "v2-down-gamelet.sgameglobal.com",
           "ovscdns.com",
-          "apdcdn.com"
+          "apdcdn.com",
+          "z-lib.gs",
+          "follow.is",
+          "folo.is"
         ],
         "outbound": "Proxy"
       },
       {
         "action": "route",
-        "outbound": "Game-TCP",
+        "outbound": "#Auto",
         "rule_set": "geosite-hok"
       },
       {
@@ -817,24 +789,7 @@
       },
       {
         "action": "route",
-        "domain_suffix": [
-          "z-lib.gs",
-          "follow.is",
-          "folo.is"
-        ],
-        "outbound": "Proxy"
-      },
-      {
-        "action": "route",
-        "outbound": "Proxy",
-        "rule_set": [
-          "geosite-github",
-          "geosite-sourcehut"
-        ]
-      },
-      {
-        "action": "route",
-        "outbound": "DirectConn",
+        "outbound": "#DC",
         "rule_set": [
           "geosite-bank-cn",
           "geosite-private",
@@ -849,15 +804,17 @@
           "geosite-tencent",
           "geosite-ctm_cn",
           "geosite-apple",
-          "geoip-apple",
           "geosite-microsoft",
-          "geosite-onedrive"
+          "geosite-onedrive",
+          "geosite-cn"
         ]
       },
       {
         "action": "route",
         "outbound": "Proxy",
         "rule_set": [
+          "geosite-github",
+          "geosite-sourcehut",
           "geosite-steam",
           "geosite-epic",
           "geosite-playstation",
@@ -872,20 +829,26 @@
           "geosite-porn",
           "geosite-youtube",
           "geosite-google",
-          "geoip-google",
           "geosite-telegram",
-          "geoip-telegram",
           "geosite-paypal",
           "geosite-netflix",
-          "geoip-netflix",
           "geosite-geolocation-!cn"
         ]
       },
       {
         "action": "route",
-        "outbound": "DirectConn",
+        "outbound": "Proxy",
         "rule_set": [
-          "geosite-cn",
+          "geoip-google",
+          "geoip-telegram",
+          "geoip-netflix"
+        ]
+      },
+      {
+        "action": "route",
+        "outbound": "#DC",
+        "rule_set": [
+          "geoip-apple",
           "geoip-cn",
           "geoip-private"
         ]
@@ -893,7 +856,7 @@
       {
         "action": "route",
         "network": "tcp",
-        "outbound": "Game-TCP",
+        "outbound": "#Auto",
         "port_range": [
           "1024:65535"
         ]
@@ -901,7 +864,7 @@
       {
         "action": "route",
         "network": "udp",
-        "outbound": "Game-UDP",
+        "outbound": "#DC",
         "port_range": [
           "1024:65535"
         ]
@@ -930,7 +893,7 @@
   ],
   "http_clients": [
     {
-      "detour": "DirectConn",
+      "detour": "#DC",
       "tag": "hc-direct"
     }
   ]

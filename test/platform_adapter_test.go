@@ -65,9 +65,9 @@ func TestClientAdaptersUseLegacyRuleSetDownload(t *testing.T) {
 			cfg := &config.Config{
 				Outbounds: []map[string]any{
 					{"type": "selector", "tag": "Proxy"},
-					{"type": "direct", "tag": "DirectConn"},
+					{"type": "direct", "tag": "#DC"},
 				},
-				HTTPClients: []map[string]any{{"tag": "hc-direct", "detour": "DirectConn"}},
+				HTTPClients: []map[string]any{{"tag": "hc-direct", "detour": "#DC"}},
 				Route: map[string]any{
 					"default_http_client": "hc-direct",
 					"rule_set": []map[string]any{
@@ -85,8 +85,8 @@ func TestClientAdaptersUseLegacyRuleSetDownload(t *testing.T) {
 				t.Fatalf("[%s] http_clients should be removed", name)
 			}
 			rs := cfg.Route["rule_set"].([]map[string]any)[0]
-			if rs["download_detour"] != "DirectConn" {
-				t.Fatalf("[%s] download_detour should be DirectConn, got %v", name, rs["download_detour"])
+			if rs["download_detour"] != "#DC" {
+				t.Fatalf("[%s] download_detour should be #DC, got %v", name, rs["download_detour"])
 			}
 		})
 	}
@@ -145,8 +145,8 @@ func TestIOSAdapterStripsDesktopAPIService(t *testing.T) {
 func TestIOSAdapterUsesLegacyDownloadDetour(t *testing.T) {
 	adapter := platform.NewIOSAdapter("")
 	cfg := &config.Config{
-		Outbounds:   []map[string]any{{"type": "direct", "tag": "DirectConn"}},
-		HTTPClients: []map[string]any{{"tag": "hc-direct", "detour": "DirectConn"}},
+		Outbounds:   []map[string]any{{"type": "direct", "tag": "#DC"}},
+		HTTPClients: []map[string]any{{"tag": "hc-direct", "detour": "#DC"}},
 		Route: map[string]any{
 			"default_http_client": "hc-direct",
 			"default_mark":        1,

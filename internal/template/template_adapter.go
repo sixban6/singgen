@@ -26,7 +26,7 @@ func adaptTemplateForVersion(config map[string]any, version string) map[string]a
 					if rsMap, ok := rs.(map[string]any); ok {
 						if t, ok := rsMap["type"].(string); ok && t == "remote" {
 							if _, hasDetour := rsMap["download_detour"]; !hasDetour {
-								rsMap["download_detour"] = "DirectConn"
+								rsMap["download_detour"] = "#DC"
 							}
 						}
 					}
@@ -35,7 +35,7 @@ func adaptTemplateForVersion(config map[string]any, version string) map[string]a
 				for _, rsMap := range ruleSetsMap {
 					if t, ok := rsMap["type"].(string); ok && t == "remote" {
 						if _, hasDetour := rsMap["download_detour"]; !hasDetour {
-							rsMap["download_detour"] = "DirectConn"
+							rsMap["download_detour"] = "#DC"
 						}
 					}
 				}

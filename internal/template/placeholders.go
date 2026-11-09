@@ -31,12 +31,14 @@ func orDefault(v, def string) string {
 // 只有写成占位符的值才会被替换，模板中其它同值字面量不受影响。
 func renderPlaceholders(cfg map[string]any, o config.TemplateOptions) {
 	mirror := o.MirrorURL
+	controller := orDefault(o.ExternalController, defaultExternalController)
 	values := map[string]string{
-		"{dns_local}":           orDefault(o.DNSLocalServer, defaultDNSLocal),
-		"{client_subnet}":       orDefault(o.ClientSubnet, defaultClientSubnet),
-		"{external_controller}": orDefault(o.ExternalController, defaultExternalController),
-		"{ts_auth_key}":         o.TSAuthKey,
-		"{ts_lan_ipcidr}":       o.TSLanIPCIDR,
+		"{dns_local}":                orDefault(o.DNSLocalServer, defaultDNSLocal),
+		"{client_subnet}":            orDefault(o.ClientSubnet, defaultClientSubnet),
+		"{external_controller}":      controller,
+		"{external_controller_host}": extractControllerHost(controller),
+		"{ts_auth_key}":              o.TSAuthKey,
+		"{ts_lan_ipcidr}":            o.TSLanIPCIDR,
 	}
 
 	walkStrings(cfg, func(s string) string {
@@ -103,13 +105,17 @@ func walkStrings(obj any, fn func(string) string) {
 	}
 }
 
+func extractControllerHost(addr string) string {
+	if h, _, err := net.SplitHostPort(addr); err == nil {
+		return h
+	}
+	return addr
+}
+
 // syncAPIServiceListen 将 sing-box 1.14+ api service 的监听地址与 external controller 主机保持一致，
 // 避免绑定到部署机不存在的 IP
 func syncAPIServiceListen(cfg map[string]any, externalController string) {
-	host := externalController
-	if h, _, err := net.SplitHostPort(externalController); err == nil {
-		host = h
-	}
+	host := extractControllerHost(orDefault(externalController, defaultExternalController))
 	if services := asMapSlice(cfg["services"]); len(services) > 0 {
 		services[0]["listen"] = host
 	}

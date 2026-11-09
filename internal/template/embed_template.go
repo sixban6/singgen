@@ -53,9 +53,7 @@ func (t *EmbedTemplate) InjectWithOptions(outbounds []transformer.Outbound, opti
 	t.handleTailscaleConfig(configData, options)
 
 	// 外部控制器：同步 sing-box 1.14+ api service 的监听地址
-	if options.ExternalController != "" {
-		syncAPIServiceListen(configData, options.ExternalController)
-	}
+	syncAPIServiceListen(configData, options.ExternalController)
 
 	// 处理 {all} 占位符和过滤规则
 	processor := *t.processor // 按次复制，避免并发调用时共享 logger
@@ -114,10 +112,10 @@ func (t *EmbedTemplate) injectProxyOutbounds(config map[string]any, outbounds []
 		return // 无法处理的类型
 	}
 
-	// 找到插入位置 (在 DirectConn 之前)
+	// 找到插入位置 (在 #DC 之前)
 	insertIndex := len(existingOutbounds) - 1
 	for i, outbound := range existingOutbounds {
-		if tag, ok := outbound["tag"].(string); ok && tag == "DirectConn" {
+		if tag, ok := outbound["tag"].(string); ok && tag == "#DC" {
 			insertIndex = i
 			break
 		}
@@ -405,7 +403,7 @@ func (t *EmbedTemplate) removeRouteRules(config map[string]any) {
 			"100.64.0.0/10",
 			"fd7a:115c:a1e0::/48",
 		},
-		"outbound": "DirectConn",
+		"outbound": "#DC",
 	}
 
 	// 2. 构建第二条域名规则
@@ -413,7 +411,7 @@ func (t *EmbedTemplate) removeRouteRules(config map[string]any) {
 		"domain_suffix": []string{
 			"ts.net",
 		},
-		"outbound": "DirectConn",
+		"outbound": "#DC",
 	}
 
 	// 3. 将这两条新规则组合成一个切片 []any

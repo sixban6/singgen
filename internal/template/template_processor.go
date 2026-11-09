@@ -373,6 +373,36 @@ func (p *TemplateProcessor) cleanInvalidReferences(config map[string]any, existi
 	}
 	p.walkAndCleanReferences(config, existingTags)
 	p.cleanDNSServerDetours(config, existingTags)
+	p.cleanRouteRuleOutbounds(config, existingTags)
+}
+
+// cleanRouteRuleOutbounds 确保 route.rules 中指向底层节点池的 outbound 在对应池被级联移除时回退到有效出站组。
+func (p *TemplateProcessor) cleanRouteRuleOutbounds(config map[string]any, existingTags map[string]bool) {
+	routeMap, ok := config["route"].(map[string]any)
+	if !ok {
+		return
+	}
+	rules, ok := routeMap["rules"].([]any)
+	if !ok {
+		return
+	}
+	fallbacks := []string{"#Auto", "#VPS", "#Nodes", "Proxy"}
+	for _, item := range rules {
+		rule, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		ob, ok := rule["outbound"].(string)
+		if !ok || !strings.HasPrefix(ob, "#") || existingTags[ob] {
+			continue
+		}
+		for _, candidate := range fallbacks {
+			if existingTags[candidate] {
+				rule["outbound"] = candidate
+				break
+			}
+		}
+	}
 }
 
 // cleanDNSServerDetours 确保 dns.servers 中的 detour 指向有效存在的出站分组。

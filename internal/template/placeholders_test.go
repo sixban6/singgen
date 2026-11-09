@@ -51,6 +51,7 @@ func TestRenderPlaceholdersDefaultsAndUnknown(t *testing.T) {
 		"a": "{dns_local}",
 		"b": "{client_subnet}",
 		"c": "{external_controller}",
+		"f": "{external_controller_host}",
 		"d": []any{"{all}"},
 		"e": "{typo_placeholder}",
 	}
@@ -60,7 +61,7 @@ func TestRenderPlaceholdersDefaultsAndUnknown(t *testing.T) {
 		Logger:    slog.New(slog.NewTextHandler(&buf, nil)),
 	})
 
-	want := map[string]string{"a": defaultDNSLocal, "b": defaultClientSubnet, "c": defaultExternalController}
+	want := map[string]string{"a": defaultDNSLocal, "b": defaultClientSubnet, "c": defaultExternalController, "f": "127.0.0.1"}
 	for k, v := range want {
 		if cfg[k] != v {
 			t.Errorf("%s = %v, want %v", k, cfg[k], v)

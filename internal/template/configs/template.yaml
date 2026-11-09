@@ -2,12 +2,13 @@
 # 针对不同 sing-box 版本 (如 v1.12 vs v1.14+), 由程序在内存中自动进行 AST 转换
 #
 # 占位符（生成时替换，未指定时使用默认值）:
-#   {mirror_url}           规则集/面板下载镜像；为空时连同后面的 "/" 一起去掉
-#   {dns_local}            本地 DNS 服务器，默认 114.114.114.114
-#   {client_subnet}        DNS ECS 子网，默认 223.5.5.5/24
-#   {external_controller}  Clash API 监听地址，默认 127.0.0.1:9090
+#   {mirror_url}                规则集/面板下载镜像；为空时连同后面的 "/" 一起去掉
+#   {dns_local}                 本地 DNS 服务器，默认 114.114.114.114
+#   {client_subnet}             DNS ECS 子网，默认 223.5.5.5/24
+#   {external_controller}       Clash API 监听地址，默认 127.0.0.1:9090
+#   {external_controller_host}  从 {external_controller} 提取的监听 IP，默认 127.0.0.1
 #   {ts_auth_key} / {ts_lan_ipcidr}  Tailscale 参数；未提供 auth key 时整个 tailscale 配置被移除
-#   {all}                  代理组中展开为全部订阅节点（支持 filter）
+#   {all}                       代理组中展开为全部订阅节点（支持 filter）
 
 log: {disabled: false, level: info, timestamp: true}
 
@@ -16,24 +17,24 @@ experimental:
     external_controller: "{external_controller}"   # 默认 127.0.0.1:9090
     external_ui: /etc/sing-box/ui
     secret: ""
-    external_ui_download_detour: DirectConn
+    external_ui_download_detour: "#DC"
     default_mode: rule
     external_ui_download_url: "{mirror_url}/https://github.com/MetaCubeX/metacubexd/archive/gh-pages.zip"
   cache_file:
     enabled: true
     path: /etc/sing-box/cache.db
-    store_fakeip: true
+    store_fakeip: false
     store_dns: true
 
 # 统一 HTTP 客户端，供远程规则集 / Dashboard 下载引用
 http_clients:
-  - {tag: hc-direct, detour: DirectConn}
+  - {tag: hc-direct, detour: "#DC"}
 
 # 原生 gRPC API 服务，可被官方 Dashboard / 图形客户端远程控制
 services:
   - type: api
     tag: api-in
-    listen: 0.0.0.0
+    listen: "{external_controller_host}"   # 获取 {external_controller} 对应局域网/回环 IP
     listen_port: 9091
     secret: ""
     access_control_allow_private_network: true
@@ -46,17 +47,15 @@ services:
 
 dns:
   servers:
-    - {tag: dns_local, type: udp, server: "{dns_local}"}   # 默认 114.114.114.114
+    - {tag: dns_local, type: udp, server: "{dns_local}"}   # 默认 使用Adguard Home自建的本地DNS 127.0.0.1:3000
     - {tag: dns_proxy, type: https, server: 8.8.8.8, detour: "#VPS"}
-    - {tag: dns_hok, type: https, server: 8.8.8.8, detour: "#VPS"}
     - {tag: dns_tailscale, type: tailscale, endpoint: ts-node}
-    - {tag: fakeip, type: fakeip, inet4_range: 198.18.0.0/15, inet6_range: fc00::/18}
   rules:
     - {clash_mode: Direct, server: dns_local, client_subnet: "{client_subnet}"}   # 默认 223.5.5.5/24
     - {clash_mode: Global, server: dns_proxy}
     - {domain_suffix: [ts.net], server: dns_tailscale}
-    - {domain_suffix: [sgameglobal.com, ovscdns.com, apdcdn.com], server: dns_hok, client_subnet: 203.80.96.0/24}
-    - {rule_set: geosite-hok, server: dns_hok, client_subnet: 203.80.96.0/24}
+    - {domain_suffix: [sgameglobal.com, ovscdns.com, apdcdn.com], server: dns_proxy, client_subnet: 203.80.96.0/24}
+    - {rule_set: geosite-hok, server: dns_proxy, client_subnet: 203.80.96.0/24}
     - {rule_set: geosite-cn, server: dns_local, client_subnet: "{client_subnet}"}
     - {rule_set: geosite-geolocation-!cn, server: dns_proxy}
   final: dns_proxy
@@ -70,15 +69,13 @@ inbounds:
 
 outbounds:
   # 第一层：业务分流控制组
-  - {tag: Proxy, type: selector, outbounds: ["#VPS", "#Auto", "#Nodes", DirectConn], interrupt_exist_connections: true}
+  - {tag: Proxy, type: selector, outbounds: ["#VPS", "#Auto", "#Nodes", "#DC"], interrupt_exist_connections: true}
   - {tag: AI, type: selector, outbounds: ["#VPS", "#Nodes", "#Auto"], interrupt_exist_connections: true}
-  - {tag: Game-TCP, type: selector, outbounds: ["#Auto", "#VPS", "#Nodes"], interrupt_exist_connections: true}
-  - {tag: Game-UDP, type: selector, outbounds: [DirectConn, "#Auto", "#VPS", "#Nodes"], interrupt_exist_connections: true}
   # 第二层：底层节点池（统一带 # 微前缀区分）
-  - {tag: "#VPS", type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["sec_"]}]}
-  - {tag: "#Auto", type: urltest, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期|[2-9]倍|[0-9]{2,}倍|倍率|[2-9][xX]|[xX][2-9]"]}], url: https://captive.apple.com/hotspot-detect.html, interval: 1m, tolerance: 50, interrupt_exist_connections: false}
-  - {tag: "#Nodes", type: selector, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|sec|到期"]}]}
-  - {tag: DirectConn, type: direct}
+  - {tag: "#VPS", type: selector, outbounds: ["{all}"], filter: [{action: include, keywords: ["sec_"]}]} # 过滤出自建节点
+  - {tag: "#Auto", type: urltest, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|到期|[2-9]倍|[0-9]{2,}倍|倍率|[2-9][xX]|[xX][2-9]"]}], url: https://captive.apple.com/hotspot-detect.html, interval: 1m, tolerance: 50, interrupt_exist_connections: false}
+  - {tag: "#Nodes", type: selector, outbounds: ["{all}"], filter: [{action: exclude, keywords: ["网站|地址|剩余|过期|时间|有效|官网|流量|到期"]}]}
+  - {tag: "#DC", type: direct}   # 直连，不走代理
 
 route:
   default_http_client: hc-direct
@@ -92,24 +89,23 @@ route:
     - {action: hijack-dns, protocol: dns}
     - {action: hijack-dns, port: 53}
     - {ip_cidr: ["100.64.0.0/10", "fd7a:115c:a1e0::/48"], outbound: ts-node}
-    - {ip_is_private: true, outbound: DirectConn}
+    - {ip_is_private: true, outbound: "#DC"}
     - {action: reject, ip_cidr: ["30.0.0.0/8"]}
-    - {action: route, protocol: [ssh, bittorrent], outbound: DirectConn}
-    - {action: route, clash_mode: direct, outbound: DirectConn}
+    - {action: route, protocol: [ssh, bittorrent], outbound: "#DC"}
+    - {action: route, clash_mode: direct, outbound: "#DC"}
     - {action: route, clash_mode: global, outbound: Proxy}
-    - {action: route, domain: [clash.razord.top, yacd.metacubex.one, yacd.haishan.me, d.metacubex.one], outbound: DirectConn}
-    - {action: route, domain_suffix: [download.sgameglobal.com, res.sgameglobal.com, v2-down-gamelet.sgameglobal.com, ovscdns.com, apdcdn.com], outbound: Proxy}
-    - {action: route, rule_set: geosite-hok, outbound: Game-TCP}
+    - {action: route, domain: [clash.razord.top, yacd.metacubex.one, yacd.haishan.me, d.metacubex.one], outbound: "#DC"}
+    - {action: route, domain_suffix: [download.sgameglobal.com, res.sgameglobal.com, v2-down-gamelet.sgameglobal.com, ovscdns.com, apdcdn.com, z-lib.gs, follow.is, folo.is], outbound: Proxy} # 适配 Hok更新，下载 走自建节点
+    - {action: route, rule_set: geosite-hok, outbound: "#Auto"}
     - {action: reject, rule_set: [geosite-ad1, geosite-ad2]}
     - {action: route, rule_set: geosite-chat, outbound: AI}
     - {action: route, domain_suffix: [grok.com, z.ai], outbound: AI}
-    - {action: route, domain_suffix: [z-lib.gs, follow.is, folo.is], outbound: Proxy}
-    - {action: route, rule_set: [geosite-github, geosite-sourcehut], outbound: Proxy}
-    - {action: route, rule_set: [geosite-bank-cn, geosite-private, geosite-jd, geosite-ali, geosite-baidu, geosite-bytedance, geosite-pdd, geosite-bili, geosite-meituan, geosite-ctrip, geosite-tencent, geosite-ctm_cn, geosite-apple, geoip-apple, geosite-microsoft, geosite-onedrive], outbound: DirectConn}
-    - {action: route, rule_set: [geosite-steam, geosite-epic, geosite-playstation, geosite-xbox, geosite-disney, geosite-hbo, geosite-primevideo, geosite-spotify, geosite-tiktok, geosite-x, geosite-cryptocurrency, geosite-porn, geosite-youtube, geosite-google, geoip-google, geosite-telegram, geoip-telegram, geosite-paypal, geosite-netflix, geoip-netflix, geosite-geolocation-!cn], outbound: Proxy}
-    - {action: route, rule_set: [geosite-cn, geoip-cn, geoip-private], outbound: DirectConn}
-    - {action: route, network: tcp, port_range: ["1024:65535"], outbound: Game-TCP}
-    - {action: route, network: udp, port_range: ["1024:65535"], outbound: Game-UDP}
+    - {action: route, rule_set: [geosite-bank-cn, geosite-private, geosite-jd, geosite-ali, geosite-baidu, geosite-bytedance, geosite-pdd, geosite-bili, geosite-meituan, geosite-ctrip, geosite-tencent, geosite-ctm_cn, geosite-apple, geosite-microsoft, geosite-onedrive, geosite-cn], outbound: "#DC"}
+    - {action: route, rule_set: [geosite-github, geosite-sourcehut, geosite-steam, geosite-epic, geosite-playstation, geosite-xbox, geosite-disney, geosite-hbo, geosite-primevideo, geosite-spotify, geosite-tiktok, geosite-x, geosite-cryptocurrency, geosite-porn, geosite-youtube, geosite-google, geosite-telegram, geosite-paypal, geosite-netflix, geosite-geolocation-!cn], outbound: Proxy}
+    - {action: route, rule_set: [geoip-google, geoip-telegram, geoip-netflix], outbound: Proxy}
+    - {action: route, rule_set: [geoip-apple, geoip-cn, geoip-private], outbound: "#DC"}
+    - {action: route, network: tcp, port_range: ["1024:65535"], outbound: "#Auto"}  # 适配 国际服游戏 登陆、大厅 走最近的亚洲节点
+    - {action: route, network: udp, port_range: ["1024:65535"], outbound: "#DC"}    # 适配 国际服游戏 UDP国内直连更快
 
   rule_set:
     - {tag: geosite-bank-cn, type: remote, format: binary, url: "{mirror_url}/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-bank-cn.srs"}

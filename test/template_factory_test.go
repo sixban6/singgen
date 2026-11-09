@@ -172,8 +172,8 @@ func TestVersionAdaptation(t *testing.T) {
 		t.Errorf("v1.12 route should not have default_http_client")
 	}
 	if ruleSets, ok := cfg112.Route["rule_set"].([]map[string]any); ok && len(ruleSets) > 0 {
-		if detour, ok := ruleSets[0]["download_detour"].(string); !ok || detour != "DirectConn" {
-			t.Errorf("v1.12 remote rule_set expected download_detour=DirectConn, got %v", ruleSets[0]["download_detour"])
+		if detour, ok := ruleSets[0]["download_detour"].(string); !ok || detour != "#DC" {
+			t.Errorf("v1.12 remote rule_set expected download_detour=#DC, got %v", ruleSets[0]["download_detour"])
 		}
 	}
 

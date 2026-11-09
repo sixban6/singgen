@@ -6,12 +6,12 @@ experimental:
     cache_file:
         enabled: true
         store_dns: true
-        store_fakeip: true
+        store_fakeip: false
     clash_api:
         default_mode: rule
         external_controller: 127.0.0.1:9095
         external_ui: /etc/sing-box/ui
-        external_ui_download_detour: DirectConn
+        external_ui_download_detour: '#DC'
         external_ui_download_url: https://ghfast.top/https://github.com/MetaCubeX/metacubexd/archive/gh-pages.zip
         secret: ""
 dns:
@@ -30,10 +30,10 @@ dns:
             - sgameglobal.com
             - ovscdns.com
             - apdcdn.com
-          server: dns_hok
+          server: dns_proxy
         - client_subnet: 203.80.96.0/24
           rule_set: geosite-hok
-          server: dns_hok
+          server: dns_proxy
         - client_subnet: 223.5.5.5/24
           rule_set: geosite-cn
           server: dns_local
@@ -47,14 +47,6 @@ dns:
           server: 8.8.8.8
           tag: dns_proxy
           type: https
-        - detour: '#Auto'
-          server: 8.8.8.8
-          tag: dns_hok
-          type: https
-        - inet4_range: 198.18.0.0/15
-          inet6_range: fc00::/18
-          tag: fakeip
-          type: fakeip
     strategy: ipv4_only
 inbounds:
     - address:
@@ -71,7 +63,7 @@ outbounds:
       outbounds:
         - '#Auto'
         - '#Nodes'
-        - DirectConn
+        - '#DC'
       tag: Proxy
       type: selector
     - interrupt_exist_connections: true
@@ -79,19 +71,6 @@ outbounds:
         - '#Nodes'
         - '#Auto'
       tag: AI
-      type: selector
-    - interrupt_exist_connections: true
-      outbounds:
-        - '#Auto'
-        - '#Nodes'
-      tag: Game-TCP
-      type: selector
-    - interrupt_exist_connections: true
-      outbounds:
-        - DirectConn
-        - '#Auto'
-        - '#Nodes'
-      tag: Game-UDP
       type: selector
     - interrupt_exist_connections: false
       interval: 1m
@@ -311,239 +290,239 @@ outbounds:
         insecure: false
         server_name: any.example.com
       type: anytls
-    - tag: DirectConn
+    - tag: '#DC'
       type: direct
 route:
     auto_detect_interface: true
     default_domain_resolver: dns_local
     final: Proxy
     rule_set:
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-bank-cn
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-bank-cn.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-ad1
           type: remote
           url: https://ghfast.top/https://github.com/Toperlock/sing-box-geosite/raw/main/rule/adservers.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-ad2
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/privacy-protection-tools/anti-ad.github.io/master/docs/anti-ad-sing-box.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-ctm_cn
           type: remote
           url: https://ghfast.top/https://github.com/sixban6/rulesets/raw/refs/heads/main/rule/direct_cn.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-chat
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-ai-chat-!cn.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-steam
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/steam.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-epic
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/epicgames.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-playstation
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/sony.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-xbox
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/xbox.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-disney
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/disney.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-hbo
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/hbo.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-primevideo
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/primevideo.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-spotify
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/spotify.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-youtube
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/youtube.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-google
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/google.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-github
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/github.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-telegram
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/telegram.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-tiktok
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/tiktok.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-netflix
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/netflix.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-apple
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/apple.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-microsoft
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/microsoft.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-onedrive
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/onedrive.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-geolocation-!cn
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/geolocation-!cn.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-cn
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/cn.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-private
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/private.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geoip-google
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/google.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geoip-telegram
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/telegram.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geoip-netflix
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/netflix.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geoip-apple
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo-lite/geoip/apple.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geoip-cn
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/cn.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geoip-private
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geoip/private.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-paypal
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/paypal.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-hok
           type: remote
           url: https://ghfast.top/https://github.com/sixban6/rulesets/raw/refs/heads/main/rule/hok.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-cryptocurrency
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-cryptocurrency.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-jd
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/jd.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-ali
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/alibaba.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-baidu
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/baidu.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-bytedance
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/bytedance.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-pdd
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/pinduoduo.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-bili
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/bilibili.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-meituan
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/meituan.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-ctrip
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/ctrip.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-tencent
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/tencent.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-porn
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/category-porn.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-sourcehut
           type: remote
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/sourcehut.srs
-        - download_detour: DirectConn
+        - download_detour: '#DC'
           format: binary
           tag: geosite-x
           type: remote
@@ -555,28 +534,28 @@ route:
         - ip_cidr:
             - 100.64.0.0/10
             - fd7a:115c:a1e0::/48
-          outbound: DirectConn
+          outbound: '#DC'
         - domain_suffix:
             - ts.net
-          outbound: DirectConn
+          outbound: '#DC'
         - action: sniff
         - action: hijack-dns
           protocol: dns
         - action: hijack-dns
           port: 53
         - ip_is_private: true
-          outbound: DirectConn
+          outbound: '#DC'
         - action: reject
           ip_cidr:
             - 30.0.0.0/8
         - action: route
-          outbound: DirectConn
+          outbound: '#DC'
           protocol:
             - ssh
             - bittorrent
         - action: route
           clash_mode: direct
-          outbound: DirectConn
+          outbound: '#DC'
         - action: route
           clash_mode: global
           outbound: Proxy
@@ -586,7 +565,7 @@ route:
             - yacd.metacubex.one
             - yacd.haishan.me
             - d.metacubex.one
-          outbound: DirectConn
+          outbound: '#DC'
         - action: route
           domain_suffix:
             - download.sgameglobal.com
@@ -594,9 +573,12 @@ route:
             - v2-down-gamelet.sgameglobal.com
             - ovscdns.com
             - apdcdn.com
+            - z-lib.gs
+            - follow.is
+            - folo.is
           outbound: Proxy
         - action: route
-          outbound: Game-TCP
+          outbound: '#Auto'
           rule_set: geosite-hok
         - action: reject
           rule_set:
@@ -611,18 +593,7 @@ route:
             - z.ai
           outbound: AI
         - action: route
-          domain_suffix:
-            - z-lib.gs
-            - follow.is
-            - folo.is
-          outbound: Proxy
-        - action: route
-          outbound: Proxy
-          rule_set:
-            - geosite-github
-            - geosite-sourcehut
-        - action: route
-          outbound: DirectConn
+          outbound: '#DC'
           rule_set:
             - geosite-bank-cn
             - geosite-private
@@ -637,12 +608,14 @@ route:
             - geosite-tencent
             - geosite-ctm_cn
             - geosite-apple
-            - geoip-apple
             - geosite-microsoft
             - geosite-onedrive
+            - geosite-cn
         - action: route
           outbound: Proxy
           rule_set:
+            - geosite-github
+            - geosite-sourcehut
             - geosite-steam
             - geosite-epic
             - geosite-playstation
@@ -657,27 +630,30 @@ route:
             - geosite-porn
             - geosite-youtube
             - geosite-google
-            - geoip-google
             - geosite-telegram
-            - geoip-telegram
             - geosite-paypal
             - geosite-netflix
-            - geoip-netflix
             - geosite-geolocation-!cn
         - action: route
-          outbound: DirectConn
+          outbound: Proxy
           rule_set:
-            - geosite-cn
+            - geoip-google
+            - geoip-telegram
+            - geoip-netflix
+        - action: route
+          outbound: '#DC'
+          rule_set:
+            - geoip-apple
             - geoip-cn
             - geoip-private
         - action: route
           network: tcp
-          outbound: Game-TCP
+          outbound: '#Auto'
           port_range:
             - 1024:65535
         - action: route
           network: udp
-          outbound: Game-UDP
+          outbound: '#DC'
           port_range:
             - 1024:65535
 certificate:

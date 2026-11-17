@@ -111,6 +111,7 @@ func (a *Adapter) AdaptConfig(cfg *config.Config, options config.TemplateOptions
 	if cfg.Experimental == nil {
 		cfg.Experimental = make(map[string]any)
 	}
+	sanitizeEmptyDirectHTTPClients(cfg)
 
 	if a.profile.Router {
 		// tproxy 需要 default_mark 防止回环
@@ -131,8 +132,6 @@ func (a *Adapter) AdaptConfig(cfg *config.Config, options config.TemplateOptions
 	delete(cfg.Route, "default_mark")
 	// 剥离桌面专属的 api service(详见 stripDesktopAPIServices)
 	stripDesktopAPIServices(cfg)
-	// 规则集下载切换为 legacy download_detour(详见 useLegacyRuleSetDownload)
-	useLegacyRuleSetDownload(cfg)
 	clashAPI := ensureClashAPI(cfg)
 	if options.ExternalController != "" {
 		// 终端设备只能绑定本机地址：为路由器准备的局域网地址（如 192.168.1.1:9095）

@@ -185,6 +185,8 @@ func TestVersionAdaptation(t *testing.T) {
 	cfg114 := tmpl114.Inject([]transformer.Outbound{}, "")
 	if len(cfg114.HTTPClients) == 0 {
 		t.Errorf("v1.14 expected http_clients to be present")
+	} else if _, hasDetour := cfg114.HTTPClients[0]["detour"]; hasDetour {
+		t.Errorf("v1.14 hc-direct must not set detour to empty direct outbound, got %v", cfg114.HTTPClients[0])
 	}
 	if client, ok := cfg114.Route["default_http_client"].(string); !ok || client != "hc-direct" {
 		t.Errorf("v1.14 route expected default_http_client=hc-direct, got %v", cfg114.Route["default_http_client"])

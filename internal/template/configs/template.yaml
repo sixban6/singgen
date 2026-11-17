@@ -26,9 +26,9 @@ experimental:
     store_fakeip: false
     store_dns: true
 
-# 统一 HTTP 客户端，供远程规则集 / Dashboard 下载引用
+# 统一 HTTP 客户端，供远程规则集 / Dashboard 直连下载引用（省略空 direct detour，兼容 sing-box 1.14+ 严格校验）
 http_clients:
-  - {tag: hc-direct, detour: "#DC"}
+  - {tag: hc-direct}
 
 # 原生 gRPC API 服务，可被官方 Dashboard / 图形客户端远程控制
 services:

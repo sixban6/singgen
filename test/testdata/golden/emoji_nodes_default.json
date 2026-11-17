@@ -865,7 +865,6 @@
   ],
   "http_clients": [
     {
-      "detour": "#DC",
       "tag": "hc-direct"
     }
   ]

@@ -51,10 +51,11 @@ func TestClientPlatformTemplatesNoHTTPProxy(t *testing.T) {
 	}
 }
 
-// TestClientAdaptersUseLegacyRuleSetDownload 客户端平台(iOS/mac/win)必须把规则集
-// 下载通道切换为 legacy download_detour: sing-box 1.14.0 的 http_client 对
-// detour=空 direct 出站校验过严, 经 hc-direct 的下载会直接报错
-func TestClientAdaptersUseLegacyRuleSetDownload(t *testing.T) {
+// TestClientAdaptersKeepModernHTTPClient 客户端平台(iOS/mac/win)在 v1.14+ 下保留
+// route.default_http_client 与 http_clients（同时剥离指向空 direct 出站的 detour，
+// 防止 sing-box 1.14+ 报 "detour to an empty direct outbound makes no sense"），
+// 且不再注入已在 1.14 弃用、1.16 移除的 download_detour。
+func TestClientAdaptersKeepModernHTTPClient(t *testing.T) {
 	adapters := map[string]platform.PlatformAdapter{
 		"darwin":  platform.NewDarwinAdapter(""),
 		"windows": platform.NewWindowsAdapter(""),
@@ -78,15 +79,18 @@ func TestClientAdaptersUseLegacyRuleSetDownload(t *testing.T) {
 			if err := adapter.AdaptConfig(cfg, config.TemplateOptions{Platform: name}); err != nil {
 				t.Fatal(err)
 			}
-			if _, has := cfg.Route["default_http_client"]; has {
-				t.Fatalf("[%s] default_http_client should be removed", name)
+			if cfg.Route["default_http_client"] != "hc-direct" {
+				t.Fatalf("[%s] default_http_client should be preserved as hc-direct, got %v", name, cfg.Route["default_http_client"])
 			}
-			if cfg.HTTPClients != nil {
-				t.Fatalf("[%s] http_clients should be removed", name)
+			if len(cfg.HTTPClients) != 1 || cfg.HTTPClients[0]["tag"] != "hc-direct" {
+				t.Fatalf("[%s] http_clients should keep hc-direct, got %v", name, cfg.HTTPClients)
+			}
+			if _, hasDetour := cfg.HTTPClients[0]["detour"]; hasDetour {
+				t.Fatalf("[%s] empty direct detour should be stripped from hc-direct, got %v", name, cfg.HTTPClients[0])
 			}
 			rs := cfg.Route["rule_set"].([]map[string]any)[0]
-			if rs["download_detour"] != "#DC" {
-				t.Fatalf("[%s] download_detour should be #DC, got %v", name, rs["download_detour"])
+			if _, hasLegacy := rs["download_detour"]; hasLegacy {
+				t.Fatalf("[%s] legacy download_detour must not be injected, got %v", name, rs["download_detour"])
 			}
 		})
 	}
@@ -137,12 +141,9 @@ func TestIOSAdapterStripsDesktopAPIService(t *testing.T) {
 	})
 }
 
-// TestIOSAdapterKeepsDefaultHTTPClient 确认 iOS 不破坏 1.14 的规则集下载通道
-// (route.default_http_client -> hc-direct, 与桌面共享同一语义)
-// TestIOSAdapterUsesLegacyDownloadDetour iOS 规则集下载切换为 legacy
-// download_detour（1.14.0 的 http_client 对 detour=空 direct 校验过严），
-// 同时保留 default_mark 清理行为
-func TestIOSAdapterUsesLegacyDownloadDetour(t *testing.T) {
+// TestIOSAdapterKeepsDefaultHTTPClient 确认 iOS 保留 1.14 规则集下载通道
+// (route.default_http_client -> hc-direct, 剥离空 direct detour)，同时清理 default_mark
+func TestIOSAdapterKeepsDefaultHTTPClient(t *testing.T) {
 	adapter := platform.NewIOSAdapter("")
 	cfg := &config.Config{
 		Outbounds:   []map[string]any{{"type": "direct", "tag": "#DC"}},
@@ -155,11 +156,14 @@ func TestIOSAdapterUsesLegacyDownloadDetour(t *testing.T) {
 	if err := adapter.AdaptConfig(cfg, config.TemplateOptions{Platform: "ios"}); err != nil {
 		t.Fatal(err)
 	}
-	if _, has := cfg.Route["default_http_client"]; has {
-		t.Fatal("default_http_client should be removed on iOS")
+	if cfg.Route["default_http_client"] != "hc-direct" {
+		t.Fatalf("default_http_client should be preserved on iOS, got %v", cfg.Route["default_http_client"])
 	}
-	if cfg.HTTPClients != nil {
-		t.Fatal("http_clients should be removed on iOS")
+	if len(cfg.HTTPClients) != 1 || cfg.HTTPClients[0]["tag"] != "hc-direct" {
+		t.Fatalf("http_clients should be preserved on iOS, got %v", cfg.HTTPClients)
+	}
+	if _, hasDetour := cfg.HTTPClients[0]["detour"]; hasDetour {
+		t.Fatalf("empty direct detour should be stripped from http_clients, got %v", cfg.HTTPClients[0])
 	}
 	if _, has := cfg.Route["default_mark"]; has {
 		t.Fatal("default_mark should be removed on iOS")

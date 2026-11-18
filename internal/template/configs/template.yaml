@@ -84,7 +84,7 @@ route:
   final: Proxy
   default_mark: 1
   rules:
-    - {action: reject, protocol: udp, port: 443}
+    - {action: reject, network: udp, port: 443}
     - {action: sniff}
     - {action: hijack-dns, protocol: dns}
     - {action: hijack-dns, port: 53}

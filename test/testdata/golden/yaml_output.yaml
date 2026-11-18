@@ -484,8 +484,8 @@ route:
           url: https://ghfast.top/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo/geosite/x.srs
     rules:
         - action: reject
+          network: udp
           port: 443
-          protocol: udp
         - ip_cidr:
             - 100.64.0.0/10
             - fd7a:115c:a1e0::/48

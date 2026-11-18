@@ -683,8 +683,8 @@
     "rules": [
       {
         "action": "reject",
-        "port": 443,
-        "protocol": "udp"
+        "network": "udp",
+        "port": 443
       },
       {
         "ip_cidr": [

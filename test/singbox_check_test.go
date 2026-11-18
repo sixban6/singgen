@@ -82,10 +82,28 @@ func TestGeneratedOutboundsRegression(t *testing.T) {
 
 	var cfg struct {
 		Outbounds []map[string]any `json:"outbounds"`
+		Route     struct {
+			Rules []map[string]any `json:"rules"`
+		} `json:"route"`
 	}
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		t.Fatal(err)
 	}
+
+	t.Run("QUIC port 443 reject uses network=udp instead of protocol=udp", func(t *testing.T) {
+		foundValidReject := false
+		for _, r := range cfg.Route.Rules {
+			if p, _ := r["protocol"].(string); p == "udp" || p == "tcp" {
+				t.Fatalf("route rule must use network=%q instead of invalid sniff protocol=%q: %v", p, p, r)
+			}
+			if r["action"] == "reject" && r["network"] == "udp" && r["port"] == float64(443) {
+				foundValidReject = true
+			}
+		}
+		if !foundValidReject {
+			t.Fatalf("expected {action:reject, network:udp, port:443} in route.rules, got: %v", cfg.Route.Rules[:min(3, len(cfg.Route.Rules))])
+		}
+	})
 
 	byTag := make(map[string]map[string]any)
 	for _, ob := range cfg.Outbounds {

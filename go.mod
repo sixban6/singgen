@@ -1,14 +1,11 @@
 module github.com/sixban6/singgen
 
-go 1.27.3
+go 1.27.4
 
 require (
-	github.com/goccy/go-json v0.10.5
-	github.com/stretchr/testify v1.8.1
+	github.com/goccy/go-json v0.12.0
+	github.com/stretchr/testify v1.12.1
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require (
-	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/pmezard/go-difflib v1.0.0 // indirect
-)
+require go.yaml.in/yaml/v3 v3.0.5 // indirect
